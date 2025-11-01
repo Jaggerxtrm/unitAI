@@ -14,10 +14,6 @@ export interface AIExecutionOptions {
     shadow?: boolean;
     verbose?: boolean;
     restore?: boolean;
-    codeMode?: boolean;
-    reviewMode?: boolean;
-    optimize?: boolean;
-    explain?: boolean;
     onProgress?: (output: string) => void;
 }
 /**
@@ -26,6 +22,8 @@ export interface AIExecutionOptions {
 export declare function executeQwenCLI(options: Omit<AIExecutionOptions, 'backend'>): Promise<string>;
 /**
  * Execute Rovodev CLI with the given options
+ * Note: Rovodev CLI only supports: --shadow, --verbose, --restore, --yolo flags
+ * The prompt is passed as a positional argument (not with -p flag)
  */
 export declare function executeRovodevCLI(options: Omit<AIExecutionOptions, 'backend'>): Promise<string>;
 /**

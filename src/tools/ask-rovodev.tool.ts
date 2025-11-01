@@ -17,42 +17,12 @@ export const askRovodevTool: UnifiedTool = {
       .describe(
         "The query or instruction for Rovodev. Use @filename, #filename, or directory references to include file contents. Example: '@src/ Explain this codebase structure'"
       ),
-    model: z
-      .enum([
-        AI_MODELS.ROVODEV.PRIMARY,
-        AI_MODELS.ROVODEV.FALLBACK
-      ])
-      .optional()
-      .describe(
-        `Optional model to use (e.g., '${AI_MODELS.ROVODEV.PRIMARY}'). If not specified, uses the default model configured in Rovo Dev.`
-      ),
-    approvalMode: z
-      .enum([
-        APPROVAL_MODES.PLAN,
-        APPROVAL_MODES.DEFAULT,
-        APPROVAL_MODES.AUTO_EDIT,
-        APPROVAL_MODES.YOLO
-      ])
-      .optional()
-      .describe(
-        "Control tool execution approval: 'plan' (analyze only), 'default' (prompt for approval), 'auto-edit' (auto-approve edits), 'yolo' (auto-approve all)"
-      ),
     yolo: z
       .boolean()
       .default(false)
       .describe(
-        "Enable YOLO mode to automatically approve all tool calls without prompting (equivalent to approvalMode='yolo')"
+        "Enable YOLO mode to automatically approve all tool calls without prompting"
       ),
-    allFiles: z
-      .boolean()
-      .default(false)
-      .describe(
-        "Include all files in the current directory as context (use with caution for large directories)"
-      ),
-    debug: z
-      .boolean()
-      .default(false)
-      .describe("Enable debug mode for more verbose output"),
     shadow: z
       .boolean()
       .default(false)
@@ -64,48 +34,24 @@ export const askRovodevTool: UnifiedTool = {
     restore: z
       .boolean()
       .default(false)
-      .describe("Continue the last session if available instead of starting a new one"),
-    codeMode: z
-      .boolean()
-      .default(false)
-      .describe("Enable code-specific analysis mode for better code understanding"),
-    reviewMode: z
-      .boolean()
-      .default(false)
-      .describe("Enable code review mode for detailed feedback"),
-    optimize: z
-      .boolean()
-      .default(false)
-      .describe("Request optimization suggestions for the code"),
-    explain: z
-      .boolean()
-      .default(false)
-      .describe("Request detailed explanations of code functionality")
+      .describe("Continue the last session if available instead of starting a new one")
   }),
   execute: async (args, onProgress) => {
-    const { prompt, model, approvalMode, yolo, allFiles, debug, shadow, verbose, restore, codeMode, reviewMode, optimize, explain } = args;
+    const { prompt, yolo, shadow, verbose, restore } = args;
 
     // Validate prompt
     if (!prompt || !prompt.trim()) {
       throw new Error(ERROR_MESSAGES.NO_PROMPT_PROVIDED);
     }
 
-    // Execute Rovodev CLI
+    // Execute Rovodev CLI (only passing supported parameters)
     const result = await executeAIClient({
       backend: BACKENDS.ROVODEV,
       prompt,
-      model,
-      approvalMode,
       yolo,
-      allFiles,
-      debug,
       shadow,
       verbose,
       restore,
-      codeMode,
-      reviewMode,
-      optimize,
-      explain,
       onProgress
     });
 
@@ -114,7 +60,7 @@ export const askRovodevTool: UnifiedTool = {
   prompt: {
     name: "ask-rovodev",
     description:
-      "Interact with Rovodev AI for code analysis, file exploration, and general queries. Supports @file or #file references for including file contents.",
+      "Interact with Rovodev AI for code analysis, file exploration, and general queries. Supports @file or #file references for including file contents. Based on acli rovodev CLI.",
     arguments: [
       {
         name: "prompt",
@@ -123,48 +69,23 @@ export const askRovodevTool: UnifiedTool = {
         required: true
       },
       {
-        name: "model",
-        description: `Optional model selection (${AI_MODELS.ROVODEV.PRIMARY}, ${AI_MODELS.ROVODEV.FALLBACK})`,
-        required: false
-      },
-      {
-        name: "approvalMode",
-        description: "Control approval for tool execution (plan/default/auto-edit/yolo)",
+        name: "yolo",
+        description: "Enable YOLO mode to auto-approve all operations",
         required: false
       },
       {
         name: "shadow",
-        description: "Enable shadow mode for safe changes",
+        description: "Enable shadow mode for safe changes on temporary workspace copy",
         required: false
       },
       {
         name: "verbose",
-        description: "Enable verbose output",
+        description: "Enable verbose tool output",
         required: false
       },
       {
         name: "restore",
-        description: "Continue last session",
-        required: false
-      },
-      {
-        name: "codeMode",
-        description: "Enable code-specific analysis mode",
-        required: false
-      },
-      {
-        name: "reviewMode",
-        description: "Enable detailed code review mode",
-        required: false
-      },
-      {
-        name: "optimize",
-        description: "Request optimization suggestions",
-        required: false
-      },
-      {
-        name: "explain",
-        description: "Request detailed explanations",
+        description: "Continue last session instead of starting new one",
         required: false
       }
     ]

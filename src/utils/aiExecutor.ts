@@ -9,20 +9,17 @@ import type { QwenModel, RovodevModel, ApprovalMode } from "../constants.js";
 export interface AIExecutionOptions {
   backend: string;
   prompt: string;
-  model?: string; // Will be converted to appropriate model type based on backend
-  sandbox?: boolean;
-  approvalMode?: ApprovalMode;
-  yolo?: boolean;
-  allFiles?: boolean;
-  debug?: boolean;
-  // Rovodev specific
-  shadow?: boolean;
-  verbose?: boolean;
-  restore?: boolean;
-  codeMode?: boolean;
-  reviewMode?: boolean;
-  optimize?: boolean;
-  explain?: boolean;
+  // Qwen-specific options
+  model?: string; // Only for Qwen (Will be converted to appropriate model type)
+  sandbox?: boolean; // Only for Qwen
+  approvalMode?: ApprovalMode; // Only for Qwen
+  yolo?: boolean; // Both Qwen and Rovodev support this
+  allFiles?: boolean; // Only for Qwen
+  debug?: boolean; // Only for Qwen
+  // Rovodev-specific options (based on acli rovodev run --help)
+  shadow?: boolean; // Rovodev only
+  verbose?: boolean; // Rovodev only
+  restore?: boolean; // Rovodev only
   onProgress?: (output: string) => void;
 }
 
@@ -160,24 +157,18 @@ export async function executeQwenCLI(
 
 /**
  * Execute Rovodev CLI with the given options
+ * Note: Rovodev CLI only supports: --shadow, --verbose, --restore, --yolo flags
+ * The prompt is passed as a positional argument (not with -p flag)
  */
 export async function executeRovodevCLI(
   options: Omit<AIExecutionOptions, 'backend'>
 ): Promise<string> {
   const {
     prompt,
-    model,
-    approvalMode,
     yolo = false,
-    allFiles = false,
-    debug = false,
     shadow = false,
     verbose = false,
     restore = false,
-    codeMode = false,
-    reviewMode = false,
-    optimize = false,
-    explain = false,
     onProgress
   } = options;
 
@@ -185,38 +176,13 @@ export async function executeRovodevCLI(
     throw new Error(ERROR_MESSAGES.NO_PROMPT_PROVIDED);
   }
 
-  // Build command arguments
+  // Build command arguments for acli rovodev run [OPTIONS] [MESSAGE]
   const args: string[] = [];
 
-  // Add subcommand
+  // Add subcommand 'run'
   args.push(CLI.COMMANDS.ROVODEV_SUBCOMMAND);
 
-  // Add model flag if specified
-  if (model) {
-    args.push(CLI.FLAGS.ROVODEV.MODEL, model);
-  }
-
-  // Add approval mode if specified
-  if (approvalMode) {
-    args.push(CLI.FLAGS.ROVODEV.APPROVAL_MODE, approvalMode);
-  }
-
-  // Add yolo flag if enabled
-  if (yolo) {
-    args.push(CLI.FLAGS.ROVODEV.YOLO);
-  }
-
-  // Add all-files flag if enabled
-  if (allFiles) {
-    args.push(CLI.FLAGS.ROVODEV.ALL_FILES);
-  }
-
-  // Add debug flag if enabled
-  if (debug) {
-    args.push(CLI.FLAGS.ROVODEV.DEBUG);
-  }
-
-  // Add rovodev-specific flags if enabled
+  // Add only supported rovodev-specific flags
   if (shadow) {
     args.push(CLI.FLAGS.ROVODEV.SHADOW);
   }
@@ -229,29 +195,15 @@ export async function executeRovodevCLI(
     args.push(CLI.FLAGS.ROVODEV.RESTORE);
   }
 
-  if (codeMode) {
-    args.push(CLI.FLAGS.ROVODEV.CODE_MODE);
+  if (yolo) {
+    args.push(CLI.FLAGS.ROVODEV.YOLO);
   }
 
-  if (reviewMode) {
-    args.push(CLI.FLAGS.ROVODEV.REVIEW_MODE);
-  }
+  // Add prompt as POSITIONAL argument (not with a flag)
+  // Rovodev CLI expects: acli rovodev run [OPTIONS] [MESSAGE]
+  args.push(prompt);
 
-  if (optimize) {
-    args.push(CLI.FLAGS.ROVODEV.OPTIMIZE);
-  }
-
-  if (explain) {
-    args.push(CLI.FLAGS.ROVODEV.EXPLAIN);
-  }
-
-  // Add prompt flag with the prompt
-  // Wrap in quotes if it contains @ symbols for file references
-  const shouldQuote = prompt.includes("@") || prompt.includes("#");
-  args.push(CLI.FLAGS.ROVODEV.PROMPT);
-  args.push(shouldQuote ? `"${prompt}"` : prompt);
-
-  logger.info(`Executing Rovodev CLI with model: ${model || "default"}`);
+  logger.info(`Executing Rovodev CLI`);
 
   if (onProgress) {
     onProgress(STATUS_MESSAGES.STARTING_ANALYSIS);

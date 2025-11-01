@@ -36,21 +36,14 @@ export const CLI = {
       ALL_FILES: "--all-files",
       DEBUG: "--debug"
     },
-    // Rovodev specific flags
+    // Rovodev specific flags (based on actual acli rovodev run --help)
     ROVODEV: {
-      PROMPT: "-p",
-      MODEL: "--model",
-      APPROVAL_MODE: "--approval-mode",
-      YOLO: "--yolo",
-      ALL_FILES: "--all-files",
-      DEBUG: "--debug",
+      // Only flags that actually exist in acli rovodev CLI
       SHADOW: "--shadow",
       VERBOSE: "--verbose",
       RESTORE: "--restore",
-      CODE_MODE: "--code-mode",
-      REVIEW_MODE: "--review",
-      OPTIMIZE: "--optimize",
-      EXPLAIN: "--explain"
+      YOLO: "--yolo",
+      CONFIG_FILE: "--config-file"
     }
   }
 } as const;

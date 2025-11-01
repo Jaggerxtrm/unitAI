@@ -33,19 +33,11 @@ export declare const CLI: {
             readonly DEBUG: "--debug";
         };
         readonly ROVODEV: {
-            readonly PROMPT: "-p";
-            readonly MODEL: "--model";
-            readonly APPROVAL_MODE: "--approval-mode";
-            readonly YOLO: "--yolo";
-            readonly ALL_FILES: "--all-files";
-            readonly DEBUG: "--debug";
             readonly SHADOW: "--shadow";
             readonly VERBOSE: "--verbose";
             readonly RESTORE: "--restore";
-            readonly CODE_MODE: "--code-mode";
-            readonly REVIEW_MODE: "--review";
-            readonly OPTIMIZE: "--optimize";
-            readonly EXPLAIN: "--explain";
+            readonly YOLO: "--yolo";
+            readonly CONFIG_FILE: "--config-file";
         };
     };
 };

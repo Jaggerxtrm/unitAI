@@ -23,8 +23,9 @@ Model Context Protocol server for multiple AI clients (Qwen, Rovo Dev, etc.). Th
 - Strong code analysis capabilities
 
 ### Rovo Dev CLI Strengths:
+- Access to Claude Sonnet and GPT-5 models for advanced reasoning
+- Pre-configured with premium Anthropic models (Sonnet 4, Opus)
 - Atlassian ecosystem integration
-- Pre-configured with Claude models (Sonnet, Opus)
 - Built-in project awareness and workspace management
 - Shadow mode for safe changes
 - MCP support built into the tool itself
