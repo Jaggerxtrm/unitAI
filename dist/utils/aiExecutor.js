@@ -160,8 +160,8 @@ export async function executeGeminiCLI(options) {
         throw new Error(ERROR_MESSAGES.NO_PROMPT_PROVIDED);
     }
     const args = [];
-    // Always pass a model: default to PRO if none provided
-    const effectiveModel = model ?? AI_MODELS.GEMINI.PRO;
+    // Always pass a model: default to PRIMARY if none provided
+    const effectiveModel = model ?? AI_MODELS.GEMINI.PRIMARY;
     args.push(CLI.FLAGS.GEMINI.MODEL, effectiveModel);
     // Sandbox flag
     if (sandbox) {
@@ -171,7 +171,7 @@ export async function executeGeminiCLI(options) {
     const shouldQuote = prompt.includes("@") || prompt.includes("#");
     args.push(CLI.FLAGS.GEMINI.PROMPT);
     args.push(shouldQuote ? `"${prompt}"` : prompt);
-    logger.info(`Executing Gemini CLI with model: ${model || "default"}`);
+    logger.info(`Executing Gemini CLI with model: ${effectiveModel}`);
     if (onProgress) {
         onProgress(STATUS_MESSAGES.STARTING_ANALYSIS);
     }

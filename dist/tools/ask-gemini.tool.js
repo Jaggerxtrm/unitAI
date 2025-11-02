@@ -16,11 +16,10 @@ export const askGeminiTool = {
         model: z
             .enum([
             AI_MODELS.GEMINI.PRIMARY,
-            AI_MODELS.GEMINI.PRO,
             AI_MODELS.GEMINI.FLASH
         ])
             .optional()
-            .describe(`Optional model to use (e.g., '${AI_MODELS.GEMINI.PRO}'). If not specified, uses the default model (${AI_MODELS.GEMINI.PRO}).`),
+            .describe(`Optional model to use (e.g., '${AI_MODELS.GEMINI.PRIMARY}'). If not specified, uses the default model (${AI_MODELS.GEMINI.PRIMARY}).`),
         sandbox: z
             .boolean()
             .default(false)
@@ -51,7 +50,7 @@ export const askGeminiTool = {
             },
             {
                 name: "model",
-                description: `Optional model selection (${AI_MODELS.GEMINI.PRIMARY}, ${AI_MODELS.GEMINI.PRO}, etc.)`,
+                description: `Optional model selection (${AI_MODELS.GEMINI.PRIMARY}, ${AI_MODELS.GEMINI.FLASH})`,
                 required: false
             },
             {

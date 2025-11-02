@@ -243,8 +243,8 @@ export async function executeGeminiCLI(
 
   const args: string[] = [];
 
-  // Always pass a model: default to PRO if none provided
-  const effectiveModel = model ?? AI_MODELS.GEMINI.PRO;
+  // Always pass a model: default to PRIMARY if none provided
+  const effectiveModel = model ?? AI_MODELS.GEMINI.PRIMARY;
   args.push(CLI.FLAGS.GEMINI.MODEL, effectiveModel);
 
   // Sandbox flag

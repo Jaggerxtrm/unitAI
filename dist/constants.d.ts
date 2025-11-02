@@ -6,8 +6,8 @@ export declare const AI_MODELS: {
     readonly QWEN: {
         readonly PRIMARY: "qwen3-coder-plus";
         readonly FALLBACK: "qwen3-coder-turbo";
-        readonly PLUS: "qwen3-coder-plus";
-        readonly TURBO: "qwen3-coder-turbo";
+        readonly PLUS: "Qwen/Qwen3-Coder-480B-A35B-Instruct";
+        readonly TURBO: "qwen/qwen3-coder:free";
         readonly PRO: "qwen3-coder-pro";
     };
     readonly ROVODEV: {
@@ -16,7 +16,6 @@ export declare const AI_MODELS: {
     };
     readonly GEMINI: {
         readonly PRIMARY: "gemini-2.5-pro";
-        readonly PRO: "gemini-2.5-pro";
         readonly FLASH: "gemini-2.5-flash";
     };
 };

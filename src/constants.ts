@@ -8,8 +8,8 @@ export const AI_MODELS = {
   QWEN: {
     PRIMARY: "qwen3-coder-plus",
     FALLBACK: "qwen3-coder-turbo",
-    PLUS: "qwen3-coder-plus",
-    TURBO: "qwen3-coder-turbo",
+    PLUS: "Qwen/Qwen3-Coder-480B-A35B-Instruct",
+    TURBO: "qwen/qwen3-coder:free",
     PRO: "qwen3-coder-pro"
   },
   ROVODEV: {
@@ -18,7 +18,6 @@ export const AI_MODELS = {
   },
   GEMINI: {
     PRIMARY: "gemini-2.5-pro",
-    PRO: "gemini-2.5-pro",
     FLASH: "gemini-2.5-flash"
   }
 } as const;
