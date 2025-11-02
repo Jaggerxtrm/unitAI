@@ -19,8 +19,8 @@ async function main() {
     results.push(await runTool("gemini-help", {}));
     results.push(await runTool("qwen-help", {}));
     results.push(await runTool("rovodev-help", {}));
-    // Light ask-gemini call (may fail if CLI not installed)
-    results.push(await runTool("ask-gemini", { prompt: "Say hello from E2E test" }));
+    // ask-gemini should now default to PRO
+    results.push(await runTool("ask-gemini", { prompt: "Say hello from E2E test (expect PRO default)" }));
     const summary = results.map(r => `${r.name}: ${r.ok ? "OK" : `ERROR (${r.error})`}`).join("\n");
     logger.info(`E2E summary:\n${summary}`);
 }

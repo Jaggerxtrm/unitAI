@@ -26,7 +26,7 @@ export const askGeminiTool: UnifiedTool = {
       ])
       .optional()
       .describe(
-        `Optional model to use (e.g., '${AI_MODELS.GEMINI.PRIMARY}'). If not specified, uses the default model (${AI_MODELS.GEMINI.PRIMARY}).`
+        `Optional model to use (e.g., '${AI_MODELS.GEMINI.PRO}'). If not specified, uses the default model (${AI_MODELS.GEMINI.PRO}).`
       ),
     sandbox: z
       .boolean()

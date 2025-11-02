@@ -15,7 +15,7 @@ export const AI_MODELS = {
         FALLBACK: "basic"
     },
     GEMINI: {
-        PRIMARY: "gemini-2.5-flash",
+        PRIMARY: "gemini-2.5-pro",
         PRO: "gemini-2.5-pro",
         FLASH: "gemini-2.5-flash"
     }

@@ -160,10 +160,9 @@ export async function executeGeminiCLI(options) {
         throw new Error(ERROR_MESSAGES.NO_PROMPT_PROVIDED);
     }
     const args = [];
-    // Model flag if provided
-    if (model) {
-        args.push(CLI.FLAGS.GEMINI.MODEL, model);
-    }
+    // Always pass a model: default to PRO if none provided
+    const effectiveModel = model ?? AI_MODELS.GEMINI.PRO;
+    args.push(CLI.FLAGS.GEMINI.MODEL, effectiveModel);
     // Sandbox flag
     if (sandbox) {
         args.push(CLI.FLAGS.GEMINI.SANDBOX);

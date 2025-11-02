@@ -15,7 +15,7 @@ export declare const AI_MODELS: {
         readonly FALLBACK: "basic";
     };
     readonly GEMINI: {
-        readonly PRIMARY: "gemini-2.5-flash";
+        readonly PRIMARY: "gemini-2.5-pro";
         readonly PRO: "gemini-2.5-pro";
         readonly FLASH: "gemini-2.5-flash";
     };

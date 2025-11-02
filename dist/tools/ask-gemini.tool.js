@@ -20,7 +20,7 @@ export const askGeminiTool = {
             AI_MODELS.GEMINI.FLASH
         ])
             .optional()
-            .describe(`Optional model to use (e.g., '${AI_MODELS.GEMINI.PRIMARY}'). If not specified, uses the default model (${AI_MODELS.GEMINI.PRIMARY}).`),
+            .describe(`Optional model to use (e.g., '${AI_MODELS.GEMINI.PRO}'). If not specified, uses the default model (${AI_MODELS.GEMINI.PRO}).`),
         sandbox: z
             .boolean()
             .default(false)
