@@ -152,6 +152,46 @@ export async function executeRovodevCLI(options) {
     }
 }
 /**
+ * Execute Gemini CLI with the given options
+ */
+export async function executeGeminiCLI(options) {
+    const { prompt, model, sandbox = false, onProgress } = options;
+    if (!prompt || !prompt.trim()) {
+        throw new Error(ERROR_MESSAGES.NO_PROMPT_PROVIDED);
+    }
+    const args = [];
+    // Model flag if provided
+    if (model) {
+        args.push(CLI.FLAGS.GEMINI.MODEL, model);
+    }
+    // Sandbox flag
+    if (sandbox) {
+        args.push(CLI.FLAGS.GEMINI.SANDBOX);
+    }
+    // Prompt flag and value (quote if contains @ or #)
+    const shouldQuote = prompt.includes("@") || prompt.includes("#");
+    args.push(CLI.FLAGS.GEMINI.PROMPT);
+    args.push(shouldQuote ? `"${prompt}"` : prompt);
+    logger.info(`Executing Gemini CLI with model: ${model || "default"}`);
+    if (onProgress) {
+        onProgress(STATUS_MESSAGES.STARTING_ANALYSIS);
+    }
+    try {
+        const result = await executeCommand(CLI.COMMANDS.GEMINI, args, {
+            onProgress,
+            timeout: 600000
+        });
+        if (onProgress)
+            onProgress(STATUS_MESSAGES.COMPLETED);
+        return result;
+    }
+    catch (error) {
+        if (onProgress)
+            onProgress(STATUS_MESSAGES.FAILED);
+        throw error;
+    }
+}
+/**
  * Execute a simple command (like echo or help)
  */
 export async function executeSimpleCommand(command, args = []) {
@@ -168,6 +208,8 @@ export async function executeAIClient(options) {
             return executeQwenCLI(rest);
         case BACKENDS.ROVODEV:
             return executeRovodevCLI(rest);
+        case BACKENDS.GEMINI:
+            return executeGeminiCLI(rest);
         default:
             throw new Error(`Unsupported backend: ${backend}`);
     }

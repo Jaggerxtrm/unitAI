@@ -1,7 +1,7 @@
 import { CLI, AI_MODELS, ERROR_MESSAGES, STATUS_MESSAGES, BACKENDS } from "../constants.js";
 import { executeCommand } from "./commandExecutor.js";
 import { logger } from "./logger.js";
-import type { QwenModel, RovodevModel, ApprovalMode } from "../constants.js";
+import type { QwenModel, RovodevModel, ApprovalMode, GeminiModel } from "../constants.js";
 
 /**
  * Options for executing AI CLI commands
@@ -10,10 +10,10 @@ export interface AIExecutionOptions {
   backend: string;
   prompt: string;
   // Qwen-specific options
-  model?: string; // Only for Qwen (Will be converted to appropriate model type)
-  sandbox?: boolean; // Only for Qwen
+  model?: string; // Qwen or Gemini model name
+  sandbox?: boolean; // Qwen or Gemini sandbox flag
   approvalMode?: ApprovalMode; // Only for Qwen
-  yolo?: boolean; // Both Qwen and Rovodev support this
+  yolo?: boolean; // Qwen and Rovodev support this
   allFiles?: boolean; // Only for Qwen
   debug?: boolean; // Only for Qwen
   // Rovodev-specific options (based on acli rovodev run --help)
@@ -230,6 +230,55 @@ export async function executeRovodevCLI(
 }
 
 /**
+ * Execute Gemini CLI with the given options
+ */
+export async function executeGeminiCLI(
+  options: Omit<AIExecutionOptions, 'backend'>
+): Promise<string> {
+  const { prompt, model, sandbox = false, onProgress } = options;
+
+  if (!prompt || !prompt.trim()) {
+    throw new Error(ERROR_MESSAGES.NO_PROMPT_PROVIDED);
+  }
+
+  const args: string[] = [];
+
+  // Model flag if provided
+  if (model) {
+    args.push(CLI.FLAGS.GEMINI.MODEL, model);
+  }
+
+  // Sandbox flag
+  if (sandbox) {
+    args.push(CLI.FLAGS.GEMINI.SANDBOX);
+  }
+
+  // Prompt flag and value (quote if contains @ or #)
+  const shouldQuote = prompt.includes("@") || prompt.includes("#");
+  args.push(CLI.FLAGS.GEMINI.PROMPT);
+  args.push(shouldQuote ? `"${prompt}"` : prompt);
+
+  logger.info(`Executing Gemini CLI with model: ${model || "default"}`);
+
+  if (onProgress) {
+    onProgress(STATUS_MESSAGES.STARTING_ANALYSIS);
+  }
+
+  try {
+    const result = await executeCommand(CLI.COMMANDS.GEMINI, args, {
+      onProgress,
+      timeout: 600000
+    });
+
+    if (onProgress) onProgress(STATUS_MESSAGES.COMPLETED);
+    return result;
+  } catch (error) {
+    if (onProgress) onProgress(STATUS_MESSAGES.FAILED);
+    throw error;
+  }
+}
+
+/**
  * Execute a simple command (like echo or help)
  */
 export async function executeSimpleCommand(
@@ -251,6 +300,8 @@ export async function executeAIClient(options: AIExecutionOptions): Promise<stri
       return executeQwenCLI(rest);
     case BACKENDS.ROVODEV:
       return executeRovodevCLI(rest);
+    case BACKENDS.GEMINI:
+      return executeGeminiCLI(rest);
     default:
       throw new Error(`Unsupported backend: ${backend}`);
   }

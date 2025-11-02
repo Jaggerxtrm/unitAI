@@ -14,12 +14,18 @@ export declare const AI_MODELS: {
         readonly PRIMARY: "default";
         readonly FALLBACK: "basic";
     };
+    readonly GEMINI: {
+        readonly PRIMARY: "gemini-2.5-flash";
+        readonly PRO: "gemini-2.5-pro";
+        readonly FLASH: "gemini-2.5-flash";
+    };
 };
 export declare const CLI: {
     readonly COMMANDS: {
         readonly QWEN: "qwen";
         readonly ROVODEV: "acli";
         readonly ROVODEV_SUBCOMMAND: "rovodev";
+        readonly GEMINI: "gemini";
         readonly ECHO: "echo";
     };
     readonly FLAGS: {
@@ -38,6 +44,12 @@ export declare const CLI: {
             readonly RESTORE: "--restore";
             readonly YOLO: "--yolo";
             readonly CONFIG_FILE: "--config-file";
+        };
+        readonly GEMINI: {
+            readonly PROMPT: "-p";
+            readonly SANDBOX: "-s";
+            readonly HELP: "-help";
+            readonly MODEL: "--model";
         };
     };
 };
@@ -79,9 +91,11 @@ export declare const APPROVAL_MODES: {
 export declare const BACKENDS: {
     readonly QWEN: "qwen";
     readonly ROVODEV: "rovodev";
+    readonly GEMINI: "gemini";
 };
 export type QwenModel = typeof AI_MODELS.QWEN[keyof typeof AI_MODELS.QWEN];
 export type RovodevModel = typeof AI_MODELS.ROVODEV[keyof typeof AI_MODELS.ROVODEV];
+export type GeminiModel = typeof AI_MODELS.GEMINI[keyof typeof AI_MODELS.GEMINI];
 export type ApprovalMode = typeof APPROVAL_MODES[keyof typeof APPROVAL_MODES];
 export type BackendType = typeof BACKENDS[keyof typeof BACKENDS];
 //# sourceMappingURL=constants.d.ts.map

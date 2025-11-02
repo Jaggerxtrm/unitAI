@@ -27,6 +27,10 @@ export declare function executeQwenCLI(options: Omit<AIExecutionOptions, 'backen
  */
 export declare function executeRovodevCLI(options: Omit<AIExecutionOptions, 'backend'>): Promise<string>;
 /**
+ * Execute Gemini CLI with the given options
+ */
+export declare function executeGeminiCLI(options: Omit<AIExecutionOptions, 'backend'>): Promise<string>;
+/**
  * Execute a simple command (like echo or help)
  */
 export declare function executeSimpleCommand(command: string, args?: string[]): Promise<string>;

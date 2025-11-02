@@ -11,4 +11,8 @@ export declare const qwenHelpTool: UnifiedTool;
  * Rovodev Help tool - show Rovodev CLI help
  */
 export declare const rovodevHelpTool: UnifiedTool;
+/**
+ * Gemini Help tool - show Gemini CLI help
+ */
+export declare const geminiHelpTool: UnifiedTool;
 //# sourceMappingURL=simple-tools.d.ts.map

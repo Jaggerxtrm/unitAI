@@ -13,6 +13,11 @@ export const AI_MODELS = {
     ROVODEV: {
         PRIMARY: "default", // This will use the model configured in rovodev
         FALLBACK: "basic"
+    },
+    GEMINI: {
+        PRIMARY: "gemini-2.5-flash",
+        PRO: "gemini-2.5-pro",
+        FLASH: "gemini-2.5-flash"
     }
 };
 export const CLI = {
@@ -20,6 +25,7 @@ export const CLI = {
         QWEN: "qwen",
         ROVODEV: "acli",
         ROVODEV_SUBCOMMAND: "rovodev",
+        GEMINI: "gemini",
         ECHO: "echo"
     },
     FLAGS: {
@@ -41,6 +47,13 @@ export const CLI = {
             RESTORE: "--restore",
             YOLO: "--yolo",
             CONFIG_FILE: "--config-file"
+        },
+        // Gemini specific flags (based on gemini CLI help)
+        GEMINI: {
+            PROMPT: "-p",
+            SANDBOX: "-s",
+            HELP: "-help",
+            MODEL: "--model"
         }
     }
 };
@@ -81,6 +94,7 @@ export const APPROVAL_MODES = {
 };
 export const BACKENDS = {
     QWEN: "qwen",
-    ROVODEV: "rovodev"
+    ROVODEV: "rovodev",
+    GEMINI: "gemini"
 };
 //# sourceMappingURL=constants.js.map

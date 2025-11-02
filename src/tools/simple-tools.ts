@@ -65,3 +65,21 @@ export const rovodevHelpTool: UnifiedTool = {
     arguments: []
   }
 };
+
+/**
+ * Gemini Help tool - show Gemini CLI help
+ */
+export const geminiHelpTool: UnifiedTool = {
+  name: "gemini-help",
+  description: "Display Gemini CLI help information",
+  category: "simple",
+  zodSchema: z.object({}),
+  execute: async () => {
+    return executeSimpleCommand(CLI.COMMANDS.GEMINI, [CLI.FLAGS.GEMINI.HELP]);
+  },
+  prompt: {
+    name: "gemini-help",
+    description: "Show Gemini CLI help and available options",
+    arguments: []
+  }
+};
