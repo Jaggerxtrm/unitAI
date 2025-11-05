@@ -11,6 +11,44 @@ import type { WorkflowDefinition, ProgressCallback, GitCommitInfo } from "./type
 const initSessionSchema = z.object({});
 
 /**
+ * Genera query semantiche per la ricerca nelle memorie basate sull'analisi AI
+ */
+function generateMemorySearchQueries(aiAnalysis: string): string[] {
+  const queries: string[] = [];
+
+  // Estrai concetti chiave dall'analisi
+  // Cerca pattern comuni nell'analisi
+
+  // Query 1: Feature/workflow changes
+  if (aiAnalysis.toLowerCase().includes('workflow') || aiAnalysis.toLowerCase().includes('feature')) {
+    queries.push('workflows implementation features architecture');
+  }
+
+  // Query 2: Bug fixes e miglioramenti
+  if (aiAnalysis.toLowerCase().includes('bug') || aiAnalysis.toLowerCase().includes('fix')) {
+    queries.push('bug fixes improvements optimization');
+  }
+
+  // Query 3: AI/backend integration
+  if (aiAnalysis.toLowerCase().includes('gemini') || aiAnalysis.toLowerCase().includes('qwen') || aiAnalysis.toLowerCase().includes('rovodev')) {
+    queries.push('AI analysis Gemini Qwen Rovodev parallel backends');
+  }
+
+  // Query 4: Architecture e refactoring
+  if (aiAnalysis.toLowerCase().includes('refactor') || aiAnalysis.toLowerCase().includes('architecture')) {
+    queries.push('refactoring architecture code organization');
+  }
+
+  // Query 5: Token optimization
+  if (aiAnalysis.toLowerCase().includes('token') || aiAnalysis.toLowerCase().includes('optimization')) {
+    queries.push('token optimization performance efficiency');
+  }
+
+  // Limita a 3 query più rilevanti
+  return queries.slice(0, 3);
+}
+
+/**
  * Costruisce il prompt per l'analisi AI dei commit
  */
 function buildCommitAnalysisPrompt(commits: GitCommitInfo[]): string {
@@ -121,27 +159,36 @@ ${aiAnalysis}
         metadata.aiAnalysisCompleted = false;
       }
 
-      // Ricerca memorie basata sul range di date
-      onProgress?.("Ricerca memorie correlate...");
-      const dateRange = getDateRangeFromCommits(recentCommits);
-      if (dateRange) {
-        metadata.dateRange = dateRange;
+      // Genera query semantiche per la ricerca nelle memorie
+      onProgress?.("Generazione query semantiche per memorie...");
+      if (aiAnalysis) {
+        const memoryQueries = generateMemorySearchQueries(aiAnalysis);
 
-        // Costruisci query per openmemory
-        const memoryQuery = `memories from ${dateRange.oldest} to ${dateRange.newest}`;
+        if (memoryQueries.length > 0) {
+          metadata.memoryQueriesGenerated = memoryQueries.length;
 
-        // Nota: MCP tools non possono essere chiamati direttamente da un workflow
-        // L'utente dovrà cercare manualmente le memorie usando il comando suggerito
-        sections.push(`
+          sections.push(`
+## Relevant Memories - Suggested Searches
+
+Based on the AI analysis of recent work, try these semantic memory searches:
+
+${memoryQueries.map((query, i) => `${i + 1}. \`mcp__openmemory__search-memories "${query}"\``).join('\n')}
+
+*These queries target key concepts from your recent commits for better semantic matching.*
+`);
+        }
+      } else {
+        // Fallback se l'analisi AI non è disponibile
+        const dateRange = getDateRangeFromCommits(recentCommits);
+        if (dateRange) {
+          sections.push(`
 ## Relevant Memories
 
-📅 Date range: ${dateRange.oldest} to ${dateRange.newest}
+📅 Commit date range: ${dateRange.oldest} to ${dateRange.newest}
 
-*Note: To search memories for this period, run:*
-\`\`\`
-mcp__openmemory__search-memories "${memoryQuery}"
-\`\`\`
+*AI analysis unavailable. Search memories manually based on specific topics from commits above.*
 `);
+        }
       }
 
       // Status dettagliato

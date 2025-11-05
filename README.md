@@ -310,8 +310,8 @@ Intelligent workflows that orchestrate multiple AI backends for complex tasks li
   - Bug fixes and their root causes
   - Refactoring and architectural improvements
   - Current work status (in-progress, completed, next steps)
-- Extracts date range from commits
-- **Suggests memory searches** based on commit date range
+- **Generates semantic memory search queries** based on AI analysis
+- Suggests 2-3 targeted searches for relevant past work
 - Shows current branch, staged and modified files
 - Verifies availability of Qwen, Gemini, and Rovo Dev CLIs
 - Provides session information (timestamp, timezone, working directory)
@@ -328,7 +328,7 @@ Intelligent workflows that orchestrate multiple AI backends for complex tasks li
 **Output includes:**
 - Repository info and recent commits summary
 - **AI Analysis of Recent Work** (synthesized by Rovodev)
-- **Relevant Memories** section with suggested search command
+- **Relevant Memories** section with 2-3 semantic search queries
 - Detailed repository status and branch info
 - CLI availability check
 - Session metadata
