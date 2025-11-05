@@ -300,7 +300,7 @@ Intelligent workflows that orchestrate multiple AI backends for complex tasks li
 
 ### 🚀 init-session
 
-Initialize your development session by analyzing the Git repository and checking CLI availability.
+Initialize your development session by analyzing Git repository and checking CLI availability.
 
 **What it does:**
 - Checks if current directory is a Git repository
@@ -315,8 +315,6 @@ Initialize your development session by analyzing the Git repository and checking
   "workflow": "init-session"
 }
 ```
-
----
 
 ### 👥 parallel-review
 
@@ -342,8 +340,6 @@ Run parallel code analysis using Gemini and Rovodev for comprehensive code revie
   }
 }
 ```
-
----
 
 ### ✅ validate-last-commit
 
@@ -539,6 +535,67 @@ unified-ai-mcp-tool/
 ├── package.json
 └── tsconfig.json
 ```
+
+---
+
+## 🧪 Testing
+
+### Local Testing with Claude Desktop
+
+To test your local changes with Claude Desktop:
+
+1. **Build the project**:
+```bash
+npm run build
+```
+
+2. **Configure Claude Desktop**:
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or equivalent on Windows/Linux:
+
+```json
+{
+  "mcpServers": {
+    "unified-ai-local": {
+      "command": "node",
+      "args": ["/path/to/unified-ai-mcp-tool/dist/index.js"]
+    }
+  }
+}
+```
+
+3. **Restart Claude Desktop** to load the new configuration
+
+4. **Test workflows**:
+```
+Per favore, esegui il workflow init-session
+```
+
+### Quick Testing with Test Script
+
+We've included a test script for rapid workflow testing:
+
+```bash
+# Make the test script executable
+chmod +x test-workflows.js
+
+# Run the tests
+node test-workflows.js
+```
+
+This will test:
+- `init-session` workflow
+- `validate-last-commit` workflow
+- Server startup and tool registration
+
+### Development Mode
+
+For continuous testing during development:
+
+```bash
+npm run dev
+```
+
+This starts the MCP server in development mode with automatic reloading.
 
 ---
 
