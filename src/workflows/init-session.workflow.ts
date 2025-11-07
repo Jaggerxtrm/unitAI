@@ -3,6 +3,8 @@ import { getGitRepoInfo, getGitDiff, getDetailedGitStatus, getGitBranches, check
 import { formatWorkflowOutput } from "./utils.js";
 import { executeAIClient } from "../utils/aiExecutor.js";
 import { BACKENDS } from "../constants.js";
+import { structuredLogger } from "../utils/structuredLogger.js";
+import { randomUUID } from "crypto";
 import type { WorkflowDefinition, ProgressCallback, GitCommitInfo } from "./types.js";
 
 /**
@@ -101,14 +103,20 @@ async function executeInitSession(
   params: z.infer<typeof initSessionSchema>,
   onProgress?: ProgressCallback
 ): Promise<string> {
+  const workflowId = randomUUID();
+  const logger = structuredLogger.forWorkflow(workflowId, 'init-session');
+  
+  logger.step('start', 'Starting session initialization', { params });
   onProgress?.("Avvio inizializzazione sessione...");
 
   const sections: string[] = [];
   const metadata: Record<string, any> = {};
 
   // Verifica se siamo in un repository Git
+  logger.step('check-git-repo', 'Checking if directory is a Git repository');
   const isRepo = await isGitRepository();
   metadata.isGitRepository = isRepo;
+  logger.step('check-git-repo-complete', 'Git repository check complete', { isRepo });
 
   if (isRepo) {
     onProgress?.("Recupero informazioni repository Git...");
@@ -137,10 +145,12 @@ ${recentCommits.map((commit, i) => `${i + 1}. [${commit.hash.substring(0, 8)}] $
 `);
 
       // Analisi AI con Rovodev
+      logger.step('ai-analysis-start', 'Starting AI analysis with Rovodev', { commitsCount: recentCommits.length });
       onProgress?.("Analisi AI dei commit con Rovodev...");
       let aiAnalysis = "";
       try {
         const analysisPrompt = buildCommitAnalysisPrompt(recentCommits);
+        logger.aiCall('rovodev', analysisPrompt, { promptLength: analysisPrompt.length });
         aiAnalysis = await executeAIClient({
           backend: BACKENDS.ROVODEV,
           prompt: analysisPrompt
@@ -152,7 +162,9 @@ ${recentCommits.map((commit, i) => `${i + 1}. [${commit.hash.substring(0, 8)}] $
 ${aiAnalysis}
 `);
         metadata.aiAnalysisCompleted = true;
+        logger.step('ai-analysis-complete', 'AI analysis completed successfully', { responseLength: aiAnalysis.length });
       } catch (error) {
+        logger.error('ai-analysis-failed', error as Error, { backend: BACKENDS.ROVODEV });
         const errorMsg = error instanceof Error ? error.message : String(error);
         sections.push(`
 ## AI Analysis

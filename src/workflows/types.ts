@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { AutonomyLevel } from "../utils/permissionManager.js";
+import type { WorkflowContext } from "./workflowContext.js";
 
 /**
  * Tipo di callback per progresso dell'esecuzione
@@ -16,6 +17,12 @@ export interface BaseWorkflowParams {
    * @default AutonomyLevel.READ_ONLY
    */
   autonomyLevel?: AutonomyLevel;
+  
+  /**
+   * Workflow context memory (auto-injected by ContextualWorkflowExecutor)
+   * @internal
+   */
+  __context?: WorkflowContext;
 }
 
 /**

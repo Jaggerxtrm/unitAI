@@ -11,7 +11,10 @@
     "build": "tsc",
     "dev": "tsc && node dist/index.js",
     "lint": "tsc --noEmit",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
   },
   "keywords": [
     "mcp",
@@ -32,7 +35,10 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
-    "typescript": "^5.0.0"
+    "@vitest/coverage-v8": "^1.0.4",
+    "@vitest/ui": "^1.0.4",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.4"
   },
   "engines": {
     "node": ">=16.0.0"
