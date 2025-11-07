@@ -231,7 +231,7 @@ Punti deboli:
 
 ## 3. Roadmap Rivista (Pragmatica)
 
-### Fase 0: Foundations (2-3 settimane) - PRIORITA' MASSIMA
+### Fase 0: Foundations (3 settimane esatte) - PRIORITA' MASSIMA
 
 #### 3.0.1. Testing Infrastructure
 **Perche':** Non puoi costruire autonomia senza test. Period.
@@ -260,38 +260,401 @@ Punti deboli:
 **Effort:** 1 settimana (critico)
 
 #### 3.0.2. Logging Strutturato e Monitoring
-**Perche':** Debugging autonomia senza logging e' impossibile.
+**Perche':** Debugging autonomia senza logging strutturato e' impossibile. Serve visibilita' real-time e post-mortem analysis.
 
-**Task:**
-1. Replace console.log con structured logger:
+**Architettura Proposta:**
+```
+logs/
+├── workflow-executions.log    # Eventi workflow-level
+├── ai-backend-calls.log        # Interazioni con AI
+├── permission-checks.log       # Audit sistema permessi  
+├── git-operations.log          # Operazioni Git
+├── errors.log                  # Solo errori
+└── debug.log                   # Tutto (verbose mode)
+```
+
+**Componenti Chiave:**
+
+1. **StructuredLogger** - Logger principale con file-based output
+2. **WorkflowLogger** - Logger context-aware con auto-inject workflowId
+3. **LogEntry** - Formato strutturato JSON per ogni log
+4. **LogRotation** - Compressione automatica logs vecchi
+5. **Query API** - Ricerca logs per debug post-mortem
+
+**Implementazione:**
+
+```typescript
+// src/utils/structuredLogger.ts
+
+export enum LogLevel {
+  DEBUG = 0,
+  INFO = 1,
+  WARN = 2,
+  ERROR = 3
+}
+
+export enum LogCategory {
+  WORKFLOW = 'workflow',
+  AI_BACKEND = 'ai-backend',
+  PERMISSION = 'permission',
+  GIT = 'git',
+  MCP = 'mcp',
+  SYSTEM = 'system'
+}
+
+export interface LogEntry {
+  timestamp: string;              // ISO 8601
+  level: LogLevel;
+  category: LogCategory;
+  component: string;              // Nome workflow o modulo
+  operation: string;              // Nome operazione specifica
+  message: string;
+  metadata?: Record<string, any>;
+  duration?: number;              // Millisecondi (per timing)
+  workflowId?: string;            // Per correlare log stesso workflow
+  parentSpanId?: string;          // Per distributed tracing (future)
+}
+
+export class StructuredLogger {
+  private logDir: string;
+  private minLevel: LogLevel;
+  private streams: Map<string, fs.WriteStream>;
+  
+  constructor(config?: {
+    logDir?: string;
+    minLevel?: LogLevel;
+    enableConsole?: boolean;
+  });
+  
+  /**
+   * Log generico - scrive su file appropriati
+   */
+  log(entry: Omit<LogEntry, 'timestamp'>): void;
+  
+  /**
+   * Helpers per livelli specifici
+   */
+  debug(category: LogCategory, component: string, operation: string, message: string, metadata?: any): void;
+  info(category: LogCategory, component: string, operation: string, message: string, metadata?: any): void;
+  warn(category: LogCategory, component: string, operation: string, message: string, metadata?: any): void;
+  error(category: LogCategory, component: string, operation: string, message: string, error?: Error, metadata?: any): void;
+  
+  /**
+   * Crea workflow-scoped logger
+   */
+  forWorkflow(workflowId: string, workflowName: string): WorkflowLogger;
+  
+  /**
+   * Query logs per debug post-mortem
+   */
+  queryLogs(filters: {
+    category?: LogCategory;
+    level?: LogLevel;
+    workflowId?: string;
+    startTime?: Date;
+    endTime?: Date;
+    limit?: number;
+  }): LogEntry[];
+  
+  /**
+   * Export logs per external analysis
+   */
+  exportLogs(category: LogCategory, format: 'json' | 'csv'): string;
+  
+  /**
+   * Cleanup logs vecchi
+   */
+  cleanup(daysToKeep: number): void;
+  
+  /**
+   * Timer per operazioni
+   */
+  startTimer(workflowId: string, operation: string): () => void;
+}
+
+/**
+ * Workflow-scoped logger - auto-inject workflowId
+ */
+export class WorkflowLogger {
+  constructor(
+    private baseLogger: StructuredLogger,
+    private workflowId: string,
+    private workflowName: string
+  );
+  
+  /**
+   * Log workflow step
+   */
+  step(stepName: string, message: string, metadata?: any): void;
+  
+  /**
+   * Log AI backend call
+   */
+  aiCall(backend: string, prompt: string, metadata?: any): void;
+  
+  /**
+   * Log permission check
+   */
+  permissionCheck(operation: string, allowed: boolean, metadata?: any): void;
+  
+  /**
+   * Log error
+   */
+  error(operation: string, error: Error, metadata?: any): void;
+  
+  /**
+   * Time operation automatically
+   */
+  timing<T>(operation: string, fn: () => Promise<T>): Promise<T>;
+}
+
+// Singleton instance
+export const structuredLogger = new StructuredLogger({
+  minLevel: process.env.LOG_LEVEL === 'debug' ? LogLevel.DEBUG : LogLevel.INFO,
+  enableConsole: process.env.LOG_TO_CONSOLE === 'true'
+});
+```
+
+**Task Dettagliati:**
+
+1. **Implementare StructuredLogger** (Giorni 1-2)
+   - File-based write streams per categoria
+   - JSON serialization per ogni log entry
+   - Atomic writes (evitare corrupted logs)
+   - Gestione errori write (fallback graceful)
+   - Tests: 100% coverage su log writing
+
+2. **Implementare WorkflowLogger** (Giorno 2)
+   - Wrapper che auto-inject workflowId
+   - Helper methods (step, aiCall, permissionCheck, etc.)
+   - Timing decorator per operations
+   - Tests: integration con StructuredLogger
+
+3. **Integrate in workflow esistenti** (Giorno 3)
+   - Aggiornare init-session.workflow.ts
+   - Aggiornare parallel-review.workflow.ts  
+   - Aggiornare validate-last-commit.workflow.ts
+   - Pattern:
+     ```typescript
+     const workflowId = generateId();
+     const logger = structuredLogger.forWorkflow(workflowId, 'workflow-name');
+     
+     logger.step('start', 'Starting workflow', { params });
+     // ... workflow logic con logger.step() calls
+     logger.step('complete', 'Workflow done', { results });
+     ```
+
+4. **Implementare Log Rotation** (Giorno 4)
    ```typescript
-   // src/utils/structuredLogger.ts
-   interface LogEntry {
-     timestamp: Date;
-     level: 'debug' | 'info' | 'warn' | 'error';
-     component: string; // "workflow", "permission", "ai-executor"
-     operation: string;
-     metadata: Record<string, any>;
-     message: string;
+   // src/utils/logRotation.ts
+   export class LogRotator {
+     constructor(
+       private logDir: string,
+       private maxSizeMB: number = 10,
+       private maxFiles: number = 5
+     );
+     
+     /**
+      * Rotate single log file
+      * file.log -> file.log.1.gz -> file.log.2.gz -> ...
+      */
+     async rotate(filename: string): Promise<void>;
+     
+     /**
+      * Rotate all logs
+      */
+     async rotateAll(): Promise<void>;
    }
    
-   export class StructuredLogger {
-     log(entry: LogEntry): void;
-     getLogsByComponent(component: string): LogEntry[];
-     exportLogs(format: 'json' | 'csv'): string;
-   }
+   // Auto-rotation ogni ora
+   const rotator = new LogRotator(path.join(process.cwd(), 'logs'));
+   setInterval(() => rotator.rotateAll(), 60 * 60 * 1000);
    ```
-2. Add logging a OGNI workflow step
-3. Add logging per OGNI permission check
-4. Add logging per OGNI AI backend call (with timing)
-5. Create log viewer utility
+
+5. **Implementare Query API** (Giorno 4)
+   - Read logs da file
+   - Parse JSON lines
+   - Apply filters (category, level, workflowId, time range)
+   - Return sorted results
+   - Tests: vari scenari di query
+
+6. **Monitoring Scripts** (Giorno 5)
+   ```bash
+   # scripts/watch-logs.sh
+   #!/bin/bash
+   
+   # Real-time workflow monitoring
+   tail -f logs/workflow-executions.log | jq '.'
+   
+   # Watch errors only
+   tail -f logs/errors.log | jq 'select(.level == 3)'
+   
+   # Filter by workflowId
+   tail -f logs/debug.log | jq 'select(.workflowId == "'"$1"'")'   
+   # Watch specific category
+   tail -f logs/ai-backend-calls.log | jq '.'
+   ```
+   
+   ```bash
+   # scripts/analyze-logs.sh
+   #!/bin/bash
+   
+   # Show workflow summary
+   cat logs/workflow-executions.log | jq -s '
+     group_by(.component) | 
+     map({
+       workflow: .[0].component,
+       count: length,
+       avgDuration: (map(.duration) | add / length)
+     })
+   '
+   
+   # Show error distribution
+   cat logs/errors.log | jq -s 'group_by(.component) | map({component: .[0].component, count: length})'
+   ```
+
+7. **Documentation** (Giorno 5)
+   - README section su logging
+   - Examples di usage nei workflow
+   - Query examples per common debug scenarios
+   - Monitoring setup guide
+
+**Integration Example:**
+
+```typescript
+// src/workflows/parallel-review.workflow.ts (AGGIORNATO)
+
+import { structuredLogger, LogCategory } from '../utils/structuredLogger.js';
+import { generateId } from '../utils/idGenerator.js';
+
+async function executeParallelReview(
+  params: ParallelReviewParams,
+  onProgress?: ProgressCallback
+): Promise<string> {
+  // Setup logging
+  const workflowId = generateId();
+  const logger = structuredLogger.forWorkflow(workflowId, 'parallel-review');
+  
+  logger.step('start', 'Starting parallel review workflow', {
+    filesCount: params.files.length,
+    focus: params.focus,
+    autonomyLevel: params.autonomyLevel
+  });
+  
+  try {
+    // Step 1: Permission check
+    const permissions = createWorkflowPermissionManager(params);
+    const canRead = permissions.file.canRead();
+    logger.permissionCheck('read-files', canRead, {
+      requestedLevel: params.autonomyLevel
+    });
+    
+    if (!canRead) {
+      throw new Error('Permission denied: cannot read files');
+    }
+    
+    // Step 2: Parallel AI analysis
+    logger.step('parallel-analysis-start', 'Starting parallel analysis', {
+      backends: ['gemini', 'rovodev']
+    });
+    
+    const geminiResult = await logger.timing('gemini-analysis', async () => {
+      logger.aiCall('gemini', buildPrompt(params.files), {
+        model: AI_MODELS.GEMINI.PRIMARY,
+        filesCount: params.files.length
+      });
+      
+      return await executeAIClient({
+        backend: BACKENDS.GEMINI,
+        prompt: buildPrompt(params.files, params.focus)
+      });
+    });
+    
+    logger.step('gemini-complete', 'Gemini analysis completed', {
+      outputLength: geminiResult.length
+    });
+    
+    const rovodevResult = await logger.timing('rovodev-analysis', async () => {
+      logger.aiCall('rovodev', buildPrompt(params.files), {
+        filesCount: params.files.length
+      });
+      
+      return await executeAIClient({
+        backend: BACKENDS.ROVODEV,
+        prompt: buildPrompt(params.files, params.focus)
+      });
+    });
+    
+    logger.step('rovodev-complete', 'Rovodev analysis completed', {
+      outputLength: rovodevResult.length
+    });
+    
+    // Step 3: Synthesize
+    const synthesis = synthesizeResults([
+      { backend: 'gemini', output: geminiResult, success: true },
+      { backend: 'rovodev', output: rovodevResult, success: true }
+    ]);
+    
+    logger.step('complete', 'Parallel review completed successfully', {
+      synthesisLength: synthesis.length
+    });
+    
+    return formatWorkflowOutput('Parallel Review', synthesis);
+    
+  } catch (error) {
+    logger.error('execution-failed', error as Error, {
+      files: params.files,
+      focus: params.focus
+    });
+    throw error;
+  }
+}
+```
+
+**Real-Time Monitoring:**
+
+```bash
+# Terminal 1: Run MCP server
+unified-ai-mcp-tool
+
+# Terminal 2: Monitor workflow activity
+tail -f logs/workflow-executions.log | jq '.'
+
+# Terminal 3: Monitor AI backend calls
+tail -f logs/ai-backend-calls.log | jq 'select(.component == "parallel-review")'
+
+# Terminal 4: Watch for errors
+tail -f logs/errors.log | jq '.'
+
+# Query logs post-mortem
+node -e "
+const { structuredLogger } = require('./dist/utils/structuredLogger.js');
+const logs = structuredLogger.queryLogs({
+  workflowId: 'abc-123',
+  category: 'workflow'
+});
+console.log(JSON.stringify(logs, null, 2));
+"
+```
 
 **Success Criteria:**
-- Ogni workflow execution ha log completo
-- Possibilita' di debug post-mortem
-- Performance metrics visibili
+- Ogni workflow execution ha log completo (start, steps, complete/error)
+- Correlation via workflowId (tutti i log di uno stesso workflow)
+- Performance metrics visibili (duration per ogni step)
+- Zero interferenza con MCP protocol (write a stderr/files, NOT stdout)
+- Log rotation automatico (evita file giganti)
+- Query API funzionante per debug post-mortem
+- Export in JSON/CSV per external analysis
+- Real-time monitoring possibile via tail
+- Tests con 80%+ coverage
 
-**Effort:** 3-4 giorni
+**Effort:** 5 giorni (1 settimana lavorativa)
+
+**Breakdown:**
+- Giorni 1-2: StructuredLogger + WorkflowLogger implementation + unit tests
+- Giorno 3: Integration in tutti i workflow esistenti (3 workflow)
+- Giorno 4: Log rotation + query API + integration tests
+- Giorno 5: Monitoring scripts + documentation + examples
 
 #### 3.0.3. Audit Trail per Decisioni Autonome
 **Perche':** Trust ma verify. Ogni azione autonoma deve essere tracciata.
@@ -418,6 +781,528 @@ Punti deboli:
 - User escalation per errori irrecuperabili
 
 **Effort:** 1 settimana
+
+#### 3.0.5. Workflow Context Memory
+**Perche':** Workflow complessi necessitano stato temporaneo per accumulo incrementale, conditional flow, e AI context building. Evita parameter drilling e rende workflow più composabili.
+
+**Concept:**
+```typescript
+// WorkflowContext = memoria temporanea che vive durante esecuzione workflow
+// Permette accumulo incrementale, checkpoint/rollback, shared context
+
+const ctx = new WorkflowContext(workflowId, 'bug-hunt');
+
+// Accumulo progressivo
+ctx.set('targetFiles', await findFiles());
+ctx.append('analyses', await analyzeFile(file1));
+ctx.append('analyses', await analyzeFile(file2));
+ctx.increment('issuesFound');
+
+// Checkpoint per error recovery
+ctx.checkpoint('before-risky-operation');
+try {
+  await riskyOperation();
+} catch (error) {
+  ctx.rollback('before-risky-operation');
+}
+
+// Generate report con tutto il contesto
+const report = generateReport(ctx.getAll('analyses'));
+```
+
+**Use Cases Principali:**
+
+1. **Accumulo Incrementale**
+   ```typescript
+   // SENZA Context (parameter drilling)
+   async function bugHunt(symptoms: string) {
+     const files = await findFiles(symptoms);
+     const issues = [];
+     for (const file of files) {
+       issues.push(await analyzeFile(file));
+     }
+     return generateReport(files, issues); // Ripeti parametri
+   }
+   
+   // CON Context (accumulo naturale)
+   async function bugHunt(symptoms: string, ctx: WorkflowContext) {
+     ctx.set('targetFiles', await findFiles(symptoms));
+     
+     for (const file of ctx.get<string[]>('targetFiles')!) {
+       ctx.append('analyses', await analyzeFile(file));
+       if (hasIssue) ctx.increment('issuesFound');
+     }
+     
+     return generateReport(ctx); // Accede a tutto
+   }
+   ```
+
+2. **AI Context Building**
+   ```typescript
+   // Accumula discoveries per AI synthesis
+   async function iterativeAnalysis(ctx: WorkflowContext) {
+     const scan1 = await askQwen("Quick scan");
+     ctx.append('discoveries', scan1);
+     
+     // AI ha contesto precedente
+     const scan2 = await askGemini(`
+       Based on: ${ctx.getAll('discoveries').join('\n')}
+       Now analyze deeper...
+     `);
+     ctx.append('discoveries', scan2);
+     
+     // Final synthesis con TUTTO il contesto
+     return await askGemini(`
+       Report from: ${ctx.getAll('discoveries').join('\n\n')}
+     `);
+   }
+   ```
+
+3. **Conditional Flow**
+   ```typescript
+   // Decisioni basate su discoveries
+   async function smartWorkflow(ctx: WorkflowContext) {
+     const hasTests = await checkForTests();
+     ctx.set('hasTests', hasTests);
+     
+     if (!ctx.get('hasTests')) {
+       await generateTests();
+       ctx.set('testsGenerated', true);
+     }
+     
+     if (ctx.get('testsGenerated')) {
+       await commitTests();
+     }
+     
+     return `Tests ${ctx.get('testsGenerated') ? 'generated' : 'existed'}`;
+   }
+   ```
+
+4. **Error Recovery con Checkpoints**
+   ```typescript
+   async function multiStepRefactoring(ctx: WorkflowContext) {
+     const steps = ['rename', 'extract', 'optimize'];
+     
+     for (const step of steps) {
+       ctx.checkpoint(`before-${step}`);
+       
+       try {
+         await applyRefactoring(step);
+         ctx.append('completedSteps', step);
+       } catch (error) {
+         ctx.rollback(`before-${step}`); // Safe rollback
+         ctx.append('failedSteps', { step, error });
+         if (isCritical(step)) throw error;
+       }
+     }
+   }
+   ```
+
+5. **Shared Context tra Sub-Workflows**
+   ```typescript
+   async function complexTask() {
+     const mainCtx = new WorkflowContext('main', 'complex');
+     mainCtx.set('projectRoot', process.cwd());
+     
+     // Sub-workflows ereditano context
+     await Promise.all([
+       securityAudit(mainCtx.createChild('security')),  // Legge projectRoot
+       performanceCheck(mainCtx.createChild('perf'))   // Legge projectRoot
+     ]);
+   }
+   ```
+
+**Implementazione:**
+
+```typescript
+// src/workflows/workflowContext.ts
+
+export class WorkflowContext {
+  private data: Map<string, any>;
+  private arrays: Map<string, any[]>;
+  private metadata: {
+    workflowId: string;
+    workflowName: string;
+    startTime: Date;
+  };
+  
+  constructor(workflowId: string, workflowName: string) {
+    this.data = new Map();
+    this.arrays = new Map();
+    this.metadata = { workflowId, workflowName, startTime: new Date() };
+  }
+  
+  /**
+   * Basic operations
+   */
+  set<T>(key: string, value: T): void;
+  get<T>(key: string): T | undefined;
+  has(key: string): boolean;
+  getOrDefault<T>(key: string, defaultValue: T): T;
+  
+  /**
+   * Array operations (accumulo)
+   */
+  append<T>(key: string, value: T): void;
+  getAll<T>(key: string): T[];
+  
+  /**
+   * Counter operations
+   */
+  increment(key: string, amount?: number): number;
+  
+  /**
+   * Object merge
+   */
+  merge(key: string, partial: Record<string, any>): void;
+  
+  /**
+   * Checkpoints (error recovery)
+   */
+  checkpoint(name: string): void;
+  rollback(name: string): boolean;
+  
+  /**
+   * Persistence (optional)
+   */
+  export(): string;
+  static import(json: string): WorkflowContext;
+  
+  /**
+   * Summary per logging
+   */
+  summary(): Record<string, any>;
+  
+  /**
+   * Clear (testing)
+   */
+  clear(): void;
+}
+
+/**
+ * Context-aware workflow executor
+ * Auto-inject context in workflow params
+ */
+export class ContextualWorkflowExecutor {
+  async execute<TParams, TResult>(
+    workflow: WorkflowDefinition<TParams>,
+    params: TParams,
+    onProgress?: ProgressCallback
+  ): Promise<TResult> {
+    const workflowId = generateId();
+    const ctx = new WorkflowContext(workflowId, workflow.name);
+    
+    // Inject context
+    const contextualParams = { ...params, __context: ctx };
+    
+    try {
+      const result = await workflow.execute(contextualParams, onProgress);
+      
+      // Log context summary
+      structuredLogger.info(
+        LogCategory.WORKFLOW,
+        workflow.name,
+        'context-summary',
+        'Workflow context summary',
+        ctx.summary()
+      );
+      
+      return result;
+    } catch (error) {
+      // Log context at error (per debug)
+      structuredLogger.error(
+        LogCategory.WORKFLOW,
+        workflow.name,
+        'execution-failed',
+        'Workflow failed',
+        error as Error,
+        { context: ctx.summary() }
+      );
+      throw error;
+    }
+  }
+}
+```
+
+**Advanced: Shared Context Manager (Optional)**
+
+```typescript
+// src/workflows/sharedContext.ts
+
+/**
+ * Manager per shared context tra workflow parent-child
+ */
+export class SharedContextManager {
+  private contexts: Map<string, WorkflowContext>;
+  private parentChildMap: Map<string, string[]>;
+  
+  constructor() {
+    this.contexts = new Map();
+    this.parentChildMap = new Map();
+  }
+  
+  /**
+   * Create root context
+   */
+  createRoot(workflowId: string, workflowName: string): WorkflowContext;
+  
+  /**
+   * Create child context (inherits from parent)
+   */
+  createChild(parentId: string, childId: string, childName: string): WorkflowContext;
+  
+  /**
+   * Get context by ID
+   */
+  get(workflowId: string): WorkflowContext | undefined;
+  
+  /**
+   * Cleanup completed workflows
+   */
+  cleanup(workflowId: string): void;
+}
+
+export const sharedContextManager = new SharedContextManager();
+```
+
+**Task Dettagliati:**
+
+1. **Implementare WorkflowContext** (Giorno 1)
+   - Map-based storage per data e arrays
+   - Basic operations (set, get, has, append)
+   - Counter operations (increment)
+   - Checkpoint/rollback mechanism
+   - Tests: 100% coverage
+
+2. **Implementare ContextualWorkflowExecutor** (Giorno 1)
+   - Auto-inject context in params
+   - Log context summary on completion
+   - Log context on error
+   - Integration con StructuredLogger
+   - Tests: integration con workflow mock
+
+3. **Update workflow types** (Giorno 2)
+   ```typescript
+   // src/workflows/types.ts
+   export interface BaseWorkflowParams {
+     autonomyLevel?: AutonomyLevel;
+     __context?: WorkflowContext; // Injected by executor
+   }
+   ```
+
+4. **Integrate in workflow esistenti** (Giorno 2)
+   - Update parallel-review per usare context
+   - Update init-session per usare context
+   - Update validate-last-commit per usare context
+   - Pattern:
+     ```typescript
+     async function myWorkflow(params: MyParams) {
+       const ctx = params.__context!;
+       
+       ctx.set('startData', await fetchData());
+       ctx.append('results', await processData());
+       ctx.increment('itemsProcessed');
+       
+       return formatOutput(ctx.summary());
+     }
+     ```
+
+5. **Documentation & Examples** (Giorno 2)
+   - README section su workflow context
+   - Examples per ogni use case
+   - Best practices
+   - Common patterns
+
+**Integration Example:**
+
+```typescript
+// src/workflows/bug-hunt-with-context.workflow.ts
+
+interface BugHuntParams extends BaseWorkflowParams {
+  symptoms: string;
+  suspectedFiles?: string[];
+  __context?: WorkflowContext; // Injected
+}
+
+async function executeBugHunt(
+  params: BugHuntParams,
+  onProgress?: ProgressCallback
+): Promise<string> {
+  const ctx = params.__context!;
+  const logger = structuredLogger.forWorkflow(ctx.metadata.workflowId, 'bug-hunt');
+  
+  logger.step('start', 'Starting bug hunt', { symptoms: params.symptoms });
+  
+  // Step 1: Find files
+  if (!params.suspectedFiles || params.suspectedFiles.length === 0) {
+    logger.step('file-discovery', 'Searching for relevant files');
+    
+    const files = await executeAIClient({
+      backend: BACKENDS.QWEN,
+      prompt: `Find files related to: ${params.symptoms}`
+    });
+    
+    ctx.set('targetFiles', extractFilePaths(files));
+    ctx.set('discoveryMethod', 'ai-search');
+  } else {
+    ctx.set('targetFiles', params.suspectedFiles);
+    ctx.set('discoveryMethod', 'user-provided');
+  }
+  
+  logger.step('files-identified', 'Target files identified', {
+    count: ctx.get<string[]>('targetFiles')!.length,
+    method: ctx.get('discoveryMethod')
+  });
+  
+  // Step 2: Analyze each file (accumulo)
+  for (const file of ctx.get<string[]>('targetFiles')!) {
+    logger.step('analyzing-file', `Analyzing ${file}`);
+    
+    const analysis = await executeAIClient({
+      backend: BACKENDS.GEMINI,
+      prompt: `Analyze ${file} for: ${params.symptoms}`
+    });
+    
+    ctx.append('fileAnalyses', { file, analysis });
+    
+    if (hasIssue(analysis)) {
+      ctx.append('problematicFiles', file);
+      ctx.increment('issuesFound');
+    }
+  }
+  
+  logger.step('analysis-complete', 'File analysis complete', {
+    filesAnalyzed: ctx.get<string[]>('targetFiles')!.length,
+    issuesFound: ctx.get('issuesFound')
+  });
+  
+  // Step 3: Conditional - Se trovati issue, cerca related files
+  if (ctx.has('problematicFiles') && ctx.getAll('problematicFiles').length > 0) {
+    logger.step('searching-related', 'Searching for related files');
+    
+    const problematic = ctx.getAll<string>('problematicFiles');
+    
+    for (const file of problematic) {
+      const related = await findRelatedFiles(file);
+      ctx.append('relatedFiles', ...related);
+    }
+    
+    logger.step('related-found', 'Related files identified', {
+      count: ctx.getAll('relatedFiles').length
+    });
+  }
+  
+  // Step 4: Synthesis con TUTTO il contesto
+  logger.step('generating-report', 'Generating comprehensive report');
+  
+  const synthesisPrompt = `
+Generate bug report:
+Symptoms: ${params.symptoms}
+Files analyzed: ${ctx.get<string[]>('targetFiles')!.join(', ')}
+Issues found: ${ctx.get('issuesFound')}
+Problematic files: ${ctx.getAll('problematicFiles').join(', ')}
+
+Detailed analyses:
+${ctx.getAll('fileAnalyses').map((a: any) => `${a.file}: ${a.analysis}`).join('\n')}
+
+${ctx.has('relatedFiles') ? `
+Related files: ${ctx.getAll('relatedFiles').join(', ')}
+` : ''}
+
+Provide root cause and fix recommendations.
+  `;
+  
+  const report = await executeAIClient({
+    backend: BACKENDS.GEMINI,
+    prompt: synthesisPrompt
+  });
+  
+  logger.step('complete', 'Bug hunt complete', ctx.summary());
+  
+  return formatWorkflowOutput('Bug Hunt Report', report, {
+    ...ctx.summary(),
+    problematicFilesCount: ctx.getAll('problematicFiles').length,
+    relatedFilesCount: ctx.getAll('relatedFiles').length
+  });
+}
+```
+
+**Success Criteria:**
+- WorkflowContext implementato con API completa
+- Zero parameter drilling tra workflow steps
+- Context summary loggato automaticamente
+- Checkpoint/rollback funzionante per error recovery
+- Integration in almeno 2 workflow esistenti
+- Documentation con esempi pratici
+- Tests con 80%+ coverage
+
+**Effort:** 2 giorni
+
+**Breakdown:**
+- Giorno 1: WorkflowContext implementation + ContextualWorkflowExecutor + unit tests
+- Giorno 2: Integration in workflow + documentation + examples
+
+**Note:** Questa feature è MOLTO utile e NON è "too much". Rende workflow più:
+- Composable (sub-workflows con shared context)
+- Debuggable (context summary in logs)
+- Resilient (checkpoint/rollback)
+- Maintainable (meno parameter drilling)
+
+#### 3.0.6. Summary Fase 0 - Effort & Timeline
+
+**Effort Totale:** 3 settimane (15 giorni lavorativi)
+
+| Task | Effort | Settimana | Priorità |
+|------|--------|-----------|----------|
+| 3.0.1 Testing Infrastructure | 5 giorni | Settimana 1 | CRITICA |
+| 3.0.2 Structured Logging | 5 giorni | Settimana 2 (giorni 1-5) | CRITICA |
+| 3.0.5 Workflow Context | 2 giorni | Settimana 2 (giorni 3-4, parallelo) | ALTA |
+| 3.0.3 Audit Trail | 5 giorni | Settimana 2-3 | ALTA |
+| 3.0.4 Error Recovery | 5 giorni | Settimana 3 | ALTA |
+
+**Timeline Dettagliato:**
+
+**Settimana 1: Testing Infrastructure**
+- Giorni 1-2: Setup Vitest, test utilities, mock frameworks
+- Giorni 3-4: Unit tests (permissionManager, gitHelper, aiExecutor)
+- Giorno 5: Integration tests, CI/CD setup
+
+**Settimana 2: Logging & Context**
+- Giorni 1-2: StructuredLogger + WorkflowLogger implementation
+- Giorno 3: Workflow Context implementation (parallelo con logging)
+- Giorno 4: Workflow Context integration + logging integration
+- Giorno 5: Log rotation, query API, monitoring scripts
+
+**Settimana 3: Audit & Recovery**
+- Giorni 1-3: Audit Trail (database, integration, reporting)
+- Giorni 4-5: Error Recovery Framework (classification, retry, circuit breaker)
+
+**Dependencies:**
+- Testing deve essere completato prima (Settimana 1)
+- Logging e Context possono essere paralleli (Settimana 2)
+- Audit Trail richiede Logging completato
+- Error Recovery può iniziare quando Logging è pronto
+
+**Success Criteria Complessivi (Fine Fase 0):**
+- 80%+ test coverage
+- CI/CD green con automated tests
+- Structured logging operativo su tutti i workflow
+- Workflow context memory funzionante
+- Audit trail completo per operazioni MEDIUM/HIGH
+- Error recovery con retry e circuit breaker
+- Real-time log monitoring funzionante
+- Documentation completa per tutte le features
+
+**Deliverables Fine Fase 0:**
+1. Test suite completa (tests/)
+2. StructuredLogger + WorkflowLogger (src/utils/)
+3. WorkflowContext + ContextualWorkflowExecutor (src/workflows/)
+4. AuditTrail (src/utils/)
+5. Error Recovery Framework (src/utils/)
+6. Monitoring scripts (scripts/)
+7. Documentation aggiornata (docs/)
+
+Dopo Fase 0, il sistema avrà fondamenta solide per implementare features avanzate con confidence.
 
 ---
 
@@ -1272,10 +2157,14 @@ src/
 ### Mancante (Prioritizzato)
 
 **PRIORITA' MASSIMA (Fase 0):**
-- `src/utils/structuredLogger.ts` - NEW
-- `src/utils/auditTrail.ts` - NEW
-- `src/utils/errorRecovery.ts` - NEW
 - `tests/` - DIRECTORY COMPLETA (zero tests attualmente)
+- `src/utils/structuredLogger.ts` - NEW (file-based JSON logging)
+- `src/workflows/workflowContext.ts` - NEW (memoria temporanea workflow)
+- `src/utils/logRotation.ts` - NEW (compressione logs vecchi)
+- `src/utils/auditTrail.ts` - NEW (audit database SQLite)
+- `src/utils/errorRecovery.ts` - NEW (retry logic + circuit breaker)
+- `scripts/watch-logs.sh` - NEW (real-time monitoring)
+- `scripts/analyze-logs.sh` - NEW (log analysis)
 
 **PRIORITA' ALTA (Fase 1):**
 - `src/workflows/pre-commit-validate.workflow.ts` - COMPLETO
