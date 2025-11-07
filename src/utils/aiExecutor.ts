@@ -78,10 +78,9 @@ export async function executeQwenCLI(
   }
 
   // Add prompt flag with the prompt
-  // Wrap in quotes if it contains @ symbols for file references
-  const shouldQuote = prompt.includes("@") || prompt.includes("#");
+  // No need to manually quote - spawn with shell:false handles special characters
   args.push(CLI.FLAGS.QWEN.PROMPT);
-  args.push(shouldQuote ? `"${prompt}"` : prompt);
+  args.push(prompt);
 
   logger.info(`Executing Qwen CLI with model: ${model || "default"}`);
 
@@ -252,10 +251,10 @@ export async function executeGeminiCLI(
     args.push(CLI.FLAGS.GEMINI.SANDBOX);
   }
 
-  // Prompt flag and value (quote if contains @ or #)
-  const shouldQuote = prompt.includes("@") || prompt.includes("#");
+  // Prompt flag and value
+  // No need to manually quote - spawn with shell:false handles special characters
   args.push(CLI.FLAGS.GEMINI.PROMPT);
-  args.push(shouldQuote ? `"${prompt}"` : prompt);
+  args.push(prompt);
 
   logger.info(`Executing Gemini CLI with model: ${effectiveModel}`);
 

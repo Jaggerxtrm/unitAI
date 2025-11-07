@@ -249,6 +249,140 @@ Query Google Gemini with file analysis support.
 
 ---
 
+### 🔄 smart-workflows
+
+Intelligent workflows that orchestrate multiple AI backends for complex tasks like parallel code review, pre-commit validation, and bug hunting.
+
+<details>
+<summary><b>Parameters & Examples</b></summary>
+
+**Parameters:**
+- `workflow` *(required)*: Workflow to execute
+  - `init-session` - AI-powered session initialization with commit analysis
+  - `parallel-review` - Parallel code review with Gemini + Rovodev
+  - `validate-last-commit` - Validate commits with Gemini + Qwen analysis
+- `params` *(optional)*: Workflow-specific parameters
+
+**Available Workflows:** 3 implemented (init-session, parallel-review, validate-last-commit)
+**Coming Soon:** pre-commit-validate, bug-hunt
+
+**Examples:**
+
+```json
+{
+  "workflow": "init-session"
+}
+```
+
+```json
+{
+  "workflow": "parallel-review",
+  "params": {
+    "files": ["src/index.ts", "src/utils/"],
+    "focus": "security"
+  }
+}
+```
+
+```json
+{
+  "workflow": "validate-last-commit",
+  "params": {
+    "commit_ref": "HEAD~1"
+  }
+}
+```
+
+</details>
+
+---
+
+## 🔄 Smart Workflows
+
+### 🚀 init-session
+
+**AI-powered session initialization** that analyzes your Git repository and provides an intelligent summary of recent work.
+
+**What it does:**
+- Collects last **10 commits** with full diffs
+- **AI analysis with Rovodev** to synthesize:
+  - Feature changes and new functionality
+  - Bug fixes and their root causes
+  - Refactoring and architectural improvements
+  - Current work status (in-progress, completed, next steps)
+- **Generates semantic memory search queries** based on AI analysis
+- Suggests 2-3 targeted searches for relevant past work
+- Shows current branch, staged and modified files
+- Verifies availability of Qwen, Gemini, and Rovo Dev CLIs
+- Provides session information (timestamp, timezone, working directory)
+
+**No parameters required** - fully automated.
+
+**Example:**
+```json
+{
+  "workflow": "init-session"
+}
+```
+
+**Output includes:**
+- Repository info and recent commits summary
+- **AI Analysis of Recent Work** (synthesized by Rovodev)
+- **Relevant Memories** section with 2-3 semantic search queries
+- Detailed repository status and branch info
+- CLI availability check
+- Session metadata
+
+### 👥 parallel-review
+
+Run parallel code analysis using Gemini and Rovodev for comprehensive code review.
+
+**What it does:**
+- Analyzes specified files with multiple AI backends simultaneously
+- Provides specialized analysis based on focus area
+- Synthesizes results from different perspectives
+- Offers combined recommendations
+
+**Parameters:**
+- `files` *(required)*: Array of files or directories to analyze
+- `focus` *(optional)*: Analysis focus - "architecture", "security", "performance", "quality", or "all" (default)
+
+**Example:**
+```json
+{
+  "workflow": "parallel-review",
+  "params": {
+    "files": ["src/components/", "src/utils/"],
+    "focus": "security"
+  }
+}
+```
+
+### ✅ validate-last-commit
+
+Validate a specific Git commit using parallel analysis with Gemini and Qwen.
+
+**What it does:**
+- Retrieves commit information and diff
+- Analyzes changes for breaking changes and issues
+- Provides architectural and technical perspectives
+- Returns verdict with recommendations
+
+**Parameters:**
+- `commit_ref` *(optional)*: Git reference to validate (default: "HEAD")
+
+**Example:**
+```json
+{
+  "workflow": "validate-last-commit",
+  "params": {
+    "commit_ref": "HEAD~1"
+  }
+}
+```
+
+---
+
 ## 📚 File Reference Syntax
 
 All `ask-*` tools support powerful file references:
@@ -397,11 +531,20 @@ unified-ai-mcp-tool/
 │   │   ├── ask-qwen.tool.ts
 │   │   ├── ask-rovodev.tool.ts
 │   │   ├── ask-gemini.tool.ts
+│   │   ├── smart-workflows.tool.ts  # NEW: Workflow router
 │   │   ├── registry.ts     # Tool registry
 │   │   └── index.ts
+│   ├── workflows/          # NEW: Workflow implementations
+│   │   ├── types.ts       # Shared types
+│   │   ├── utils.ts       # Common utilities
+│   │   ├── index.ts       # Workflow registry
+│   │   ├── init-session.workflow.ts
+│   │   ├── parallel-review.workflow.ts
+│   │   └── validate-last-commit.workflow.ts
 │   ├── utils/              # Utilities
 │   │   ├── aiExecutor.ts   # CLI execution
 │   │   ├── commandExecutor.ts
+│   │   ├── gitHelper.ts    # NEW: Git operations
 │   │   └── logger.ts
 │   ├── constants.ts        # Configuration
 │   └── index.ts            # MCP server
@@ -409,6 +552,67 @@ unified-ai-mcp-tool/
 ├── package.json
 └── tsconfig.json
 ```
+
+---
+
+## 🧪 Testing
+
+### Local Testing with Claude Desktop
+
+To test your local changes with Claude Desktop:
+
+1. **Build the project**:
+```bash
+npm run build
+```
+
+2. **Configure Claude Desktop**:
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or equivalent on Windows/Linux:
+
+```json
+{
+  "mcpServers": {
+    "unified-ai-local": {
+      "command": "node",
+      "args": ["/path/to/unified-ai-mcp-tool/dist/index.js"]
+    }
+  }
+}
+```
+
+3. **Restart Claude Desktop** to load the new configuration
+
+4. **Test workflows**:
+```
+Per favore, esegui il workflow init-session
+```
+
+### Quick Testing with Test Script
+
+We've included a test script for rapid workflow testing:
+
+```bash
+# Make the test script executable
+chmod +x test-workflows.js
+
+# Run the tests
+node test-workflows.js
+```
+
+This will test:
+- `init-session` workflow
+- `validate-last-commit` workflow
+- Server startup and tool registration
+
+### Development Mode
+
+For continuous testing during development:
+
+```bash
+npm run dev
+```
+
+This starts the MCP server in development mode with automatic reloading.
 
 ---
 
@@ -430,15 +634,28 @@ See [improvements.md](./improvements.md) for detailed optimization information.
 
 ## 🚀 Future Developments
 
-### Combined Workflow Tools
+### Recent Enhancements (v1.1.0)
 
-To streamline common tasks, we are planning to introduce dedicated tools that combine the power of the existing `ask-*` tools into single-action commands.
+-   **`init-session`**: Enhanced with AI analysis! Now uses Rovodev to analyze the last 10 commits and provide an intelligent summary of recent work, including feature changes, bug fixes, and refactoring efforts.
 
--   **`validate`**: A tool to automatically check the last commit and its diffs for correctness, ensuring code quality and integrity with a single command.
+### Additional Smart Workflows (Planned)
+
+We're planning to expand with additional workflow capabilities:
+
+-   **`pre-commit-validate`**: Multi-stage validation pipeline for staged files, checking for common issues, secrets, and test coverage
+-   **`bug-hunt`**: Comprehensive bug analysis workflow that combines error pattern analysis with codebase similarity search
 -   **`search-library`**: A powerful tool that leverages external knowledge bases like Context7 or DeepWiki to find up-to-date libraries, best practices, and documentation for any given task.
--   **`init-session`**: A utility to run a series of diagnostic checks to ensure all integrated tools and functionalities (like git and memory access) are working as expected.
 
-*Note: For workflows requiring shell access or file system modifications, tools like `ask-qwen` and `ask-gemini` would likely require the `--yolo` parameter to grant necessary permissions.*
+### Workflow Enhancements
+
+Future improvements to the workflow system:
+- Workflow chaining capabilities
+- Custom workflow definitions via configuration
+- Caching for repeated analyses
+- Webhook integration for Git hooks
+- Export workflow results as markdown/HTML
+
+*Note: For workflows requiring shell access or file system modifications, tools like `ask-qwen` and `ask-gemini` would likely require `--yolo` parameter to grant necessary permissions.*
 
 ---
 

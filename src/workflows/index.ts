@@ -1,0 +1,138 @@
+import { z } from "zod";
+import type { 
+  WorkflowDefinition, 
+  ProgressCallback,
+  ParallelReviewParams,
+  PreCommitValidateParams,
+  ValidateLastCommitParams,
+  BugHuntParams
+} from "./types.js";
+
+// Import delle definizioni dei workflow
+import { parallelReviewWorkflow } from "./parallel-review.workflow.js";
+// import { preCommitValidateWorkflow } from "./pre-commit-validate.workflow.js";
+import { initSessionWorkflow } from "./init-session.workflow.js";
+import { validateLastCommitWorkflow } from "./validate-last-commit.workflow.js";
+// import { bugHuntWorkflow } from "./bug-hunt.workflow.js";
+
+/**
+ * Registro di tutti i workflow disponibili
+ */
+const workflowRegistry: Record<string, WorkflowDefinition> = {};
+
+/**
+ * Registra un workflow nel registro
+ */
+export function registerWorkflow<TParams>(
+  name: string, 
+  workflow: WorkflowDefinition<TParams>
+): void {
+  workflowRegistry[name] = workflow;
+}
+
+/**
+ * Ottiene un workflow dal registro
+ */
+export function getWorkflow(name: string): WorkflowDefinition | undefined {
+  return workflowRegistry[name];
+}
+
+/**
+ * Elenca tutti i workflow disponibili
+ */
+export function listWorkflows(): string[] {
+  return Object.keys(workflowRegistry);
+}
+
+/**
+ * Esegue un workflow per nome
+ */
+export async function executeWorkflow(
+  name: string,
+  params: any,
+  onProgress?: ProgressCallback
+): Promise<string> {
+  const workflow = getWorkflow(name);
+  if (!workflow) {
+    throw new Error(`Workflow non trovato: ${name}`);
+  }
+  
+  try {
+    // Validazione dei parametri
+    const validatedParams = workflow.schema.parse(params);
+    
+    // Esecuzione del workflow
+    return await workflow.execute(validatedParams, onProgress);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const errorDetails = error.errors.map(e => `${e.path.join(".")}: ${e.message}`).join(", ");
+      throw new Error(`Parametri non validi per il workflow ${name}: ${errorDetails}`);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Schema Zod per il router dei workflow
+ */
+export const smartWorkflowsSchema = z.object({
+  workflow: z.enum([
+    "parallel-review",
+    "pre-commit-validate", 
+    "init-session",
+    "validate-last-commit",
+    "bug-hunt"
+  ]).describe("Workflow da eseguire"),
+  params: z.record(z.any()).optional().describe("Parametri specifici del workflow")
+});
+
+/**
+ * Definizioni degli schemi per ogni workflow
+ */
+export const workflowSchemas = {
+  "parallel-review": z.object({
+    files: z.array(z.string()).describe("File da analizzare"),
+    focus: z.enum(["architecture", "security", "performance", "quality", "all"])
+      .optional().default("all").describe("Area di focus dell'analisi")
+  }),
+  
+  "pre-commit-validate": z.object({
+    depth: z.enum(["quick", "thorough", "paranoid"])
+      .optional().default("thorough").describe("Profondità della validazione")
+  }),
+  
+  "init-session": z.object({}).describe("Nessun parametro richiesto"),
+  
+  "validate-last-commit": z.object({
+    commit_ref: z.string().optional().default("HEAD")
+      .describe("Riferimento al commit da validare")
+  }),
+  
+  "bug-hunt": z.object({
+    symptoms: z.string().describe("Descrizione dei sintomi del problema"),
+    suspected_files: z.array(z.string()).optional()
+      .describe("File sospetti da analizzare")
+  })
+};
+
+/**
+ * Inizializza il registro dei workflow
+ * Questa funzione sarà chiamata dopo l'import di tutti i workflow
+ */
+export function initializeWorkflowRegistry(): void {
+  // I workflow saranno registrati qui quando implementati
+  registerWorkflow("parallel-review", parallelReviewWorkflow);
+  // registerWorkflow("pre-commit-validate", preCommitValidateWorkflow);
+  registerWorkflow("init-session", initSessionWorkflow);
+  registerWorkflow("validate-last-commit", validateLastCommitWorkflow);
+  // registerWorkflow("bug-hunt", bugHuntWorkflow);
+  
+  console.log("Registro workflow inizializzato");
+}
+
+/**
+ * Ottiene lo schema Zod per un workflow specifico
+ */
+export function getWorkflowSchema(workflowName: string): z.ZodSchema | undefined {
+  return workflowSchemas[workflowName as keyof typeof workflowSchemas];
+}
