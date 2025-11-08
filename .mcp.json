@@ -7,7 +7,7 @@
         "@zilliz/claude-context-mcp@latest"
       ],
       "env": {
-        "OPENAI_API_KEY": "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",
+        "OPENAI_API_KEY": "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",
         "MILVUS_TOKEN": "552edc860fe0eca5f5a6cc87ad5425e57270067cce63afb81de3da07f206401f4c9a128a5eb92899c110639ca31e16951c48dbd3"
       }
     },
