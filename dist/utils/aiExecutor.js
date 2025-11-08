@@ -1,4 +1,6 @@
 import { CLI, AI_MODELS, ERROR_MESSAGES, STATUS_MESSAGES, BACKENDS } from "../constants.js";
+// Re-export BACKENDS for convenience
+export { BACKENDS };
 import { executeCommand } from "./commandExecutor.js";
 import { logger } from "./logger.js";
 /**
@@ -35,9 +37,8 @@ export async function executeQwenCLI(options) {
     if (debug) {
         args.push(CLI.FLAGS.QWEN.DEBUG);
     }
-    // Add prompt flag with the prompt
+    // Prompt as positional argument (FIXED: -p flag is deprecated in Qwen CLI)
     // No need to manually quote - spawn with shell:false handles special characters
-    args.push(CLI.FLAGS.QWEN.PROMPT);
     args.push(prompt);
     logger.info(`Executing Qwen CLI with model: ${model || "default"}`);
     if (onProgress) {
@@ -166,9 +167,8 @@ export async function executeGeminiCLI(options) {
     if (sandbox) {
         args.push(CLI.FLAGS.GEMINI.SANDBOX);
     }
-    // Prompt flag and value
+    // Prompt as positional argument (FIXED: -p flag is deprecated in Gemini CLI)
     // No need to manually quote - spawn with shell:false handles special characters
-    args.push(CLI.FLAGS.GEMINI.PROMPT);
     args.push(prompt);
     logger.info(`Executing Gemini CLI with model: ${effectiveModel}`);
     if (onProgress) {

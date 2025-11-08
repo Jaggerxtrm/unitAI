@@ -188,22 +188,26 @@ describe('GitHelper', () => {
   });
 
   describe('checkCLIAvailability', () => {
-    it('should detect available git command', async () => {
-      mockGitCommand('--version', 'git version 2.40.0');
+    it('should detect available CLI commands', async () => {
+      mockGitCommand('--version', 'version 2.40.0');
 
       const { checkCLIAvailability } = await import('../../src/utils/gitHelper.js');
       const available = await checkCLIAvailability();
 
-      expect(available).toBe(true);
+      expect(available).toHaveProperty('qwen');
+      expect(available).toHaveProperty('gemini');
+      expect(available).toHaveProperty('acli');
     });
 
-    it('should detect unavailable git command', async () => {
+    it('should detect unavailable CLI commands', async () => {
       mockGitCommand('--version', '', 127);
 
       const { checkCLIAvailability } = await import('../../src/utils/gitHelper.js');
       const available = await checkCLIAvailability();
 
-      expect(available).toBe(false);
+      expect(available).toHaveProperty('qwen');
+      expect(available).toHaveProperty('gemini');
+      expect(available).toHaveProperty('acli');
     });
   });
 });

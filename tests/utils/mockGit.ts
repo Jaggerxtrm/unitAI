@@ -22,9 +22,12 @@ export function mockGitCommand(command: string, output: string, exitCode = 0): v
   vi.doMock('../../src/utils/commandExecutor.js', () => ({
     executeCommand: vi.fn().mockImplementation(async (cmd: string) => {
       if (cmd.includes(commandRef)) {
-        return { output: outputRef, exitCode: exitCodeRef };
+        if (exitCodeRef !== 0) {
+          throw new Error(`Command failed with exit code ${exitCodeRef}`);
+        }
+        return outputRef;
       }
-      return { output: '', exitCode: 0 };
+      return '';
     })
   }));
 }
@@ -40,10 +43,13 @@ export function mockGitCommands(commands: MockGitCommand[]): void {
     executeCommand: vi.fn().mockImplementation(async (cmd: string) => {
       for (const mock of commandsRef) {
         if (cmd.includes(mock.command)) {
-          return { output: mock.output, exitCode: mock.exitCode || 0 };
+          if (mock.exitCode && mock.exitCode !== 0) {
+            throw new Error(`Command failed with exit code ${mock.exitCode}`);
+          }
+          return mock.output;
         }
       }
-      return { output: '', exitCode: 0 };
+      return '';
     })
   }));
 }

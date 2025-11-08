@@ -5,7 +5,7 @@
 
 # Set project directory to current working directory if not set
 if [ -z "$CLAUDE_PROJECT_DIR" ]; then
-    CLAUDE_PROJECT_DIR="/home/dawid/Projects/py_backend"
+    CLAUDE_PROJECT_DIR="$(pwd)"
 fi
 
 # Read tool information from stdin
@@ -22,20 +22,53 @@ if [[ "$tool_name" == "Bash" ]]; then
     
     # If Claude used direct file reading tools that suggest they should have used claude-context first
     if [[ "$command_used" =~ ^(cat|grep|rg|find).* ]] && [[ ! "$command_used" =~ claude-context ]]; then
-        # This suggests Claude might have used direct file search instead of semantic search
-        # In a real implementation, this would output a reminder to use claude-context
-        # For now, we just log this for analysis
+        # Log to file for analytics
         cache_dir="$CLAUDE_PROJECT_DIR/.claude/tsc-cache/${session_id:-default}"
         mkdir -p "$cache_dir"
         echo "$(date): Claude used direct search instead of claude-context: $command_used" >> "$cache_dir/context-reminders.log"
+
+        # Output reminder to Claude (stdout)
+        cat <<EOF
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 REMINDER: Consider claude-context semantic search
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You used: $command_used
+
+Consider using mcp__claude-context__search_code for:
+- Semantic search across codebase
+- Finding related code patterns
+- Hybrid BM25 + vector search
+
+This can be more effective than direct file commands.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EOF
     fi
 elif [[ "$tool_name" == "Read" ]]; then
-    # If Claude used direct file reading, log it as a potential case where claude-context should be used first
+    # If Claude used direct file reading for code files
     file_path=$(echo "$tool_info" | jq -r '.tool_input.absolute_path // empty')
-    if [[ -n "$file_path" ]]; then
+    if [[ -n "$file_path" ]] && [[ "$file_path" =~ \.(ts|js|tsx|jsx|py|java|go|rs|cpp|c|h)$ ]]; then
+        # Log to file
         cache_dir="$CLAUDE_PROJECT_DIR/.claude/tsc-cache/${session_id:-default}"
         mkdir -p "$cache_dir"
         echo "$(date): Claude read file directly instead of using claude-context: $file_path" >> "$cache_dir/context-reminders.log"
+
+        # Output reminder to Claude (stdout)
+        cat <<EOF
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 TIP: Consider Serena or claude-context first
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You read: $file_path
+
+For code files, consider:
+1. mcp__serena__get_symbols_overview - Get file structure (75-80% token savings)
+2. mcp__serena__find_symbol - Find specific symbols
+3. mcp__claude-context__search_code - Semantic search
+
+These are more efficient than reading entire files.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EOF
     fi
 fi
 

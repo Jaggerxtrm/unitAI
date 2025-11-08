@@ -26,7 +26,7 @@
       "type": "stdio",
       "command": "node",
       "args": [
-        "/home/jagger/projects/unified-ai-mcp-tool/dist/index.js"
+        "/home/dawid/Projects/unified-ai-mcp-tool/dist/index.js"
       ],
       "env": {}
     },

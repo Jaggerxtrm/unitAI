@@ -142,7 +142,8 @@ export function initializeWorkflowRegistry(): void {
   registerWorkflow("feature-design", featureDesignWorkflow);
   registerWorkflow("bug-hunt", bugHuntWorkflow);
 
-  console.log("Registro workflow inizializzato");
+  // Removed console.log - corrupts MCP JSON protocol
+  // Use logger.debug() if logging needed
 }
 
 /**

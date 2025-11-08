@@ -92,6 +92,7 @@ export declare const BACKENDS: {
     readonly ROVODEV: "rovodev";
     readonly GEMINI: "gemini";
 };
+export { BACKENDS as default };
 export type QwenModel = typeof AI_MODELS.QWEN[keyof typeof AI_MODELS.QWEN];
 export type RovodevModel = typeof AI_MODELS.ROVODEV[keyof typeof AI_MODELS.ROVODEV];
 export type GeminiModel = typeof AI_MODELS.GEMINI[keyof typeof AI_MODELS.GEMINI];

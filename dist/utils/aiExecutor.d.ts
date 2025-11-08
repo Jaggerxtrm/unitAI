@@ -1,3 +1,5 @@
+import { BACKENDS } from "../constants.js";
+export { BACKENDS };
 import type { ApprovalMode } from "../constants.js";
 /**
  * Options for executing AI CLI commands

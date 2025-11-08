@@ -96,6 +96,8 @@ export const BACKENDS = {
     ROVODEV: "rovodev",
     GEMINI: "gemini"
 };
+// Export BACKENDS values for easier importing
+export { BACKENDS as default };
 /**
  * Agent role descriptions and configurations
  *
