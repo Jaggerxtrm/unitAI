@@ -14,38 +14,38 @@ export interface MockGitCommand {
  * Mock git command with custom output
  */
 export function mockGitCommand(command: string, output: string, exitCode = 0): void {
-  vi.mock('../../src/utils/commandExecutor.js', async () => {
-    const actual = await vi.importActual('../../src/utils/commandExecutor.js');
-    return {
-      ...actual,
-      executeCommand: vi.fn().mockImplementation(async (cmd: string) => {
-        if (cmd.includes(command)) {
-          return { output, exitCode };
-        }
-        return { output: '', exitCode: 0 };
-      })
-    };
-  });
+  // Store parameters to ensure proper closure
+  const commandRef = command;
+  const outputRef = output;
+  const exitCodeRef = exitCode;
+
+  vi.doMock('../../src/utils/commandExecutor.js', () => ({
+    executeCommand: vi.fn().mockImplementation(async (cmd: string) => {
+      if (cmd.includes(commandRef)) {
+        return { output: outputRef, exitCode: exitCodeRef };
+      }
+      return { output: '', exitCode: 0 };
+    })
+  }));
 }
 
 /**
  * Mock multiple git commands
  */
 export function mockGitCommands(commands: MockGitCommand[]): void {
-  vi.mock('../../src/utils/commandExecutor.js', async () => {
-    const actual = await vi.importActual('../../src/utils/commandExecutor.js');
-    return {
-      ...actual,
-      executeCommand: vi.fn().mockImplementation(async (cmd: string) => {
-        for (const mock of commands) {
-          if (cmd.includes(mock.command)) {
-            return { output: mock.output, exitCode: mock.exitCode || 0 };
-          }
+  // Store commands array to ensure proper closure
+  const commandsRef = [...commands];
+
+  vi.doMock('../../src/utils/commandExecutor.js', () => ({
+    executeCommand: vi.fn().mockImplementation(async (cmd: string) => {
+      for (const mock of commandsRef) {
+        if (cmd.includes(mock.command)) {
+          return { output: mock.output, exitCode: mock.exitCode || 0 };
         }
-        return { output: '', exitCode: 0 };
-      })
-    };
-  });
+      }
+      return { output: '', exitCode: 0 };
+    })
+  }));
 }
 
 /**
@@ -104,14 +104,17 @@ export function createMockGitDiff(file: string, additions: string[], deletions: 
  * Mock git helper functions
  */
 export function mockGitHelper(overrides: Partial<Record<string, any>> = {}): void {
-  vi.mock('../../src/utils/gitHelper.js', async () => {
+  // Store the overrides in a local variable to ensure proper closure
+  const overridesRef = { ...overrides };
+
+  vi.doMock('../../src/utils/gitHelper.js', async () => {
     const actual = await vi.importActual('../../src/utils/gitHelper.js');
     return {
       ...actual,
-      getRecentCommitsWithDiffs: vi.fn().mockResolvedValue(overrides.getRecentCommitsWithDiffs || []),
-      getStagedDiff: vi.fn().mockResolvedValue(overrides.getStagedDiff || ''),
-      getCurrentBranch: vi.fn().mockResolvedValue(overrides.getCurrentBranch || 'main'),
-      getGitStatus: vi.fn().mockResolvedValue(overrides.getGitStatus || { clean: true, files: [] })
+      getRecentCommitsWithDiffs: vi.fn().mockResolvedValue(overridesRef.getRecentCommitsWithDiffs || []),
+      getStagedDiff: vi.fn().mockResolvedValue(overridesRef.getStagedDiff || ''),
+      getCurrentBranch: vi.fn().mockResolvedValue(overridesRef.getCurrentBranch || 'main'),
+      getGitStatus: vi.fn().mockResolvedValue(overridesRef.getGitStatus || { clean: true, files: [] })
     };
   });
 }

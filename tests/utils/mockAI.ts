@@ -14,11 +14,14 @@ export interface MockAIResponse {
  * Mock Qwen CLI response
  */
 export function mockQwenResponse(response: string, shouldFail = false): void {
-  vi.mock('../../src/utils/aiExecutor.js', async () => {
+  const responseRef = response;
+  const shouldFailRef = shouldFail;
+
+  vi.doMock('../../src/utils/aiExecutor.js', async () => {
     const actual = await vi.importActual('../../src/utils/aiExecutor.js');
     return {
       ...actual,
-      executeQwenCLI: vi.fn().mockResolvedValue(shouldFail ? '' : response)
+      executeQwenCLI: vi.fn().mockResolvedValue(shouldFailRef ? '' : responseRef)
     };
   });
 }
@@ -27,11 +30,14 @@ export function mockQwenResponse(response: string, shouldFail = false): void {
  * Mock Gemini CLI response
  */
 export function mockGeminiResponse(response: string, shouldFail = false): void {
-  vi.mock('../../src/utils/aiExecutor.js', async () => {
+  const responseRef = response;
+  const shouldFailRef = shouldFail;
+
+  vi.doMock('../../src/utils/aiExecutor.js', async () => {
     const actual = await vi.importActual('../../src/utils/aiExecutor.js');
     return {
       ...actual,
-      executeGeminiCLI: vi.fn().mockResolvedValue(shouldFail ? '' : response)
+      executeGeminiCLI: vi.fn().mockResolvedValue(shouldFailRef ? '' : responseRef)
     };
   });
 }
@@ -40,11 +46,14 @@ export function mockGeminiResponse(response: string, shouldFail = false): void {
  * Mock Rovodev CLI response
  */
 export function mockRovodevResponse(response: string, shouldFail = false): void {
-  vi.mock('../../src/utils/aiExecutor.js', async () => {
+  const responseRef = response;
+  const shouldFailRef = shouldFail;
+
+  vi.doMock('../../src/utils/aiExecutor.js', async () => {
     const actual = await vi.importActual('../../src/utils/aiExecutor.js');
     return {
       ...actual,
-      executeRovodevCLI: vi.fn().mockResolvedValue(shouldFail ? '' : response)
+      executeRovodevCLI: vi.fn().mockResolvedValue(shouldFailRef ? '' : responseRef)
     };
   });
 }
@@ -53,14 +62,16 @@ export function mockRovodevResponse(response: string, shouldFail = false): void 
  * Mock AI executor with custom backend responses
  */
 export function mockAIExecutor(responses: Record<string, string>): void {
-  vi.mock('../../src/utils/aiExecutor.js', async () => {
+  const responsesRef = { ...responses };
+
+  vi.doMock('../../src/utils/aiExecutor.js', async () => {
     const actual = await vi.importActual('../../src/utils/aiExecutor.js');
     return {
       ...actual,
       executeAIClient: vi.fn().mockImplementation(async (config: any) => {
         const backend = config.backend;
-        if (responses[backend]) {
-          return responses[backend];
+        if (responsesRef[backend]) {
+          return responsesRef[backend];
         }
         throw new Error(`No mock response for backend: ${backend}`);
       })
@@ -84,15 +95,18 @@ export function createMockAIResponse(content: string, metadata?: Record<string, 
  * Mock AI executor that simulates delays
  */
 export function mockAIExecutorWithDelay(responses: Record<string, string>, delayMs = 100): void {
-  vi.mock('../../src/utils/aiExecutor.js', async () => {
+  const responsesRef = { ...responses };
+  const delayMsRef = delayMs;
+
+  vi.doMock('../../src/utils/aiExecutor.js', async () => {
     const actual = await vi.importActual('../../src/utils/aiExecutor.js');
     return {
       ...actual,
       executeAIClient: vi.fn().mockImplementation(async (config: any) => {
-        await new Promise(resolve => setTimeout(resolve, delayMs));
+        await new Promise(resolve => setTimeout(resolve, delayMsRef));
         const backend = config.backend;
-        if (responses[backend]) {
-          return responses[backend];
+        if (responsesRef[backend]) {
+          return responsesRef[backend];
         }
         throw new Error(`No mock response for backend: ${backend}`);
       })
@@ -107,17 +121,20 @@ export function mockAIExecutorWithFailure(
   successResponse: string,
   failAfterCalls: number
 ): void {
+  const successResponseRef = successResponse;
+  const failAfterCallsRef = failAfterCalls;
   let callCount = 0;
-  vi.mock('../../src/utils/aiExecutor.js', async () => {
+
+  vi.doMock('../../src/utils/aiExecutor.js', async () => {
     const actual = await vi.importActual('../../src/utils/aiExecutor.js');
     return {
       ...actual,
       executeAIClient: vi.fn().mockImplementation(async () => {
         callCount++;
-        if (callCount > failAfterCalls) {
+        if (callCount > failAfterCallsRef) {
           throw new Error('AI backend failure (simulated)');
         }
-        return successResponse;
+        return successResponseRef;
       })
     };
   });

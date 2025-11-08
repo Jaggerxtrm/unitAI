@@ -8,10 +8,12 @@ import { mockGitCommand, mockGitCommands, createMockGitDiff } from '../utils/moc
 describe('GitHelper', () => {
   beforeEach(() => {
     vi.resetModules();
+    vi.resetAllMocks();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unmock('../../src/utils/commandExecutor.js');
   });
 
   describe('isGitRepository', () => {

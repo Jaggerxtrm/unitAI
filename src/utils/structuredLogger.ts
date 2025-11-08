@@ -343,8 +343,11 @@ export class StructuredLogger {
             continue;
           }
 
-          if (filters.workflowId && entry.workflowId !== filters.workflowId) {
-            continue;
+          if (filters.workflowId) {
+            const entryWorkflowId = entry.workflowId || entry.metadata?.workflowId;
+            if (entryWorkflowId !== filters.workflowId) {
+              continue;
+            }
           }
 
           if (filters.component && entry.component !== filters.component) {

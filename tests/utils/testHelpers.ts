@@ -59,21 +59,24 @@ export function createMockWorkflowParams(
  * Simulate file system operations
  */
 export function mockFileSystem(files: Record<string, string>): void {
-  vi.mock('fs', async () => {
+  // Store files reference to prevent scope issues
+  const filesRef = { ...files };
+
+  vi.doMock('fs', async () => {
     const actual = await vi.importActual('fs');
     return {
       ...actual,
       readFileSync: vi.fn((path: string) => {
-        if (files[path]) {
-          return files[path];
+        if (filesRef[path]) {
+          return filesRef[path];
         }
         throw new Error(`File not found: ${path}`);
       }),
-      existsSync: vi.fn((path: string) => path in files),
+      existsSync: vi.fn((path: string) => path in filesRef),
       promises: {
         readFile: vi.fn(async (path: string) => {
-          if (files[path]) {
-            return files[path];
+          if (filesRef[path]) {
+            return filesRef[path];
           }
           throw new Error(`File not found: ${path}`);
         })

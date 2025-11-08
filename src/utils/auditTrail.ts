@@ -93,10 +93,7 @@ export class AuditTrail {
         executed_by TEXT NOT NULL,
         outcome TEXT NOT NULL,
         error_message TEXT,
-        metadata TEXT,
-        
-        -- Indexes for common queries
-        FOREIGN KEY (workflow_name) REFERENCES workflows(name)
+        metadata TEXT
       );
 
       CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_entries(timestamp);
