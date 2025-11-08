@@ -1,0 +1,1 @@
+Sat Nov  1 06:43:59 PM CET 2025: Claude used direct search instead of claude-context: find ~/projects -maxdepth 1 -iname "*unified*" -type d 2>/dev/null || find ~ -maxdepth 2 -iname "*unified*ai*" -type d 2>/dev/null | head -5

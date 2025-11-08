@@ -5,8 +5,7 @@ yarn.lock
 .env
 # Build artifacts
 /dist/
-.cursor/
-.claude/
+
 
 # Debug files
 gemini-error.json

@@ -1,0 +1,3 @@
+Fri Nov  7 06:13:13 PM CET 2025: Claude used direct search instead of claude-context: find /home/dawid/Projects/unified-ai-mcp-tool -name "*.ts" -type f | wc -l
+Fri Nov  7 06:35:47 PM CET 2025: Claude used direct search instead of claude-context: find /home/dawid/Projects/unified-ai-mcp-tool -type d -name "agents" 2>/dev/null | head -5
+Fri Nov  7 11:15:52 PM CET 2025: Claude used direct search instead of claude-context: find ~ -maxdepth 3 -name "*gemini*" -type f 2>/dev/null | grep -E "config|settings" | head -10

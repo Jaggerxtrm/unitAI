@@ -1,0 +1,436 @@
+{
+    "version": "1.0",
+    "description": "Skill activation triggers for Claude Code. Controls when skills automatically suggest or block actions.",
+    "skills": {
+        "memory-search-reminder": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Reminds Claude to search memories before starting new work, implementing features, or making decisions. Ensures Claude checks for past solutions, decisions, and patterns using openmemory-search-memories before diving into new implementations.",
+            "promptTriggers": {
+                "keywords": [
+                    "implement",
+                    "feature",
+                    "solution",
+                    "decision",
+                    "how did we",
+                    "previously",
+                    "past",
+                    "memory",
+                    "remember",
+                    "recall",
+                    "similar",
+                    "before",
+                    "earlier",
+                    "history",
+                    "previous"
+                ],
+                "intentPatterns": [
+                    "(how did|did we|was there).*?(implementation|solution|decision|approach)",
+                    "(implement|create|add|build).*?(feature|solution|functionality)",
+                    "(what was|how did|did we).*?(handle|solve|approach)",
+                    "(similar|like|related).*?(implementation|solution|feature)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/*.py",
+                    "**/*.md",
+                    "**/src/**",
+                    "**/api/**",
+                    "**/shared/**",
+                    "**/models/**",
+                    "**/routes/**",
+                    "**/services/**",
+                    "**/utils/**"
+                ],
+                "contentPatterns": [
+                    "def ",
+                    "class ",
+                    "function",
+                    "implementation",
+                    "solution",
+                    "feature",
+                    "design",
+                    "architecture"
+                ]
+            }
+        },
+        "claude-context-usage": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "critical",
+            "description": "Ensures Claude always uses claude-context semantic search before any other search method. claude-context provides hybrid search (BM25 + vectors) and finds related code across the codebase without reading files. Use BEFORE feature implementation, bug hunting, refactoring, schema changes, or any code search.",
+            "promptTriggers": {
+                "keywords": [
+                    "search",
+                    "find",
+                    "where is",
+                    "locate",
+                    "look for",
+                    "find code",
+                    "find function",
+                    "find implementation",
+                    "code search",
+                    "semantic search",
+                    "dependency",
+                    "relationship",
+                    "architecture"
+                ],
+                "intentPatterns": [
+                    "(search|find|look for|where is|locate).*?(code|function|implementation|dependency|pattern|similar)",
+                    "(find|show me|where).*?(uses|calls|depends on|related)",
+                    "(how is|where).*?(implemented|defined|used)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/*.py",
+                    "**/*.md",
+                    "**/src/**",
+                    "**/api/**",
+                    "**/shared/**",
+                    "**/models/**",
+                    "**/routes/**",
+                    "**/services/**",
+                    "**/utils/**"
+                ],
+                "contentPatterns": [
+                    "def ",
+                    "class ",
+                    "function",
+                    "import",
+                    "dependency",
+                    "architecture"
+                ]
+            }
+        },
+        "documentation-lookup": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Use to efficiently access project documentation using claude-context, Qwen, or Gemini to avoid token waste and find precise information. Use when working with Docker containers, connection methods, configuration files, or project-specific implementations.",
+            "promptTriggers": {
+                "keywords": [
+                    "documentation",
+                    "container connection",
+                    "connection method",
+                    "docker",
+                    "configuration",
+                    "implementation",
+                    "how to",
+                    "setup",
+                    "architecture",
+                    "database connection",
+                    "api endpoint"
+                ],
+                "intentPatterns": [
+                    "(where|how).*?(documented|configured|setup|connection|implement)",
+                    "(find|look up|search for).*?(documentation|instructions|how to)",
+                    "(how does|explain).*?(connection|setup|configuration)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/*.md",
+                    "**/*.txt",
+                    "docs/**",
+                    "plans-docs/**"
+                ],
+                "contentPatterns": [
+                    "#+.*?setup",
+                    "#+.*?configuration",
+                    "#+.*?architecture",
+                    "```yaml",
+                    "docker-compose",
+                    "config\\."
+                ]
+            }
+        },
+        "second-guessing-verification": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Reminds Claude to use MCP tools for thorough validation and second-guessing before proceeding with important changes. Use when planning complex implementations, architectural changes, bug fixes, or before committing significant code changes.",
+            "promptTriggers": {
+                "keywords": [
+                    "plan",
+                    "implement",
+                    "solution",
+                    "architecture",
+                    "bug fix",
+                    "refactor",
+                    "feature",
+                    "design",
+                    "approach",
+                    "strategy",
+                    "verification",
+                    "validate",
+                    "second guess"
+                ],
+                "intentPatterns": [
+                    "(plan|design|create|implement).*?(solution|approach|strategy)",
+                    "(how should|what is the best|should I).*?(approach|design|plan)",
+                    "(validate|check|review).*?(plan|solution|approach)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/design/**",
+                    "**/plans/**",
+                    "**/architecture/**",
+                    "**/*.py",
+                    "**/*.md"
+                ],
+                "contentPatterns": [
+                    "class ",
+                    "def ",
+                    "function ",
+                    "implementation",
+                    "design",
+                    "architecture",
+                    "solution"
+                ]
+            }
+        },
+        "pre-commit-ai-review": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "critical",
+            "description": "Ensures high code quality and architectural consistency by requiring AI-powered code review before committing important changes. Use before any commit that affects core functionality, architecture, or has broad impact on the system.",
+            "promptTriggers": {
+                "keywords": [
+                    "commit",
+                    "git commit",
+                    "important change",
+                    "significant change",
+                    "core functionality",
+                    "architectural change",
+                    "code review",
+                    "refactor",
+                    "feature implementation",
+                    "bug fix"
+                ],
+                "intentPatterns": [
+                    "(commit|make).*?(change|update|fix|feature)",
+                    "(before.*?commit|need to.*?commit)",
+                    "(review.*?changes|check.*?before commit)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/*.py",
+                    "**/src/**",
+                    "**/api/**",
+                    "**/shared/**",
+                    "**/models/**",
+                    "**/routes/**",
+                    "**/services/**",
+                    "**/utils/**"
+                ],
+                "contentPatterns": [
+                    "import.*?sys",
+                    "def ",
+                    "class ",
+                    "async def",
+                    "try:",
+                    "raise ",
+                    "Exception"
+                ]
+            }
+        },
+        "pre-memory-commit-verification": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "critical",
+            "description": "Ensures that before adding memories or making commits, Claude verifies that code is functional, plans are completed, and there's explicit confirmation. Use before any openmemory-add-memory or git commit operation.",
+            "promptTriggers": {
+                "keywords": [
+                    "memory",
+                    "openmemory",
+                    "add memory",
+                    "commit",
+                    "git commit",
+                    "save",
+                    "preserve",
+                    "final",
+                    "done",
+                    "completed",
+                    "confirmation",
+                    "verify"
+                ],
+                "intentPatterns": [
+                    "(add|save|store|record).*?memory",
+                    "(commit|push|save).*?change",
+                    "(final|done|completed).*?(memory|commit)",
+                    "(verify|confirm|ensure).*?(complete|working|done)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/*.py",
+                    "**/*.md",
+                    "**/src/**",
+                    "**/tests/**"
+                ],
+                "contentPatterns": [
+                    "^.*?function.*?\\(.*?\\):$",
+                    "^.*?class.*?:$",
+                    "def test_",
+                    "# @skip-validation",
+                    "# TODO"
+                ]
+            }
+        },
+        "post-stop-resumption": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Helps Claude effectively resume work after an interruption or stop by assessing the current situation, understanding what occurred before the stop, and seeking assistance from MCP tools to understand how to proceed.",
+            "promptTriggers": {
+                "keywords": [
+                    "resume",
+                    "continue",
+                    "restart",
+                    "where was I",
+                    "what was I doing",
+                    "help",
+                    "stuck",
+                    "problem",
+                    "issue",
+                    "error",
+                    "stop",
+                    "pause",
+                    "assistance"
+                ],
+                "intentPatterns": [
+                    "(how do|how to|help me).*?(continue|resume|restart)",
+                    "(where was|what was).*?(i doing|the task)",
+                    "(help|assistance|stuck).*?(with|on|continue)",
+                    "(resume|continue|restart).*?(work|task|process)"
+                ]
+            }
+        },
+        "serena-surgical-editing": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Use Serena for symbol-level code surgery when editing TypeScript/JavaScript. ALWAYS use find_referencing_symbols before modifications to prevent breaking changes. Achieves 75-80% token savings vs full file reads.",
+            "promptTriggers": {
+                "keywords": [
+                    "edit",
+                    "refactor",
+                    "rename",
+                    "function",
+                    "class",
+                    "method",
+                    "interface",
+                    "symbol",
+                    "modify",
+                    "change code",
+                    "update function",
+                    "impact analysis",
+                    "find references",
+                    "call graph",
+                    "dependencies"
+                ],
+                "intentPatterns": [
+                    "(edit|refactor|modify|change).*?(function|class|method|interface|symbol)",
+                    "(rename|update).*?(function|variable|class|method)",
+                    "(find|show|identify).*?(references|usages|callers|dependencies)",
+                    "(safe|check).*?(refactor|rename|edit)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/*.ts",
+                    "**/*.tsx",
+                    "**/*.js",
+                    "**/*.jsx",
+                    "**/src/**",
+                    "**/lib/**",
+                    "**/utils/**"
+                ],
+                "contentPatterns": [
+                    "function ",
+                    "class ",
+                    "interface ",
+                    "export ",
+                    "const.*=.*=>",
+                    "async function"
+                ]
+            }
+        },
+        "unified-ai-orchestration": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "medium",
+            "description": "Use unified-ai-mcp for multi-model AI analysis when complexity requires different perspectives. Run ask-gemini + ask-qwen in parallel for comprehensive validation. Add ask-rovodev for production-ready code generation.",
+            "promptTriggers": {
+                "keywords": [
+                    "review",
+                    "validate",
+                    "analyze",
+                    "comprehensive",
+                    "parallel",
+                    "gemini",
+                    "qwen",
+                    "rovodev",
+                    "AI review",
+                    "multiple perspectives",
+                    "second opinion",
+                    "cross-validate",
+                    "implement feature",
+                    "generate code",
+                    "production code"
+                ],
+                "intentPatterns": [
+                    "(review|validate|analyze).*?(code|architecture|implementation)",
+                    "(comprehensive|thorough|detailed).*?(review|analysis|validation)",
+                    "(parallel|multiple).*?(review|validation|perspective)",
+                    "(implement|generate|create).*?(feature|code|function)",
+                    "(ask|use).*(gemini|qwen|rovodev)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/*.ts",
+                    "**/*.js",
+                    "**/*.tsx",
+                    "**/*.jsx",
+                    "**/src/**",
+                    "**/api/**",
+                    "**/services/**",
+                    "**/workflows/**"
+                ],
+                "contentPatterns": [
+                    "function ",
+                    "class ",
+                    "async ",
+                    "export ",
+                    "implementation",
+                    "workflow",
+                    "handler"
+                ]
+            }
+        }
+    },
+    "notes": {
+        "enforcement_types": {
+            "suggest": "Skill suggestion appears but doesn't block execution",
+            "block": "Requires skill to be used before proceeding (guardrail)",
+            "warn": "Shows warning but allows proceeding"
+        },
+        "priority_levels": {
+            "critical": "Highest - Always trigger when matched",
+            "high": "Important - Trigger for most matches",
+            "medium": "Moderate - Trigger for clear matches",
+            "low": "Optional - Trigger only for explicit matches"
+        },
+        "customization": {
+            "pathPatterns": "Adjust to match your project structure",
+            "keywords": "Add domain-specific terms relevant to your project",
+            "intentPatterns": "Use regex for flexible user intent matching"
+        }
+    }
+}

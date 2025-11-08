@@ -11,7 +11,10 @@
     "build": "tsc",
     "dev": "tsc && node dist/index.js",
     "lint": "tsc --noEmit",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "mcp",
@@ -27,12 +30,16 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.21.0",
+    "better-sqlite3": "^11.8.1",
     "zod": "^3.25.76",
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^24.0.0",
-    "typescript": "^5.0.0"
+    "@vitest/coverage-v8": "^2.1.8",
+    "typescript": "^5.0.0",
+    "vitest": "^2.1.8"
   },
   "engines": {
     "node": ">=16.0.0"

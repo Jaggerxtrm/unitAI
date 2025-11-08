@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { BACKENDS } from "../constants.js";
 import { runParallelAnalysis, buildCodeReviewPrompt, formatWorkflowOutput } from "./utils.js";
+import { generateWorkflowId, structuredLogger } from "../utils/structuredLogger.js";
 import type { 
   WorkflowDefinition, 
   ProgressCallback, 
@@ -28,12 +29,25 @@ async function executeParallelReview(
 ): Promise<string> {
   const { files, focus } = params;
   
+  // Setup structured logging
+  const workflowId = generateWorkflowId();
+  const logger = structuredLogger.forWorkflow(workflowId, 'parallel-review');
+  
+  logger.step('start', 'Starting parallel review workflow', {
+    filesCount: files.length,
+    focus,
+    autonomyLevel: params.autonomyLevel
+  });
+  
   onProgress?.(`Avvio revisione parallela di ${files.length} file con focus: ${focus}`);
   
   // Validazione dei file
   if (files.length === 0) {
+    logger.error('validation-failed', new Error('No files specified'));
     throw new Error("È necessario specificare almeno un file da analizzare");
   }
+  
+  logger.step('validation', 'File validation passed', { filesCount: files.length });
   
   // Preparazione dei prompt per ogni backend
   const promptBuilder = (backend: string): string => {
@@ -67,12 +81,19 @@ Come Rovodev, fornisci un'analisi pratica con focus su:
   };
   
   // Esecuzione dell'analisi parallela
+  logger.step('parallel-analysis-start', 'Starting parallel analysis', {
+    backends: [BACKENDS.GEMINI, BACKENDS.ROVODEV]
+  });
+  
   onProgress?.("Avvio analisi parallela con Gemini e Rovodev...");
-  const analysisResult = await runParallelAnalysis(
-    [BACKENDS.GEMINI, BACKENDS.ROVODEV],
-    promptBuilder,
-    onProgress
-  );
+  
+  const analysisResult = await logger.timing('parallel-analysis', async () => {
+    return await runParallelAnalysis(
+      [BACKENDS.GEMINI, BACKENDS.ROVODEV],
+      promptBuilder,
+      onProgress
+    );
+  });
   
   // Analisi dei risultati
   const successful = analysisResult.results.filter(r => r.success);
@@ -135,6 +156,12 @@ L'analisi potrebbe essere incompleta. Si consiglia di risolvere i problemi e rip
   }
   
   onProgress?.(`Revisione parallela completata: ${successful.length}/${analysisResult.results.length} analisi riuscite`);
+  
+  logger.step('complete', 'Parallel review completed successfully', {
+    successfulAnalyses: successful.length,
+    failedAnalyses: failed.length,
+    totalBackends: analysisResult.results.length
+  });
   
   return formatWorkflowOutput("Revisione Parallela del Codice", outputContent, metadata);
 }

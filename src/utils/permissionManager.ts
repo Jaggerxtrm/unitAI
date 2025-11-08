@@ -7,6 +7,8 @@
  * @module permissionManager
  */
 
+import { auditTrail } from './auditTrail.js';
+
 /**
  * Permission levels for autonomous operations
  *
@@ -134,9 +136,33 @@ export function checkPermission(
 export function assertPermission(
   currentLevel: AutonomyLevel,
   operation: OperationType,
-  context?: string
+  context?: string,
+  workflowName?: string,
+  workflowId?: string
 ): void {
   const result = checkPermission(currentLevel, operation);
+  
+  // Record audit entry
+  try {
+    auditTrail.record({
+      workflowName: workflowName || 'unknown',
+      workflowId,
+      autonomyLevel: currentLevel,
+      operation,
+      target: context || 'unknown',
+      approved: result.allowed,
+      executedBy: 'system',
+      outcome: 'pending',
+      metadata: {
+        requiredLevel: result.requiredLevel,
+        currentLevel: result.currentLevel
+      }
+    });
+  } catch (error) {
+    // Don't fail the operation if audit logging fails
+    console.error('Failed to record audit entry:', error);
+  }
+  
   if (!result.allowed) {
     const contextMsg = context ? ` (${context})` : "";
     throw new Error(
@@ -211,15 +237,15 @@ export class GitOperations {
   /**
    * Asserts Git commit permission or throws
    */
-  assertCommit(context?: string): void {
-    assertPermission(this.autonomyLevel, OperationType.GIT_COMMIT, context);
+  assertCommit(context?: string, workflowName?: string, workflowId?: string): void {
+    assertPermission(this.autonomyLevel, OperationType.GIT_COMMIT, context, workflowName, workflowId);
   }
 
   /**
    * Asserts Git push permission or throws
    */
-  assertPush(context?: string): void {
-    assertPermission(this.autonomyLevel, OperationType.GIT_PUSH, context);
+  assertPush(context?: string, workflowName?: string, workflowId?: string): void {
+    assertPermission(this.autonomyLevel, OperationType.GIT_PUSH, context, workflowName, workflowId);
   }
 }
 
@@ -246,8 +272,8 @@ export class FileOperations {
   /**
    * Asserts file write permission or throws
    */
-  assertWrite(context?: string): void {
-    assertPermission(this.autonomyLevel, OperationType.WRITE_FILE, context);
+  assertWrite(context?: string, workflowName?: string, workflowId?: string): void {
+    assertPermission(this.autonomyLevel, OperationType.WRITE_FILE, context, workflowName, workflowId);
   }
 }
 
@@ -280,8 +306,8 @@ export class PermissionManager {
   /**
    * Asserts an operation is allowed or throws
    */
-  assert(operation: OperationType, context?: string): void {
-    assertPermission(this.autonomyLevel, operation, context);
+  assert(operation: OperationType, context?: string, workflowName?: string, workflowId?: string): void {
+    assertPermission(this.autonomyLevel, operation, context, workflowName, workflowId);
   }
 
   /**

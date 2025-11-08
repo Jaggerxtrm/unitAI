@@ -1,0 +1,40 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run TypeScript compiler check
+      run: npm run lint
+      
+    - name: Check for type errors
+      run: npx tsc --noEmit --pretty
+      
+    - name: Verify no console.log in production code
+      run: |
+        if grep -r "console.log" src/ --exclude-dir=node_modules --exclude-dir=dist; then
+          echo "❌ Found console.log statements in production code"
+          echo "Please use the logger utility instead"
+          exit 1
+        fi
+        echo "✅ No console.log statements found"
+      continue-on-error: true

@@ -1,0 +1,38 @@
+{
+  "mcpServers": {
+    "claude-context": {
+      "command": "npx",
+      "args": [
+        "@zilliz/claude-context-mcp@latest"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "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",
+        "MILVUS_TOKEN": "552edc860fe0eca5f5a6cc87ad5425e57270067cce63afb81de3da07f206401f4c9a128a5eb92899c110639ca31e16951c48dbd3"
+      }
+    },
+    "openmemory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "openmemory"
+      ],
+      "env": {
+        "OPENMEMORY_API_KEY": "om-qtoz1iq0fy6jmugce2mrg1841tj35cj4",
+        "CLIENT_NAME": "cursor"
+      }
+    },
+    "unified-ai-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@jaggerxtrm/unified-ai-mcp-tool"
+      ]
+    },
+    "context7": {
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "deepwiki": {
+      "url": "https://mcp.deepwiki.com/mcp"
+    }
+  }
+}
