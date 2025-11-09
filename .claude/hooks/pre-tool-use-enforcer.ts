@@ -13,6 +13,8 @@
  *
  * Hook Type: PreToolUse (experimental - suggestion only for now)
  * Triggers: Before Read, Bash, Grep tool execution
+ * 
+ * Metrics: Tracks token savings to data/token-metrics.sqlite
  */
 
 import { join, dirname } from "path";
@@ -30,6 +32,15 @@ const projectDir = process.env.CLAUDE_PROJECT_DIR || join(__dirname, "..", "..")
 interface ToolUseEvent {
   tool: string;
   params: Record<string, any>;
+}
+
+interface SuggestionResult {
+  message: string;
+  blockedTool: string;
+  recommendedTool: string;
+  target: string;
+  estimatedSavings: number;
+  metadata?: Record<string, any>;
 }
 
 /**
@@ -69,12 +80,30 @@ function isCodeFile(filePath: string): boolean {
 }
 
 /**
- * Generate suggestion message for tool usage
+ * Estimate token savings for a suggestion
  */
-function generateSuggestion(tool: string, params: Record<string, any>): string | null {
+function estimateTokenSavings(tool: string, target: string): number {
+  // Conservative estimates based on common patterns
+  if (tool === "Read") {
+    // Assume average code file is 400 LOC = ~160 tokens
+    // Serena saves 75-80%, so ~120 tokens saved
+    return 120;
+  } else if (tool === "Grep" || tool === "Bash") {
+    // Pattern search typically saves 1500 tokens vs manual grep
+    return 1500;
+  }
+  return 100; // Default conservative estimate
+}
+
+/**
+ * Generate suggestion message for tool usage
+ * Returns structured result with metrics
+ */
+function generateSuggestion(tool: string, params: Record<string, any>): SuggestionResult | null {
   // Case 1: Read tool on code files
   if (tool === "Read" && params.file_path && isCodeFile(params.file_path)) {
-    return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const estimatedSavings = estimateTokenSavings(tool, params.file_path);
+    const message = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️  TOKEN-AWARE SUGGESTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -93,12 +122,24 @@ Why Serena?
 - Can find references across codebase
 - 75-80% token savings on average
 
+💰 Estimated savings: ~${estimatedSavings} tokens
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+    return {
+      message,
+      blockedTool: "Read",
+      recommendedTool: "serena",
+      target: params.file_path,
+      estimatedSavings,
+      metadata: { fileType: "code" }
+    };
   }
 
   // Case 2: Grep on codebase
   if (tool === "Grep" && params.pattern) {
-    return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const estimatedSavings = estimateTokenSavings(tool, params.pattern);
+    const message = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️  TOKEN-AWARE SUGGESTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -119,7 +160,18 @@ Why claude-context?
 - Better results for "find functions that do X"
 - Indexed for fast search
 
+💰 Estimated savings: ~${estimatedSavings} tokens
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+    return {
+      message,
+      blockedTool: "Grep",
+      recommendedTool: "claude-context",
+      target: params.pattern,
+      estimatedSavings,
+      metadata: { pattern: params.pattern }
+    };
   }
 
   // Case 3: Bash cat/grep/find commands on code
@@ -129,8 +181,9 @@ Why claude-context?
     if (cmd.match(/^cat\s+.*\.(ts|js|py|java|go|rs|cpp|c|h)/)) {
       const fileMatch = cmd.match(/cat\s+([^\s]+)/);
       const file = fileMatch ? fileMatch[1] : "file";
+      const estimatedSavings = estimateTokenSavings(tool, file);
 
-      return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      const message = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️  TOKEN-AWARE SUGGESTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -145,11 +198,23 @@ Use Serena for symbol-level access:
 Avoid reading entire files via Bash when
 symbol-level navigation is available.
 
+💰 Estimated savings: ~${estimatedSavings} tokens
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+      return {
+        message,
+        blockedTool: "Bash",
+        recommendedTool: "serena",
+        target: file,
+        estimatedSavings,
+        metadata: { command: cmd }
+      };
     }
 
     if (cmd.match(/grep|rg/)) {
-      return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      const estimatedSavings = estimateTokenSavings(tool, cmd);
+      const message = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️  TOKEN-AWARE SUGGESTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -164,11 +229,46 @@ For semantic search:
 For symbol search:
   mcp__serena__search_for_pattern("pattern")
 
+💰 Estimated savings: ~${estimatedSavings} tokens
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+      return {
+        message,
+        blockedTool: "Bash",
+        recommendedTool: "claude-context",
+        target: cmd,
+        estimatedSavings,
+        metadata: { command: cmd }
+      };
     }
   }
 
   return null;
+}
+
+/**
+ * Record metrics to database
+ */
+async function recordMetrics(suggestion: SuggestionResult): Promise<void> {
+  try {
+    // Dynamic import to handle ES modules
+    const { getMetricsCollector } = await import(join(projectDir, "src/utils/tokenEstimator.js"));
+    const metrics = getMetricsCollector();
+    
+    metrics.record({
+      source: "enforcer-hook",
+      blockedTool: suggestion.blockedTool,
+      recommendedTool: suggestion.recommendedTool,
+      target: suggestion.target,
+      estimatedSavings: suggestion.estimatedSavings,
+      suggestionFollowed: false, // Default to false, can be updated later
+      metadata: suggestion.metadata || {}
+    });
+  } catch (error) {
+    // Silent fail - metrics should not break the hook
+    // Error will be logged but won't prevent suggestion from showing
+  }
 }
 
 /**
@@ -186,7 +286,12 @@ async function main() {
 
   if (suggestion) {
     // Output suggestion to Claude (stdout)
-    console.log(suggestion);
+    console.log(suggestion.message);
+
+    // Record metrics asynchronously (non-blocking)
+    recordMetrics(suggestion).catch(() => {
+      // Silent fail - metrics should not break hook
+    });
 
     // Also log to file for debugging
     const logPath = join(projectDir, ".claude", "tsc-cache", "pre-tool-enforcer.log");
@@ -195,7 +300,8 @@ async function main() {
       const timestamp = new Date().toISOString();
       appendFileSync(
         logPath,
-        `[${timestamp}] Tool: ${event.tool}, Params: ${JSON.stringify(event.params)}\n${suggestion}\n\n`
+        `[${timestamp}] Tool: ${event.tool}, Params: ${JSON.stringify(event.params)}\n` +
+        `Savings: ${suggestion.estimatedSavings} tokens\n${suggestion.message}\n\n`
       );
     } catch {
       // Silent fail on log write

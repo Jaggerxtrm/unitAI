@@ -21,88 +21,74 @@ Multi-AI orchestration MCP server. Stack: TypeScript, Node.js, MCP protocol. Bac
 - Prefer UPDATE over CREATE; maintain SSOT.
 
 ## 1) SESSION INIT (ALWAYS ON NEW CONVERSATION)
-- Run:
-  - git log --oneline -5
-  - git diff HEAD~3..HEAD --stat
-  - git status
-  - git branch -vv
-- Memory search (always useful):
-  - openmemory-search-memories "recent work on unified-ai-mcp"
-  - openmemory-search-memories "<YYYY-MM-DD> <topic>" (e.g., "2025-11-07 workflow")
-  - openmemory-search-memories "similar implementation or pattern"
-- Outcome: establish recent changes, current branch, relevant memories.
 
-## 3) TOOL AUTO-TRIGGERS & ADVANCED WORKFLOWS
-
-**CLAUDE-CONTEXT: Architectural Navigator & Pattern Finder**
-- ALWAYS use repo root: /home/dawid/Projects/unified-ai-mcp-tool
-- Index: mcp__claude-context__index_codebase --path /home/dawid/Projects/unified-ai-mcp-tool
-- Search: mcp__claude-context__search_code "query" --path /home/dawid/Projects/unified-ai-mcp-tool
-- Queries (semantic, not keyword):
-  - "Where is executeAIClient called from?" (finds ALL callers)
-  - "What code depends on aiExecutor?" (maps dependencies)
-  - "Find similar workflow implementations" (pattern detection)
-  - "What modules use MCP tools?" (architectural relationships)
-  - "Find duplicate error handling patterns" (duplication detection)
-- Use BEFORE: feature implementation, bug hunting, refactoring, schema changes
-- Why: Hybrid search (BM25 + vectors), finds related code across codebase without reading files
-**SERENA: Symbol-Level Code Surgery (LSP-Based)**
-Use for: Precise code navigation, safe refactoring, symbol-based editing
-Power: 75-80% token reduction vs full file reads
-Key operations:
-- mcp__serena__find_symbol "NamePath" --include_body true (localize symbols)
-- mcp__serena__find_referencing_symbols "NamePath" (impact analysis, find ALL usages)
-- mcp__serena__get_symbols_overview "file.ts" (map file structure)
-- mcp__serena__replace_symbol_body "NamePath" "new_code" (surgical edit)
-- mcp__serena__rename_symbol "NamePath" "new_name" (safe rename across codebase)
-When: BEFORE editing, ALWAYS use find_symbol + find_referencing_symbols for impact analysis
-
-**UNIFIED-AI-MCP: Multi-Model Analysis (Run in Parallel)**
-Use for: Complex code, pre-commit review, multi-perspective validation
-Strengths:
-- ask-gemini: Architecture patterns, best practices, security/performance, detailed suggestions
-- ask-qwen: Quick pattern recognition, code quality, redundancy detection, bottleneck spotting
-- ask-rovodev: Production-ready code generation, bug fixes, implementation
-Run multiple in parallel, compare results for synthesis
-
-Examples:
+**Use init-session workflow:**
+```typescript
+mcp__unified-ai-mcp__smart-workflows({
+  workflow: "init-session",
+  params: {}
+})
 ```
-# Parallel analysis
-mcp__unified-ai-mcp__ask-gemini --prompt "@file.ts 1) Architecture review 2) Best practices 3) Security"
-mcp__unified-ai-mcp__ask-qwen --prompt "@file.ts 1) Code quality issues 2) Redundant patterns 3) Performance"
+- Analyzes last 10 commits + AI synthesis
+- Generates 3 memory query suggestions
+- Shows repo status, branch, CLI availability
 
-# Production implementation
-mcp__unified-ai-mcp__ask-rovodev --prompt "@file.ts Implement OAuth flow with error handling"
+**Then execute suggested memory queries:**
+- openmemory-search-memories "recent work on unified-ai-mcp"
+- openmemory-search-memories "<YYYY-MM-DD> <topic>"
+
+## 3) MCP TOOLS & WORKFLOWS
+
+**CLAUDE-CONTEXT** (Repo: /home/dawid/Projects/unified-ai-mcp-tool)
+- Index: mcp__claude-context__index_codebase --path <repo>
+- Search: mcp__claude-context__search_code "semantic query" --path <repo>
+- Use BEFORE: features, bugs, refactors (finds ALL related code, 0 file reads)
+
+**SERENA** (75-80% token savings)
+- mcp__serena__find_symbol "Name" --include_body true
+- mcp__serena__find_referencing_symbols "Name" (ALL usages)
+- mcp__serena__get_symbols_overview "file.ts"
+- mcp__serena__replace_symbol_body / rename_symbol
+- ALWAYS: find_referencing_symbols before edit (impact analysis)
+
+**UNIFIED-AI-MCP** (Parallel analysis)
+- ask-gemini: Architecture, best practices, security
+- ask-qwen: Code quality, patterns, edge cases
+- ask-rovodev: Production implementation, bug fixes
+
+**3.1) MANUAL PATTERNS** (See 3.5 for automated workflows)
+*Feature:* claude-context → Serena → ask-gemini+qwen → ask-rovodev → Serena verify
+*Bug:* claude-context locate → Serena impact → ask-gemini+qwen → Serena fix
+*Refactor:* Serena find_referencing_symbols → ask-gemini+qwen → Serena rename_symbol
+
+**3.5) SMART WORKFLOWS** (Automated Multi-Agent Orchestration)
+
+**When:** Use workflows for standard processes; tool-direct for custom exploration
+
+| Workflow | Trigger | Params | Output |
+|----------|---------|--------|--------|
+| `init-session` | Every new conversation | `{}` | Git analysis + AI synthesis + memory queries |
+| `pre-commit-validate` | Before commit | `{ depth: "quick\|thorough\|paranoid" }` | Security + quality + breaking changes → PASS/WARN/FAIL |
+| `parallel-review` | Code review needed | `{ files: [...], focus: "architecture\|quality\|security" }` | Gemini + Rovodev parallel analysis |
+| `validate-last-commit` | Post-commit validation | `{ commit_ref: "HEAD" }` | Gemini + Qwen commit analysis → verdict |
+| `bug-hunt` | Bug unknown cause | `{ symptoms: "detailed description" }` | Root cause + fix + test plan |
+| `feature-design` | Complex feature design | `{ featureDescription: "...", targetFiles: [...] }` | Architect + Implementer + Tester phases |
+
+**Invocation:**
+```typescript
+mcp__unified-ai-mcp__smart-workflows({
+  workflow: "WORKFLOW_NAME",
+  params: { /* see table */ }
+})
 ```
 
-**INTEGRATED WORKFLOWS**
+**Decision Tree:**
+```
+Standard process (commit/bug/review/feature)? → smart-workflows
+Custom exploration? → Tool direct (Serena/claude-context/ask-*)
+```
 
-*Feature Implementation:*
-1. claude-context: "Where does similar feature exist?" → Find related modules
-2. Serena: find_symbol + get_symbols_overview → Understand current architecture
-3. Parallel: ask-gemini + ask-qwen analyze existing pattern for best practices
-4. ask-rovodev: Generate production-ready implementation
-5. Serena: find_referencing_symbols → Impact analysis before changes
-6. Serena: replace_symbol_body or insert_after_symbol → Surgical modification
-7. claude-context: "Find all callers/imports of new function" → Verify impact
-8. openmemory-add-memory "Implemented [feature]"
-
-*Bug Hunting:*
-1. claude-context: "Where is error message generated?" → Locate root cause
-2. Serena: find_symbol + find_referencing_symbols → Call graph + impact
-3. Parallel: ask-gemini + ask-qwen analyze for logic errors & patterns
-4. Serena: replace_symbol_body → Surgical fix
-5. claude-context: "Find all affected call sites" → Verify fix
-6. openmemory-add-memory "Fixed [bug]: [root cause]"
-
-*Refactoring (Safe with Serena):*
-1. claude-context: "Find all functions with pattern X" → Scope
-2. Serena: get_symbols_overview → Map file structure
-3. Serena: find_referencing_symbols → Identify ALL usages (critical for safe refactoring)
-4. Parallel: ask-gemini + ask-qwen → Refactoring strategy
-5. Serena: rename_symbol or replace_symbol_body → Safe, surgical changes
-6. claude-context: "Find similar code" → Ensure consistency
-7. openmemory-add-memory "Refactored [scope]: [changes]; affects [X] files"
+**Auto-Suggestions:** `workflow-pattern-detector` hook suggests workflows on pattern match (always ask user before executing)
 
 **DeepWiki (GitHub repository documentation):**
 - For external repos (MCP servers, TypeScript libraries)
@@ -149,32 +135,24 @@ mcp__unified-ai-mcp__ask-rovodev --prompt "@file.ts Implement OAuth flow with er
 - SSOT: one active doc per topic
 - Archive policy: move to archive/ with ARCHIVED_ prefix
 
-## 9) ADVANCED PRE-COMMIT VALIDATION (Multi-Stage)
+## 9) PRE-COMMIT VALIDATION
 
-**Stage 1: Scope Analysis (Serena + claude-context)**
-- Serena: find_referencing_symbols → Identify ALL usages of modified symbols
-- Serena: get_symbols_overview → Map structural changes
-- claude-context: "What code depends on my changes?"
-- claude-context: "Find all files importing modified module"
-- Outcome: Complete impact map, breaking change detection
-
-**Stage 2: Parallel AI Review (ask-gemini + ask-qwen)**
+**Automated (ALWAYS use):**
+```typescript
+mcp__unified-ai-mcp__smart-workflows({
+  workflow: "pre-commit-validate",
+  params: { depth: "quick" }  // or "thorough" / "paranoid"
+})
 ```
-# Both in parallel
-mcp__unified-ai-mcp__ask-gemini --prompt "@modified_file.ts Validate: 1) Architecture 2) Error handling 3) Performance 4) Security"
-mcp__unified-ai-mcp__ask-qwen --prompt "@modified_file.ts Check: 1) Code quality issues 2) Redundant logic 3) Potential bugs 4) Edge cases"
-```
-- ask-gemini provides architectural validation
-- ask-qwen catches edge cases and quality issues
-- Compare outputs, synthesize findings
+- quick (10-30s): Syntax + Qwen security
+- thorough (60-120s): + Gemini best practices + breaking changes
+- paranoid (180-300s): + Rovodev parallel analysis
 
-**Stage 3: Dependency Verification (Serena + claude-context)**
-- Serena: find_referencing_symbols → Find ALL callers (LSP-based, 100% accurate)
-- claude-context: "Verify changes compatible with call sites"
-- claude-context: "Find tests related to modified code"
-
-**Stage 4: Memory Update**
-- openmemory-add-memory "Refactored [module]: [what changed]; validated with Serena + claude-context + ask-gemini/qwen; affects [X] files"
+**Manual (fallback if workflow unavailable):**
+1. Serena: find_referencing_symbols → ALL usages
+2. claude-context: "What depends on changes?"
+3. Parallel: ask-gemini + ask-qwen validation
+4. openmemory-add-memory "Validated [scope]"
 
 ## 10) KEY CONFIGS & LOCATIONS
 - package.json: Dependencies, scripts, MCP server entry
@@ -187,39 +165,47 @@ mcp__unified-ai-mcp__ask-qwen --prompt "@modified_file.ts Check: 1) Code quality
 
 ## 11) AGENT BEHAVIOR SUMMARY
 **DO:**
-- Check memories & commits at session start
-- Use Serena find_symbol + find_referencing_symbols BEFORE editing (impact analysis)
-- Use claude-context for architectural queries before any code work
-- Run ask-gemini + ask-qwen in PARALLEL for complex analysis
-- Use Serena for surgical, symbol-level modifications (75-80% token savings)
-- Use claude-context to find ALL affected code (refactoring, bug fixes)
-- Run advanced pre-commit validation (Serena + claude-context + ask-gemini/qwen)
-- Update memory after significant changes with architectural impact
-- Verify SSOT for docs
+- Code files: Serena (ALWAYS, no exceptions - 75-80% token savings)
+- Session start: init-session workflow
+- Pre-commit: pre-commit-validate workflow
+- Code review: parallel-review workflow
+- Bugs: bug-hunt workflow
+- Features: feature-design workflow
+- Before edit: Serena find_referencing_symbols (impact analysis)
+- Before implementation: claude-context (discover related code)
+- Complex analysis: ask-gemini + ask-qwen (parallel)
+- After changes: update memory
 
 **DON'T:**
-- Read huge files directly (use Serena get_symbols_overview + find_symbol)
-- Edit symbols without find_referencing_symbols first (breaks code!)
-- Implement without understanding code relationships (use claude-context + Serena first)
-- Review single-file changes without impact analysis
-- Create new docs without approval
-- Push to remote unless asked
+- Read code files directly (ALWAYS use Serena)
+- Edit without find_referencing_symbols (breaks code!)
+- Skip workflows for standard tasks (commit/bug/review/feature)
+- Create docs without approval
+- Push unless asked
 - Commit secrets
-- Use emoji in code/docs
 
-## 12) TOOL QUICK GUIDE
-| Tool | When | Purpose | Key Power |
-|------|------|---------|-----------|
-| **Serena** | BEFORE any edit, for navigation | Symbol-level code surgery | LSP-based; finds ALL references; 75-80% token savings; safe refactoring |
-| **Claude-Context** | FIRST, for discovery | Architectural navigator | Semantic search; finds ALL related code; maps dependencies; detects patterns |
-| **ask-gemini** | Complex analysis, architecture | Deep AI reasoning | Best practices, security, performance, architectural patterns |
-| **ask-qwen** | Parallel with ask-gemini | Fast AI perspective | Code quality, redundancy, edge cases; catches what Gemini misses |
-| **ask-rovodev** | Production code generation | Implementation expert | Bug fixes, production-ready code, detailed implementations |
-| **DeepWiki** | External repo internals | GitHub documentation | Architecture insights on dependencies (MCP servers, libraries) |
-| **Open-Memory** | After significant work | Decision storage | Historical context, date-based queries, architectural decisions |
-| **Context7** | External library usage | API documentation | TypeScript, Node.js, MCP protocol specifics |
+## 12) TOOL SELECTION GUIDE
 
-**Workflow Principle**: claude-context FIRST (discover) → Serena (navigate symbols) → ask-gemini/qwen (analyze) → Serena (edit) → Serena find_referencing_symbols (verify impact)
+**Priority by Task Type:**
+
+| Task | Tool | Why |
+|------|------|-----|
+| **Code file access** | **Serena** (ALWAYS) | 75-80% token savings; symbol-level; LSP-based |
+| **Session init** | init-session workflow | Automated git+AI analysis |
+| **Commit validation** | pre-commit-validate workflow | Multi-stage security+quality |
+| **Bug hunting** | bug-hunt workflow | Root cause analysis |
+| **Code review** | parallel-review workflow | Gemini+Rovodev parallel |
+| **Feature design** | feature-design workflow | Multi-agent orchestration |
+| **Codebase search** | claude-context | Semantic; finds ALL related code |
+| **Custom AI analysis** | ask-gemini/qwen/rovodev | Parallel for best results |
+| **Simple non-code** | Read | Only if <300 LOC |
+
+**Decision Rules:**
+1. Code file? → **Serena** (no exceptions)
+2. Standard process (commit/bug/review/feature)? → **smart-workflows**
+3. Need to find related code? → **claude-context**
+4. Custom analysis? → **ask-*** (parallel)
+5. Simple config file? → Read ok
 
 ## 13) AUTONOMOUS TOKEN-AWARE ENFORCEMENT
 
@@ -233,76 +219,29 @@ Claude now autonomously detects inefficient tool usage BEFORE execution and sugg
 | Bash cat/grep commands | ❌ BLOCK → Use Serena/claude-context | Symbol-level access |
 
 **Pattern-Based Workflow Triggering (Automatic):**
-Claude detects task patterns and suggests orchestrated workflows:
+Hook detects patterns → suggests workflow (ask user confirmation before executing):
 
-| Pattern Detected | Auto-Suggested Workflow | Components |
-|------------------|------------------------|------------|
-| "implement feature" | feature-design | claude-context → Serena → ask-gemini+qwen → ask-rovodev → verify |
-| "fix bug" / "error" | bug-hunt | claude-context → Serena → ask-gemini+qwen → root cause → fix |
-| "refactor" / "rename" | refactoring-safe | Serena find_referencing_symbols → validate → rename_symbol |
-| "review" / "commit" | parallel-review | ask-gemini + ask-qwen + ask-rovodev (parallel) |
+| Pattern | Workflow | Command |
+|---------|----------|---------|
+| "implement\|feature\|create" | feature-design | `mcp__unified-ai-mcp__smart-workflows({ workflow: "feature-design", params: { featureDescription: "...", targetFiles: [...] } })` |
+| "bug\|error\|fix\|broken" | bug-hunt | `mcp__unified-ai-mcp__smart-workflows({ workflow: "bug-hunt", params: { symptoms: "..." } })` |
+| "review\|analyze\|audit" | parallel-review | `mcp__unified-ai-mcp__smart-workflows({ workflow: "parallel-review", params: { files: [...], focus: "quality" } })` |
+| "commit\|validate" | pre-commit-validate | `mcp__unified-ai-mcp__smart-workflows({ workflow: "pre-commit-validate", params: { depth: "thorough" } })` |
 
-**Token Estimation (Automatic):**
-Before ANY file operation, Claude:
-1. Estimates LOC (lines of code) using wc -l
-2. Calculates tokens: LOC × 0.4 (average for TypeScript)
-3. Classifies: small (<300), medium (300-600), large (>600), xlarge (>1000)
-4. Suggests optimal tool based on classification
+**Token Estimation:** LOC × 0.4 → classify (small <300, medium 300-600, large >600) → suggest tool
 
-**File Size Enforcement Rules:**
-```
-Code files (ANY size):  → ALWAYS Serena (symbol navigation)
-Non-code small (<300):  → Read ok
-Non-code medium/large:  → ask-gemini summarization
-Multi-file (>3 files):  → Workflow orchestration
-```
+**Decision Flow:**
+1. Pattern detect (feature/bug/review?) → suggest workflow
+2. File analysis → Code? Serena. Multi-file? Workflow. Simple? Read ok.
+3. Execute with user confirmation
 
-**Autonomous Decision Flow:**
-```
-User Request
-   ↓
-1. Pattern Detection → featureImplementation? bugHunting? refactoring?
-   ↓
-2. File Analysis → Count files, estimate LOC, classify
-   ↓
-3. Tool Selection
-   ├─ Code file? → Serena (ALWAYS)
-   ├─ Search codebase? → claude-context
-   ├─ Multi-file complex? → Workflow
-   └─ Simple non-code? → Read allowed
-   ↓
-4. Execute OR Suggest Workflow
-   ↓
-5. Verify with Serena find_referencing_symbols (if editing)
-```
+**Enforcement:** SUGGESTIVE (shows alternatives, doesn't block)
 
-**Skill Integration:**
-- token-aware-orchestration skill: Auto-activates on inefficient tool usage
-- workflow-pattern-detector hook: Suggests workflows on pattern match
-- pre-tool-use-enforcer hook: Shows suggestions before execution
-
-**Decision Confidence:**
-- >80% confidence → "STRONGLY RECOMMENDED"
-- 60-80% confidence → "HIGHLY RECOMMENDED"
-- 50-60% confidence → "Consider using"
-- <50% → Silent (no suggestion)
-
-**Token Budget Awareness:**
-Claude now tracks approximate token usage per session:
-- Small ops (<1K tokens): Direct execution
-- Medium ops (1-5K tokens): Consider Serena/claude-context
-- Large ops (>5K tokens): Mandatory workflow orchestration
-
-**Enforcement Level:**
-- Currently: SUGGESTIVE (shows alternatives, doesn't block)
-- Future: Can be configured to ENFORCE (block inefficient tools)
-
-**Utilities:**
-- src/utils/tokenEstimator.ts: LOC counting, token estimation, tool suggestions
-- .claude/hooks/pre-tool-use-enforcer.ts: Pre-execution suggestions
-- .claude/hooks/workflow-pattern-detector.ts: Pattern matching for workflows
-- .claude/skills/token-aware-orchestration/: Manual orchestration invocation
+**Implementation:**
+- src/utils/tokenEstimator.ts
+- .claude/hooks/pre-tool-use-enforcer.ts
+- .claude/hooks/workflow-pattern-detector.ts
 
 ---
 
-**Last Updated**: 2025-11-09 10:30 UTC
+**Last Updated**: 2025-11-09 19:00 UTC

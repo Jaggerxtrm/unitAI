@@ -7,6 +7,11 @@ This document provides comprehensive API documentation for all workflows availab
 ## Table of Contents
 
 - [Common Concepts](#common-concepts)
+- [Base MCP Tools](#base-mcp-tools)
+  - [ask-gemini](#ask-gemini)
+  - [ask-qwen](#ask-qwen)
+  - [ask-rovodev](#ask-rovodev)
+- [Hook System](#hook-system)
 - [Workflow Invocation](#workflow-invocation)
 - [Workflows](#workflows)
   - [init-session](#init-session)
@@ -78,6 +83,303 @@ const result = await executeWorkflow(
   (progress) => console.log(progress)
 );
 ```
+
+---
+
+## Base MCP Tools
+
+I tool base permettono di interagire direttamente con i backend AI senza orchestrazione workflow.
+
+### ask-gemini
+
+**Descrizione:** Query diretta a Google Gemini via gemini CLI.
+
+**Quando usare:**
+- Analisi architetturale approfondita
+- Review di best practices
+- Spiegazioni concettuali
+- Large context analysis (2M+ tokens)
+
+**Parametri:**
+```json
+{
+  "prompt": "string (required)",
+  "model": "gemini-2.5-pro | gemini-2.5-flash (optional)",
+  "sandbox": "boolean (optional)"
+}
+```
+
+**Esempi:**
+
+1. Analisi con file reference:
+```
+mcp__unified-ai-mcp__ask-gemini({
+  "prompt": "Analizza @src/utils/tokenEstimator.ts e identifica possibili ottimizzazioni",
+  "model": "gemini-2.5-pro"
+})
+```
+
+2. Fast analysis con Flash:
+```
+mcp__unified-ai-mcp__ask-gemini({
+  "prompt": "Summarize the main purpose of @docs/PLAN.md",
+  "model": "gemini-2.5-flash"
+})
+```
+
+---
+### ask-qwen
+
+**Descrizione:** Query diretta a Qwen AI via qwen CLI.
+
+**Quando usare:**
+- Generazione codice production-ready
+- Security analysis e secret detection
+- Fast iteration su implementazioni
+- Pattern recognition nel codice
+
+**Parametri:**
+```json
+{
+  "prompt": "string (required)",
+  "model": "qwen3-coder-plus | qwen3-coder-turbo | qwen3-coder-pro (optional)",
+  "approvalMode": "plan | default | auto-edit | yolo (optional)",
+  "sandbox": "boolean (optional)",
+  "yolo": "boolean (optional)"
+}
+```
+
+**Esempi:**
+
+1. Security scan:
+```
+mcp__unified-ai-mcp__ask-qwen({
+  "prompt": "Scan @src/** for security vulnerabilities: SQL injection, XSS, hardcoded secrets",
+  "model": "qwen3-coder-turbo",
+  "approvalMode": "plan"
+})
+```
+
+2. Code generation con auto-approval:
+```
+mcp__unified-ai-mcp__ask-qwen({
+  "prompt": "Generate unit tests for @src/utils/tokenEstimator.ts covering edge cases",
+  "model": "qwen3-coder-plus",
+  "yolo": true
+})
+```
+
+---
+### ask-rovodev
+
+**Descrizione:** Query diretta a Rovodev AI per production-ready code generation.
+
+**Quando usare:**
+- Generazione codice enterprise-grade
+- Refactoring complessi cross-file
+- Bug fixing con context-aware solutions
+- Implementation con best practices enforcement
+
+**Parametri:**
+```json
+{
+  "prompt": "string (required)",
+  "yolo": "boolean (optional)",
+  "shadow": "boolean (optional)",
+  "restore": "boolean (optional)",
+  "verbose": "boolean (optional)"
+}
+```
+
+**Esempi:**
+
+1. Safe refactoring con shadow mode:
+```
+mcp__unified-ai-mcp__ask-rovodev({
+  "prompt": "Refactor @src/workflows/parallel-review.workflow.ts to use Strategy Pattern for backend selection",
+  "shadow": true,
+  "verbose": true
+})
+```
+
+2. Bug fix implementation:
+```
+mcp__unified-ai-mcp__ask-rovodev({
+  "prompt": "Fix the shell injection vulnerability in @src/utils/tokenEstimator.ts:104. Use execFile instead of execAsync.",
+  "yolo": false
+})
+```
+
+---
+### Confronto Tool Base
+
+| Feature        | ask-gemini             | ask-qwen               | ask-rovodev            |
+|----------------|------------------------|------------------------|------------------------|
+| Punto di Forza | Analisi architetturale | Code generation veloce | Production-ready code  |
+| Context Window | 2M+ tokens             | 128K tokens            | 200K tokens            |
+| Velocità       | Media-Lenta            | Veloce                 | Media                  |
+| Costo          | Medio-Alto             | Basso                  | Medio                  |
+| File Syntax    | @.../edited-files.log  | @.../edited-files.log, #file | @.../edited-files.log, #file |
+| Safe Mode      | sandbox                | sandbox, approvalMode  | shadow                 |
+| Best For       | Architecture, review   | Quick fixes, security  | Enterprise refactoring |
+
+**Raccomandazione:** Usa ask-gemini per analisi, ask-qwen per iterate velocemente, ask-rovodev per code production-ready.
+
+---
+
+## Hook System
+
+Il sistema di hook intercetta e modifica il comportamento di Claude Code in punti specifici del workflow execution.
+
+### Architettura
+
+Gli hook sono script TypeScript in `.claude/hooks/` eseguiti automaticamente da Claude Code.
+
+**Tipi di Hook:**
+1. **PreToolUse:** Eseguiti PRIMA dell'uso di un tool (Read, Bash, Grep)
+2. **PostToolUse:** Eseguiti DOPO l'uso di un tool
+3. **UserPromptSubmit:** Eseguiti quando l'utente invia un prompt
+
+### Hook Disponibili
+
+#### pre-tool-use-enforcer.ts
+
+**Tipo:** PreToolUse (Experimental)
+
+**Scopo:** Suggerisce alternative token-efficient prima dell'esecuzione di Read/Bash/Grep.
+
+**Comportamento:**
+```typescript
+// Input: { tool: "Read", params: { file_path: "src/utils/tokenEstimator.ts" } }
+
+// Hook logic:
+if (tool === "Read" && isCodeFile(file_path)) {
+  // Output: Suggestion printed to stdout
+  console.log(`
+    ⚠️ TOKEN-AWARE SUGGESTION
+
+    You're about to use Read on a code file: ${file_path}
+
+    ❌ NOT RECOMMENDED: Read tool for code files
+    ✅ BETTER ALTERNATIVE: Serena (75-80% token savings)
+
+    Serena provides symbol-level navigation:
+      mcp__serena__get_symbols_overview("${file_path}")
+      mcp__serena__find_symbol("SymbolName", "${file_path}")
+  `);
+}
+```
+
+**Triggers:**
+- Read su file con estensione: .ts, .tsx, .js, .jsx, .py, .java, .go, .rs, .cpp, .c, .h, .hpp, .cs, .rb, .php, .swift, .kt, .scala, .clj
+- Grep con pattern su codebase → suggerisce claude-context
+- Bash cat su code files → suggerisce Serena
+
+**Note:** Attualmente in modalità SUGGESTIVE (non blocca esecuzione), solo output informativo.
+
+---
+#### workflow-pattern-detector.ts
+
+**Tipo:** UserPromptSubmit
+
+**Scopo:** Rileva pattern nel prompt utente e suggerisce workflow appropriati.
+
+**Pattern Rilevati:**
+
+| Pattern                | Regex                                  | Workflow Suggerito  | Confidence    |
+|------------------------|----------------------------------------|---------------------|---------------|
+| Feature Implementation | implement|add feature|create.*function | feature-design      | 0.3 per match |
+| Bug Hunting            | bug|error|fix|broken                   | bug-hunt            | 0.3 per match |
+| Refactoring            | refactor|restructure|reorganize        | (Serena suggestion) | 0.3 per match |
+| Code Review            | review|analyze|audit                   | parallel-review     | 0.3 per match |
+| Pre-commit             | commit|validate|check                  | pre-commit-validate | 0.3 per match |
+
+**Confidence Scoring:**
+- Base: 0.3 per ogni pattern match
+- Multiplier: ×1.5 se match multipli
+- Threshold: >0.5 per auto-suggestion
+
+**Esempio:**
+```typescript
+// User prompt: "I need to implement a new authentication feature using OAuth"
+
+// Pattern detected: "implement" + "feature" → confidence = 0.3 × 2 × 1.5 = 0.9
+
+// Hook output:
+console.log(`
+  🎯 WORKFLOW SUGGESTION (Confidence: 90%)
+  
+  Pattern detected: Feature Implementation
+  
+  Recommended workflow: feature-design
+  
+  This workflow provides:
+  - ArchitectAgent: Design analysis with Gemini
+  - ImplementerAgent: Code generation with Rovodev
+  - TesterAgent: Test suite creation with Qwen
+  
+  To execute: mcp__unified-ai-mcp__smart-workflows({
+    workflow: "feature-design",
+    params: {
+      featureDescription: "OAuth authentication feature",
+      targetFiles: ["src/auth/", "src/middleware/"]
+    }
+  })
+`);
+```
+
+---
+#### claude-context-reminder.sh
+
+**Tipo:** PostToolUse
+
+**Scopo:** Remind Claude di usare claude-context semantic search dopo operazioni di lettura file.
+
+**Triggers:**
+- Dopo Read su >3 file consecutivi
+- Dopo Grep con >100 risultati
+- Dopo Bash find commands
+
+**Output:** Reminder message suggerendo mcp__claude-context__search_code per ricerche semantiche.
+
+---
+#### memory-search-reminder.sh
+
+**Tipo:** PostToolUse
+
+**Scopo:** Remind Claude di cercare in OpenMemory prima di implementare soluzioni già viste.
+
+**Triggers:**
+- Dopo Write di nuovo file
+- Dopo pattern "implement|create|build" rilevato
+
+**Output:** Suggerisce mcp__openmemory__openmemory_query per verificare soluzioni esistenti.
+
+---
+### Configurazione Hook
+
+Gli hook sono configurati in `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "postToolUse": [
+      {
+        "type": "command",
+        "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/claude-context-reminder.sh"
+      }
+    ],
+    "userPromptSubmit": [
+      {
+        "type": "command",
+        "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/workflow-pattern-detector.ts"
+      }
+    ]
+  }
+}
+```
+
+**Note:** PreToolUse hooks sono experimental e potrebbero non essere visibili nell'output di Claude Code.
 
 ---
 
@@ -489,11 +791,11 @@ const result = await executeWorkflow(
 {
   "workflow": "feature-design",
   "params": {
-    "featureDescription": "Add real-time collaboration feature allowing multiple users to edit documents simultaneously",
-    "targetFiles": ["src/editor/EditorComponent.tsx", "src/api/collaboration.ts"],
-    "includeAPI": true,
-    "includeDB": true,
-    "includeTests": true
+    "featureDescription": "Add metrics collection for token savings",
+    "targetFiles": [".claude/hooks/pre-tool-use-enforcer.ts", "src/utils/tokenEstimator.ts"],
+    "includeUI": false,
+    "complexity": "medium",
+    "testCoverage": true
   }
 }
 ```
@@ -669,6 +971,6 @@ unified-ai workflow run feature-design --feature "Add user authentication"
 
 ---
 
-**Last Updated**: 2025-11-08
+**Last Updated**: 2025-11-09
 **API Version**: 1.1.2
 **Status**: Production Ready

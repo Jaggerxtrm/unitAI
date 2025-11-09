@@ -2,10 +2,25 @@ node_modules/
 npm-debug.log*
 package-lock.json
 yarn.lock
-.env
+
 # Build artifacts
 /dist/
 
+# Database files (sqlite)
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
+
+# Log files
+logs/
+
+# Cache directories
+.claude/tsc-cache/
+.rovodev/
+
+# MCP config (contains API keys)
+.mcp.json
+.cursor/mcp.json
 
 # Debug files
 gemini-error.json
