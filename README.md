@@ -1,12 +1,9 @@
-```
-   _   _       _  __ _          _      _    _   __  __  ____  ____  
+_   _       _  __ _          _      _    _   __  __  ____  ____  
   | | | |_ __ (_)/ _(_) ___  __| |    / \  (_)  |  \/  |/ ___||  _ \ 
   | | | | '_ \| | |_| |/ _ \/ _` |   / _ \ | |  | |\/| | |    | |_) |
   | |_| | | | | |  _| |  __/ (_| |  / ___ \| |  | |  | | |___ |  __/ 
    \___/|_| |_|_|_| |_|\___|\__,_| /_/   \_\_|  |_|  |_|\____||_|    
                                                                       
-```
-
 <div align="center">
 
 **🚀 One MCP Server. Three AI Powerhouses. Infinite Possibilities.**
@@ -32,23 +29,29 @@ A unified [Model Context Protocol](https://modelcontextprotocol.io) server that 
 ### 🎯 **Unified Interface**
 Single MCP server for multiple AI backends - no need to manage separate connections
 
-### 📁 **Smart File References**  
-Use `@filename` syntax to include files in your prompts automatically
+### 🧠 **Agent System**
+Specialized agents (Architect, Implementer, Tester) for domain-focused tasks.
+
+### ⚡ **Smart Workflows**
+6 powerful, pre-built workflows for common development tasks like pre-commit validation and bug hunting.
 
 ### 🛡️ **Safety First**
-Sandbox and shadow modes for safe code execution and testing
+Sandbox and shadow modes for safe code execution and testing.
 
 </td>
 <td width="50%">
 
+### 💰 **Token-Aware Efficiency**
+Autonomous system suggests optimal, token-saving tools (like Serena for code analysis) and workflows, reducing costs by 75-80%.
+
 ### 🔄 **Session Management**
-Restore previous conversations and maintain context across sessions
+Restore previous conversations and maintain context across sessions.
 
 ### ⚡ **Optimized Performance**
-~50% token reduction through intelligent optimization
+~50% token reduction through intelligent optimization and workflow caching.
 
 ### 🎨 **Rich Progress Tracking**
-Real-time feedback on long-running operations
+Real-time feedback on long-running operations.
 
 </td>
 </tr>
@@ -249,150 +252,6 @@ Query Google Gemini with file analysis support.
 
 ---
 
-## 🤖 Agent System (NEW in v1.1.1)
-
-The Unified AI MCP Tool now includes a powerful **Agent System** that provides specialized, domain-focused AI agents for common development tasks. Each agent encapsulates a specific AI backend optimized for its purpose.
-
-### 🏛️ ArchitectAgent
-
-**High-level system design and architecture analysis using Gemini**
-
-Specializes in:
-- System architecture design and patterns
-- Security analysis (OWASP, threat modeling)
-- Refactoring strategies
-- Performance optimization
-- Scalability planning
-
-**Example Usage:**
-```typescript
-import { AgentFactory } from "unified-ai-mcp-tool";
-
-const architect = AgentFactory.createArchitect();
-const result = await architect.execute({
-  task: "Analyze the architecture of our authentication system",
-  files: ["src/auth/", "src/middleware/auth.ts"],
-  focus: "security"
-}, {
-  autonomyLevel: "low",
-  onProgress: (msg) => console.log(msg)
-});
-
-console.log(result.output.analysis);
-console.log(result.output.recommendations);
-```
-
-**Backend:** Gemini 2.5 Pro (no fallback - requires deep reasoning)
-
-### 💻 ImplementerAgent
-
-**Production-ready code generation using Rovodev with Gemini fallback**
-
-Specializes in:
-- Production-quality code generation
-- Bug fixing and modifications
-- Incremental implementation
-- Code quality and best practices
-
-**Example Usage:**
-```typescript
-const implementer = AgentFactory.createImplementer();
-const result = await implementer.execute({
-  task: "Add rate limiting to the API endpoints",
-  targetFiles: ["src/api/routes.ts", "src/middleware/"],
-  approach: "incremental"
-}, {
-  autonomyLevel: "medium",
-  onProgress: (msg) => console.log(msg)
-});
-
-result.output.codeSnippets.forEach(snippet => {
-  console.log(`File: ${snippet.file}`);
-  console.log(snippet.code);
-});
-```
-
-**Backend:** Rovodev (fallback: Gemini 2.5 Pro)
-
-### 🧪 TesterAgent
-
-**Fast test generation and validation using Qwen**
-
-Specializes in:
-- Unit test generation
-- Integration test creation
-- Test coverage analysis
-- Edge case detection
-
-**Example Usage:**
-```typescript
-const tester = AgentFactory.createTester();
-const result = await tester.execute({
-  targetCode: readFileSync("src/utils/parser.ts", "utf-8"),
-  testType: "unit",
-  framework: "jest",
-  coverageGoal: 85
-}, {
-  autonomyLevel: "low",
-  onProgress: (msg) => console.log(msg)
-});
-
-console.log(result.output.testCode);
-console.log(`Coverage: ${result.output.estimatedCoverage}%`);
-console.log(`Tests: ${result.output.testCount}`);
-```
-
-**Backend:** Qwen (no fallback - optimized for speed)
-
-### 🏭 AgentFactory
-
-Create agents dynamically:
-
-```typescript
-import { AgentFactory, AgentType } from "unified-ai-mcp-tool";
-
-// Specific agent creation
-const architect = AgentFactory.createArchitect();
-const implementer = AgentFactory.createImplementer();
-const tester = AgentFactory.createTester();
-
-// Dynamic creation by type
-const agent = AgentFactory.createAgent(AgentType.ARCHITECT);
-
-// Get available agents
-const agents = AgentFactory.getAvailableAgents();
-agents.forEach(a => {
-  console.log(`${a.name}: ${a.specialization}`);
-});
-
-// Find agent by name
-const agent = AgentFactory.getAgentByName("ArchitectAgent");
-```
-
-### 🎯 Feature Design Workflow
-
-The **feature-design** workflow orchestrates all three agents for end-to-end feature development:
-
-1. **ArchitectAgent** - Designs architecture and approach
-2. **ImplementerAgent** - Generates production-ready code
-3. **TesterAgent** - Creates comprehensive tests
-
-**Example:**
-```json
-{
-  "workflow": "feature-design",
-  "params": {
-    "featureDescription": "Add user authentication with JWT tokens",
-    "targetFiles": ["src/auth/", "src/middleware/auth.ts"],
-    "architecturalFocus": "security",
-    "implementationApproach": "incremental",
-    "testType": "integration"
-  }
-}
-```
-
----
-
 ### 🔄 smart-workflows
 
 Intelligent workflows that orchestrate multiple AI backends for complex tasks like parallel code review, pre-commit validation, and bug hunting.
@@ -402,14 +261,15 @@ Intelligent workflows that orchestrate multiple AI backends for complex tasks li
 
 **Parameters:**
 - `workflow` *(required)*: Workflow to execute
-  - `init-session` - AI-powered session initialization with commit analysis
-  - `parallel-review` - Parallel code review with Gemini + Rovodev
-  - `validate-last-commit` - Validate commits with Gemini + Qwen analysis
-  - `feature-design` - End-to-end feature development with all three agents
 - `params` *(optional)*: Workflow-specific parameters
 
-**Available Workflows:** 4 implemented (init-session, parallel-review, validate-last-commit, feature-design)
-**Coming Soon:** pre-commit-validate, bug-hunt
+**Available Workflows:**
+- `init-session`: AI-powered session initialization with commit analysis.
+- `parallel-review`: Parallel code review with Gemini + Rovodev.
+- `validate-last-commit`: Validate commits with Gemini + Qwen analysis.
+- `pre-commit-validate`: Multi-stage validation for staged files.
+- `bug-hunt`: AI-powered bug discovery and root cause analysis.
+- `feature-design`: End-to-end feature development with all three agents.
 
 **Examples:**
 
@@ -431,9 +291,9 @@ Intelligent workflows that orchestrate multiple AI backends for complex tasks li
 
 ```json
 {
-  "workflow": "validate-last-commit",
+  "workflow": "pre-commit-validate",
   "params": {
-    "commit_ref": "HEAD~1"
+    "depth": "thorough"
   }
 }
 ```
@@ -442,89 +302,86 @@ Intelligent workflows that orchestrate multiple AI backends for complex tasks li
 
 ---
 
+## 🤖 Agent System
+
+The Unified AI MCP Tool now includes a powerful **Agent System** that provides specialized, domain-focused AI agents for common development tasks. Each agent encapsulates a specific AI backend optimized for its purpose.
+
+### 🏛️ ArchitectAgent
+
+**High-level system design and architecture analysis using Gemini**
+
+Specializes in:
+- System architecture design and patterns
+- Security analysis (OWASP, threat modeling)
+- Refactoring strategies
+- Performance optimization
+- Scalability planning
+
+### 💻 ImplementerAgent
+
+**Production-ready code generation using Rovodev with Gemini fallback**
+
+Specializes in:
+- Production-quality code generation
+- Bug fixing and modifications
+- Incremental implementation
+- Code quality and best practices
+
+### 🧪 TesterAgent
+
+**Fast test generation and validation using Qwen**
+
+Specializes in:
+- Unit test generation
+- Integration test creation
+- Test coverage analysis
+- Edge case detection
+
+### 🏭 AgentFactory
+
+Create agents dynamically:
+
+```typescript
+import { AgentFactory, AgentType } from "unified-ai-mcp-tool";
+
+// Specific agent creation
+const architect = AgentFactory.createArchitect();
+const implementer = AgentFactory.createImplementer();
+const tester = AgentFactory.createTester();
+
+// Dynamic creation by type
+const agent = AgentFactory.createAgent(AgentType.ARCHITECT);
+```
+
+---
+
 ## 🔄 Smart Workflows
+
+This tool comes with 6 powerful, pre-built workflows to automate common development tasks.
 
 ### 🚀 init-session
 
 **AI-powered session initialization** that analyzes your Git repository and provides an intelligent summary of recent work.
 
-**What it does:**
-- Collects last **10 commits** with full diffs
-- **AI analysis with Rovodev** to synthesize:
-  - Feature changes and new functionality
-  - Bug fixes and their root causes
-  - Refactoring and architectural improvements
-  - Current work status (in-progress, completed, next steps)
-- **Generates semantic memory search queries** based on AI analysis
-- Suggests 2-3 targeted searches for relevant past work
-- Shows current branch, staged and modified files
-- Verifies availability of Qwen, Gemini, and Rovo Dev CLIs
-- Provides session information (timestamp, timezone, working directory)
-
-**No parameters required** - fully automated.
-
-**Example:**
-```json
-{
-  "workflow": "init-session"
-}
-```
-
-**Output includes:**
-- Repository info and recent commits summary
-- **AI Analysis of Recent Work** (synthesized by Rovodev)
-- **Relevant Memories** section with 2-3 semantic search queries
-- Detailed repository status and branch info
-- CLI availability check
-- Session metadata
-
 ### 👥 parallel-review
 
 Run parallel code analysis using Gemini and Rovodev for comprehensive code review.
-
-**What it does:**
-- Analyzes specified files with multiple AI backends simultaneously
-- Provides specialized analysis based on focus area
-- Synthesizes results from different perspectives
-- Offers combined recommendations
-
-**Parameters:**
-- `files` *(required)*: Array of files or directories to analyze
-- `focus` *(optional)*: Analysis focus - "architecture", "security", "performance", "quality", or "all" (default)
-
-**Example:**
-```json
-{
-  "workflow": "parallel-review",
-  "params": {
-    "files": ["src/components/", "src/utils/"],
-    "focus": "security"
-  }
-}
-```
 
 ### ✅ validate-last-commit
 
 Validate a specific Git commit using parallel analysis with Gemini and Qwen.
 
-**What it does:**
-- Retrieves commit information and diff
-- Analyzes changes for breaking changes and issues
-- Provides architectural and technical perspectives
-- Returns verdict with recommendations
+### 🔒 pre-commit-validate
 
-**Parameters:**
-- `commit_ref` *(optional)*: Git reference to validate (default: "HEAD")
+Validate staged changes before committing with configurable depth levels (`quick`, `thorough`, `paranoid`).
 
-**Example:**
-```json
-{
-  "workflow": "validate-last-commit",
-  "params": {
-    "commit_ref": "HEAD~1"
-  }
-}
-```
+### 🐞 bug-hunt
+
+AI-powered bug discovery and analysis with automatic file discovery and root cause analysis.
+
+### 🎨 feature-design
+
+Design new features with architectural planning and implementation guidance using multi-agent collaboration.
 
 ---
 
@@ -538,11 +395,6 @@ All `ask-*` tools support powerful file references:
 | `#filename` | Alternative syntax | `#package.json` |
 | `@directory/` | Include directory | `@src/utils/` |
 | Multiple refs | Reference many files | `@file1.ts @file2.ts` |
-
-**Example:**
-```
-@src/index.ts @src/tools/ Explain how the tool registration works
-```
 
 ---
 
@@ -672,25 +524,28 @@ npm start
 ```
 unified-ai-mcp-tool/
 ├── src/
+│   ├── agents/             # Agent implementations
+│   │   ├── ArchitectAgent.ts
+│   │   ├── ImplementerAgent.ts
+│   │   └── TesterAgent.ts
 │   ├── tools/              # Tool definitions
 │   │   ├── ask-qwen.tool.ts
 │   │   ├── ask-rovodev.tool.ts
 │   │   ├── ask-gemini.tool.ts
-│   │   ├── smart-workflows.tool.ts  # NEW: Workflow router
-│   │   ├── registry.ts     # Tool registry
-│   │   └── index.ts
-│   ├── workflows/          # NEW: Workflow implementations
-│   │   ├── types.ts       # Shared types
-│   │   ├── utils.ts       # Common utilities
-│   │   ├── index.ts       # Workflow registry
+│   │   └── smart-workflows.tool.ts
+│   ├── workflows/          # Workflow implementations
 │   │   ├── init-session.workflow.ts
 │   │   ├── parallel-review.workflow.ts
-│   │   └── validate-last-commit.workflow.ts
+│   │   ├── validate-last-commit.workflow.ts
+│   │   ├── pre-commit-validate.workflow.ts
+│   │   ├── bug-hunt.workflow.ts
+│   │   └── feature-design.workflow.ts
 │   ├── utils/              # Utilities
-│   │   ├── aiExecutor.ts   # CLI execution
-│   │   ├── commandExecutor.ts
-│   │   ├── gitHelper.ts    # NEW: Git operations
-│   │   └── logger.ts
+│   │   ├── aiExecutor.ts
+│   │   ├── gitHelper.ts
+│   │   ├── structuredLogger.ts
+│   │   ├── permissionManager.ts
+│   │   └── tokenEstimator.ts
 │   ├── constants.ts        # Configuration
 │   └── index.ts            # MCP server
 ├── dist/                   # Compiled output
@@ -702,105 +557,42 @@ unified-ai-mcp-tool/
 
 ## 🧪 Testing
 
-### Local Testing with Claude Desktop
-
-To test your local changes with Claude Desktop:
-
-1. **Build the project**:
-```bash
-npm run build
-```
-
-2. **Configure Claude Desktop**:
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or equivalent on Windows/Linux:
-
-```json
-{
-  "mcpServers": {
-    "unified-ai-local": {
-      "command": "node",
-      "args": ["/path/to/unified-ai-mcp-tool/dist/index.js"]
-    }
-  }
-}
-```
-
-3. **Restart Claude Desktop** to load the new configuration
-
-4. **Test workflows**:
-```
-Per favore, esegui il workflow init-session
-```
-
-### Quick Testing with Test Script
-
-We've included a test script for rapid workflow testing:
+This project uses `vitest` for testing.
 
 ```bash
-# Make the test script executable
-chmod +x test-workflows.js
+# Run all tests
+npm test
 
-# Run the tests
-node test-workflows.js
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
 ```
-
-This will test:
-- `init-session` workflow
-- `validate-last-commit` workflow
-- Server startup and tool registration
-
-### Development Mode
-
-For continuous testing during development:
-
-```bash
-npm run dev
-```
-
-This starts the MCP server in development mode with automatic reloading.
 
 ---
 
 ## 📊 Performance
 
-### Token Optimization
+### Autonomous Token-Aware System
 
-The Unified AI MCP has been optimized to reduce token waste:
+This tool features a sophisticated system to optimize token usage and reduce costs.
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Tools** | 7 | 3 | 57% reduction |
-| **Token Usage** | ~10k | ~5k | 50% reduction |
-| **Context Saved** | - | ~10-15 files | Per conversation |
+- **Token Estimation**: Before executing a tool, the system estimates the token cost.
+- **Tool Suggestion**: For large files or inefficient operations (like reading a whole file), it suggests more efficient alternatives like using the **Serena** tool for symbol-based navigation, saving 75-80% of tokens.
+- **Workflow Automation**: It detects patterns in user prompts to suggest and orchestrate the most appropriate workflow for the task.
 
-See [improvements.md](./improvements.md) for detailed optimization information.
+See [docs/TOKEN_METRICS.md](./docs/TOKEN_METRICS.md) for detailed optimization information.
 
 ---
 
 ## 🚀 Future Developments
 
-### Recent Enhancements (v1.1.0)
+Based on the [v3.0 Plan](./docs/PLAN.md), future developments may include:
 
--   **`init-session`**: Enhanced with AI analysis! Now uses Rovodev to analyze the last 10 commits and provide an intelligent summary of recent work, including feature changes, bug fixes, and refactoring efforts.
-
-### Additional Smart Workflows (Planned)
-
-We're planning to expand with additional workflow capabilities:
-
--   **`pre-commit-validate`**: Multi-stage validation pipeline for staged files, checking for common issues, secrets, and test coverage
--   **`bug-hunt`**: Comprehensive bug analysis workflow that combines error pattern analysis with codebase similarity search
--   **`search-library`**: A powerful tool that leverages external knowledge bases like Context7 or DeepWiki to find up-to-date libraries, best practices, and documentation for any given task.
-
-### Workflow Enhancements
-
-Future improvements to the workflow system:
-- Workflow chaining capabilities
-- Custom workflow definitions via configuration
-- Caching for repeated analyses
-- Webhook integration for Git hooks
-- Export workflow results as markdown/HTML
-
-*Note: For workflows requiring shell access or file system modifications, tools like `ask-qwen` and `ask-gemini` would likely require `--yolo` parameter to grant necessary permissions.*
+- **External MCP Integrations**: Deeper integration with tools like Serena and claude-context.
+- **Learning & Adaptation**: A workflow memory system to learn from past executions and adapt its behavior.
+- **Adaptive Backend Selection**: Automatically select the best AI backend for a given task based on historical performance.
 
 ---
 

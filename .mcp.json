@@ -26,7 +26,7 @@
       "type": "stdio",
       "command": "node",
       "args": [
-        "/home/dawid/Projects/unified-ai-mcp-tool/dist/index.js"
+        "/home/jagger/projects/unified-ai-mcp-tool/dist/index.js"
       ],
       "env": {}
     },
@@ -46,6 +46,18 @@
       "env": {}
     },
     "openmemory": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "openmemory"
+      ],
+      "env": {
+        "OPENMEMORY_API_KEY": "om-qtoz1iq0fy6jmugce2mrg1841tj35cj4",
+        "CLIENT_NAME": "cursor"
+      }
+    },
+    "memory-local": {
       "type": "stdio",
       "command": "node",
       "args": ["/home/dawid/Projects/unified-ai-mcp-tool/OpenMemory/backend/dist/ai/mcp.js"],
