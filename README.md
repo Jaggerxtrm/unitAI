@@ -6,7 +6,7 @@ _   _       _  __ _          _      _    _   __  __  ____  ____
                                                                       
 <div align="center">
 
-**🚀 One MCP Server. Three AI Powerhouses. Infinite Possibilities.**
+**One MCP Server. Three AI Powerhouses. Infinite Possibilities.**
 
 [![npm version](https://img.shields.io/npm/v/@jaggerxtrm/unified-ai-mcp-tool.svg)](https://www.npmjs.com/package/@jaggerxtrm/unified-ai-mcp-tool)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -20,37 +20,37 @@ A unified [Model Context Protocol](https://modelcontextprotocol.io) server that 
 
 ---
 
-## ✨ Features
+## Features
 
 <table>
 <tr>
 <td width="50%">
 
-### 🎯 **Unified Interface**
+### Unified Interface
 Single MCP server for multiple AI backends - no need to manage separate connections
 
-### 🧠 **Agent System**
+### Agent System
 Specialized agents (Architect, Implementer, Tester) for domain-focused tasks.
 
-### ⚡ **Smart Workflows**
+### Smart Workflows
 6 powerful, pre-built workflows for common development tasks like pre-commit validation and bug hunting.
 
-### 🛡️ **Safety First**
+### Safety First
 Sandbox and shadow modes for safe code execution and testing.
 
 </td>
 <td width="50%">
 
-### 💰 **Token-Aware Efficiency**
+### Token-Aware Efficiency
 Autonomous system suggests optimal, token-saving tools (like Serena for code analysis) and workflows, reducing costs by 75-80%.
 
-### 🔄 **Session Management**
+### Session Management
 Restore previous conversations and maintain context across sessions.
 
-### ⚡ **Optimized Performance**
+### Optimized Performance
 ~50% token reduction through intelligent optimization and workflow caching.
 
-### 🎨 **Rich Progress Tracking**
+### Rich Progress Tracking
 Real-time feedback on long-running operations.
 
 </td>
@@ -59,7 +59,7 @@ Real-time feedback on long-running operations.
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ### Claude Desktop (Quickest)
 
@@ -95,7 +95,7 @@ npm update -g @jaggerxtrm/unified-ai-mcp-tool
 
 ---
 
-## 🎯 Quick Start
+## Quick Start
 
 ### 1. Add to MCP Configuration
 
@@ -141,9 +141,9 @@ Once configured, you can use any of the three AI tools through your MCP client:
 
 ---
 
-## 🛠️ Available Tools
+## Available Tools
 
-### 🤖 ask-qwen
+### ask-qwen
 
 Query Qwen AI with support for file analysis, codebase exploration, and large context windows.
 
@@ -183,7 +183,7 @@ Query Qwen AI with support for file analysis, codebase exploration, and large co
 
 ---
 
-### 🏢 ask-rovodev
+### ask-rovodev
 
 Query Atlassian Rovo Dev AI with shadow mode and session management.
 
@@ -218,7 +218,7 @@ Query Atlassian Rovo Dev AI with shadow mode and session management.
 
 ---
 
-### 🌟 ask-gemini
+### ask-gemini
 
 Query Google Gemini with file analysis support.
 
@@ -252,7 +252,7 @@ Query Google Gemini with file analysis support.
 
 ---
 
-### 🔄 smart-workflows
+### smart-workflows
 
 Intelligent workflows that orchestrate multiple AI backends for complex tasks like parallel code review, pre-commit validation, and bug hunting.
 
@@ -302,11 +302,11 @@ Intelligent workflows that orchestrate multiple AI backends for complex tasks li
 
 ---
 
-## 🤖 Agent System
+## Agent System
 
 The Unified AI MCP Tool now includes a powerful **Agent System** that provides specialized, domain-focused AI agents for common development tasks. Each agent encapsulates a specific AI backend optimized for its purpose.
 
-### 🏛️ ArchitectAgent
+### ArchitectAgent
 
 **High-level system design and architecture analysis using Gemini**
 
@@ -317,7 +317,7 @@ Specializes in:
 - Performance optimization
 - Scalability planning
 
-### 💻 ImplementerAgent
+### ImplementerAgent
 
 **Production-ready code generation using Rovodev with Gemini fallback**
 
@@ -327,7 +327,7 @@ Specializes in:
 - Incremental implementation
 - Code quality and best practices
 
-### 🧪 TesterAgent
+### TesterAgent
 
 **Fast test generation and validation using Qwen**
 
@@ -337,7 +337,7 @@ Specializes in:
 - Test coverage analysis
 - Edge case detection
 
-### 🏭 AgentFactory
+### AgentFactory
 
 Create agents dynamically:
 
@@ -355,37 +355,37 @@ const agent = AgentFactory.createAgent(AgentType.ARCHITECT);
 
 ---
 
-## 🔄 Smart Workflows
+## Smart Workflows
 
 This tool comes with 6 powerful, pre-built workflows to automate common development tasks.
 
-### 🚀 init-session
+### init-session
 
 **AI-powered session initialization** that analyzes your Git repository and provides an intelligent summary of recent work.
 
-### 👥 parallel-review
+### parallel-review
 
 Run parallel code analysis using Gemini and Rovodev for comprehensive code review.
 
-### ✅ validate-last-commit
+### validate-last-commit
 
 Validate a specific Git commit using parallel analysis with Gemini and Qwen.
 
-### 🔒 pre-commit-validate
+### pre-commit-validate
 
 Validate staged changes before committing with configurable depth levels (`quick`, `thorough`, `paranoid`).
 
-### 🐞 bug-hunt
+### bug-hunt
 
 AI-powered bug discovery and analysis with automatic file discovery and root cause analysis.
 
-### 🎨 feature-design
+### feature-design
 
 Design new features with architectural planning and implementation guidance using multi-agent collaboration.
 
 ---
 
-## 📚 File Reference Syntax
+## File Reference Syntax
 
 All `ask-*` tools support powerful file references:
 
@@ -398,11 +398,11 @@ All `ask-*` tools support powerful file references:
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Execution Modes
 
-#### 🛡️ Sandbox Mode (Qwen, Gemini)
+#### Sandbox Mode (Qwen, Gemini)
 Safe environment for code execution:
 ```json
 {
@@ -411,7 +411,7 @@ Safe environment for code execution:
 }
 ```
 
-#### 👻 Shadow Mode (Rovo Dev)
+#### Shadow Mode (Rovo Dev)
 Work on temporary workspace copy:
 ```json
 {
@@ -420,7 +420,7 @@ Work on temporary workspace copy:
 }
 ```
 
-#### ✅ Approval Modes (Qwen)
+#### Approval Modes (Qwen)
 Control operation approval:
 - `plan` - Analysis only
 - `default` - Prompt each time
@@ -429,7 +429,7 @@ Control operation approval:
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 ### Required CLIs
 
@@ -496,7 +496,7 @@ gemini --version
 
 ---
 
-## 🏗️ Development
+## Development
 
 ```bash
 # Clone repository
@@ -555,7 +555,7 @@ unified-ai-mcp-tool/
 
 ---
 
-## 🧪 Testing
+## Testing
 
 This project uses `vitest` for testing.
 
@@ -572,7 +572,7 @@ npm run test:coverage
 
 ---
 
-## 📊 Performance
+## Performance
 
 ### Autonomous Token-Aware System
 
@@ -586,7 +586,7 @@ See [docs/TOKEN_METRICS.md](./docs/TOKEN_METRICS.md) for detailed optimization i
 
 ---
 
-## 🚀 Future Developments
+## Future Developments
 
 Based on the [v3.0 Plan](./docs/PLAN.md), future developments may include:
 
@@ -596,7 +596,7 @@ Based on the [v3.0 Plan](./docs/PLAN.md), future developments may include:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
@@ -608,13 +608,13 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🔗 Links
+## Links
 
 - 📦 [npm Package](https://www.npmjs.com/package/@jaggerxtrm/unified-ai-mcp-tool)
 - 🐙 [GitHub Repository](https://github.com/jaggerxtrm/unified-ai-mcp-tool)
@@ -627,6 +627,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-⭐ Star this repo if you find it useful!
+Star this repo if you find it useful!
 
 </div>
