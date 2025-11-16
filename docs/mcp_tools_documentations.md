@@ -1,6 +1,6 @@
 ---
 date_created: Sunday, November 16th 2025, 1:47:53 pm
-date_modified: Sunday, November 16th 2025, 1:57:40 pm
+date_modified: Sunday, November 16th 2025, 2:12:48 pm
 ---
 https://cursor.com/docs/cli/overview - cursor CLI agent
 	- la sintassi è: cursor-agent -p "prompt" --model --output-format text 
