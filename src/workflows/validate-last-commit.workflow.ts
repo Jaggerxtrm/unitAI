@@ -21,7 +21,7 @@ const validateLastCommitSchema = z.object({
 /**
  * Esegue il workflow di validazione dell'ultimo commit
  */
-async function executeValidateLastCommit(
+export async function executeValidateLastCommit(
   params: z.infer<typeof validateLastCommitSchema>,
   onProgress?: ProgressCallback
 ): Promise<string> {
@@ -206,7 +206,7 @@ Per dettagli specifici, consulta le analisi individuali sopra.
   
   onProgress?.(`Validazione commit completata: ${successful.length}/${analysisResult.results.length} analisi riuscite`);
   
-  return formatWorkflowOutput(`Validazione Commit: ${commit_ref}`, outputContent, metadata);
+  return formatWorkflowOutput(`Validazione Commit (Commit Validation): ${commit_ref}`, outputContent, metadata);
 }
 
 /**

@@ -15,11 +15,22 @@ import { initSessionWorkflow } from "./init-session.workflow.js";
 import { validateLastCommitWorkflow } from "./validate-last-commit.workflow.js";
 import { featureDesignWorkflow } from "./feature-design.workflow.js";
 import { bugHuntWorkflow } from "./bug-hunt.workflow.js";
+import { triangulatedReviewWorkflow } from "./triangulated-review.workflow.js";
+import { autoRemediationWorkflow } from "./auto-remediation.workflow.js";
+import { refactorSprintWorkflow } from "./refactor-sprint.workflow.js";
+import { openspecDrivenDevelopmentWorkflow } from "./openspec-driven-development.workflow.js";
 
 /**
  * Registro di tutti i workflow disponibili
  */
 const workflowRegistry: Record<string, WorkflowDefinition> = {};
+let workflowsInitialized = false;
+
+function ensureWorkflowsInitialized(): void {
+  if (!workflowsInitialized) {
+    initializeWorkflowRegistry();
+  }
+}
 
 /**
  * Registra un workflow nel registro
@@ -35,6 +46,7 @@ export function registerWorkflow<TParams>(
  * Ottiene un workflow dal registro
  */
 export function getWorkflow(name: string): WorkflowDefinition | undefined {
+  ensureWorkflowsInitialized();
   return workflowRegistry[name];
 }
 
@@ -42,6 +54,7 @@ export function getWorkflow(name: string): WorkflowDefinition | undefined {
  * Elenca tutti i workflow disponibili
  */
 export function listWorkflows(): string[] {
+  ensureWorkflowsInitialized();
   return Object.keys(workflowRegistry);
 }
 
@@ -53,6 +66,7 @@ export async function executeWorkflow(
   params: any,
   onProgress?: ProgressCallback
 ): Promise<string> {
+  ensureWorkflowsInitialized();
   const workflow = getWorkflow(name);
   if (!workflow) {
     throw new Error(`Workflow non trovato: ${name}`);
@@ -83,7 +97,11 @@ export const smartWorkflowsSchema = z.object({
     "init-session",
     "validate-last-commit",
     "feature-design",
-    "bug-hunt"
+    "bug-hunt",
+    "triangulated-review",
+    "auto-remediation",
+    "refactor-sprint",
+    "openspec-driven-development"
   ]).describe("Workflow da eseguire"),
   params: z.record(z.any()).optional().describe("Parametri specifici del workflow")
 });
@@ -95,7 +113,14 @@ export const workflowSchemas = {
   "parallel-review": z.object({
     files: z.array(z.string()).describe("File da analizzare"),
     focus: z.enum(["architecture", "security", "performance", "quality", "all"])
-      .optional().default("all").describe("Area di focus dell'analisi")
+      .optional().default("all").describe("Area di focus dell'analisi"),
+    strategy: z.enum(["standard", "double-check"]).optional().default("standard")
+      .describe("Strategia di revisione"),
+    backendOverrides: z.array(z.string()).optional()
+      .describe("Override manuale dei backend"),
+    attachments: z.array(z.string()).optional()
+      .describe("File da allegare a Cursor/Droid"),
+    writeReport: z.boolean().optional().describe("Parametro legacy (non utilizzato)")
   }),
   
   "pre-commit-validate": z.object({
@@ -103,7 +128,10 @@ export const workflowSchemas = {
       .optional().default("thorough").describe("Profondità della validazione")
   }),
   
-  "init-session": z.object({}).describe("Nessun parametro richiesto"),
+  "init-session": z.object({
+    autonomyLevel: z.enum(["read-only", "low", "medium", "high"]).optional(),
+    commitCount: z.number().int().min(1).max(50).optional()
+  }).describe("Parametri opzionali per init-session"),
   
   "validate-last-commit": z.object({
     commit_ref: z.string().optional().default("HEAD")
@@ -125,7 +153,41 @@ export const workflowSchemas = {
   "bug-hunt": z.object({
     symptoms: z.string().describe("Descrizione dei sintomi del problema"),
     suspected_files: z.array(z.string()).optional()
-      .describe("File sospetti da analizzare")
+      .describe("File sospetti da analizzare"),
+    attachments: z.array(z.string()).optional()
+      .describe("File aggiuntivi da allegare all'analisi (log, dump, ecc.)"),
+    backendOverrides: z.array(z.string()).optional()
+      .describe("Override manuale dei backend AI"),
+    autonomyLevel: z.enum(["LOW", "MEDIUM", "HIGH", "AUTONOMOUS"]).optional()
+  }),
+  "triangulated-review": z.object({
+    files: z.array(z.string()).describe("File da analizzare"),
+    goal: z.enum(["bugfix", "refactor"]).optional().default("refactor")
+      .describe("Obiettivo principale della revisione"),
+    autonomyLevel: z.enum(["read-only", "low", "medium", "high"])
+      .optional()
+  }),
+  "auto-remediation": z.object({
+    symptoms: z.string().describe("Descrizione del bug da correggere"),
+    maxActions: z.number().int().min(1).max(10).optional()
+      .describe("Numero massimo di step nel piano"),
+    autonomyLevel: z.enum(["read-only", "low", "medium", "high"]).optional()
+  }),
+  "refactor-sprint": z.object({
+    targetFiles: z.array(z.string()).describe("File da refactorizzare"),
+    scope: z.string().describe("Descrizione dello scope"),
+    depth: z.enum(["light", "balanced", "deep"]).optional().default("balanced"),
+    autonomyLevel: z.enum(["read-only", "low", "medium", "high"]).optional()
+  }),
+  "openspec-driven-development": z.object({
+    featureDescription: z.string().describe("Descrizione della feature da implementare"),
+    projectInitialized: z.boolean().optional().default(false).describe("Se OpenSpec è già inizializzato"),
+    aiTools: z.array(z.string()).optional().describe("AI tools da configurare"),
+    changeType: z.enum(["feature", "bugfix", "improvement", "refactor"]).optional().default("feature"),
+    targetFiles: z.array(z.string()).optional().describe("File coinvolti nell'implementazione"),
+    implementationApproach: z.enum(["incremental", "full-rewrite", "minimal"]).optional().default("incremental"),
+    autonomyLevel: z.enum(["read-only", "low", "medium", "high"]).optional().default("low"),
+    validationBackends: z.array(z.enum(["ask-gemini", "cursor-agent", "droid"])).optional().describe("Backend per validazione AI")
   })
 };
 
@@ -134,6 +196,10 @@ export const workflowSchemas = {
  * Questa funzione sarà chiamata dopo l'import di tutti i workflow
  */
 export function initializeWorkflowRegistry(): void {
+  if (workflowsInitialized) {
+    return;
+  }
+  workflowsInitialized = true;
   // I workflow saranno registrati qui quando implementati
   registerWorkflow("parallel-review", parallelReviewWorkflow);
   registerWorkflow("pre-commit-validate", preCommitValidateWorkflow);
@@ -141,6 +207,10 @@ export function initializeWorkflowRegistry(): void {
   registerWorkflow("validate-last-commit", validateLastCommitWorkflow);
   registerWorkflow("feature-design", featureDesignWorkflow);
   registerWorkflow("bug-hunt", bugHuntWorkflow);
+  registerWorkflow("triangulated-review", triangulatedReviewWorkflow);
+  registerWorkflow("auto-remediation", autoRemediationWorkflow);
+  registerWorkflow("refactor-sprint", refactorSprintWorkflow);
+  registerWorkflow("openspec-driven-development", openspecDrivenDevelopmentWorkflow);
 
   // Removed console.log - corrupts MCP JSON protocol
   // Use logger.debug() if logging needed
@@ -150,5 +220,6 @@ export function initializeWorkflowRegistry(): void {
  * Ottiene lo schema Zod per un workflow specifico
  */
 export function getWorkflowSchema(workflowName: string): z.ZodSchema | undefined {
+  ensureWorkflowsInitialized();
   return workflowSchemas[workflowName as keyof typeof workflowSchemas];
 }

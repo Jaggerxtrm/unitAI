@@ -28,6 +28,15 @@
     ],
     "PreToolUse": [
       {
+        "matcher": "Read|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/track-recent-files.sh"
+          }
+        ]
+      },
+      {
         "matcher": "Read|Bash|Grep",
         "hooks": [
           {
@@ -48,29 +57,11 @@
         ]
       },
       {
-        "matcher": "Bash|Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/claude-context-reminder.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/memory-search-reminder.sh"
-          }
-        ]
-      },
-      {
         "matcher": "Read|Bash|Grep",
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/workflow-pattern-detector.sh"
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/unified-post-tool-reminder.sh"
           }
         ]
       }

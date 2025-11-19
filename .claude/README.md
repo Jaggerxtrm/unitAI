@@ -4,35 +4,41 @@ This directory contains an auto-activation system for Claude Code skills that en
 
 ## System Overview
 
-The system implements 6 key skills and 3 hooks to ensure Claude follows best practices when working on the py_backend project:
+The system implements 7 key skills and several hooks to ensure Claude follows best practices when working on the project.
 
-### Skills:
-1. **claude-context-usage** - Always use semantic search first
-2. **documentation-lookup** - Efficient documentation access  
-3. **second-guessing-verification** - MCP tool validation
-4. **pre-commit-ai-review** - AI-powered code review
-5. **pre-memory-commit-verification** - Quality checks before commits
-6. **post-stop-resumption** - Proper session resumption
+### Skills
+Defined in `skills/skill-rules.json`:
 
-### Hooks:
-1. **skill-activation** - Auto-suggests relevant skills
-2. **post-tool-use-tracker** - Tracks file changes
-3. **claude-context-reminder** - Logs direct file search usage
+1.  **claude-context-usage** - Ensures usage of semantic search (`claude-context`) before other search methods.
+2.  **documentation-lookup** - Efficient access to project documentation using AI tools.
+3.  **code-validation** - Guides verification workflows before commits or memory additions.
+4.  **serena-surgical-editing** - Enforces symbol-level code surgery for safer edits in TS/JS.
+5.  **unified-ai-orchestration** - Manages multi-model AI analysis (Gemini, Qwen) for complex tasks.
+6.  **memory-search-reminder** - Reminds to check past memories before starting new implementations.
+7.  **post-stop-resumption** - Assists in resuming work effectively after interruptions.
+
+### Hooks
+Configured in `settings.json` and located in `hooks/`:
+
+1.  **skill-activation-prompt** (UserPromptSubmit) - Analyzes prompts to auto-suggest relevant skills.
+2.  **smart-tool-enforcer** (PreToolUse) - Enforces tool usage rules (e.g., preventing `grep` when `claude-context` should be used).
+3.  **post-tool-use-tracker** (PostToolUse) - Tracks file changes and tool usage.
+4.  **claude-context-reminder** (PostToolUse) - Reminds to use context search if missed.
+5.  **memory-search-reminder** (PostToolUse) - Reinforces memory checks.
+6.  **workflow-pattern-detector** (PostToolUse) - Detects patterns to suggest workflows.
 
 ## Key Features
 
-- Auto-activation of relevant skills based on context
-- Claude-context semantic search as primary search method
-- MCP tool integration for validation and review
-- Session continuity and interruption handling
-- Quality assurance before commits/memories
+- **Auto-activation**: Skills are suggested automatically based on keywords, intent, and file context.
+- **Guardrails**: `smart-tool-enforcer` prevents suboptimal tool usage.
+- **Context Awareness**: Specialized skills for editing, searching, and validation.
+- **Multi-Model Support**: Integration with other AI models for comprehensive reviews.
 
 ## Quick Start
 
 Skills activate automatically based on:
-- Keywords in prompts
-- File types and content being worked on
-- Actions being performed
-- Context of the conversation
+- **Keywords** in your prompts (e.g., "refactor", "search", "commit")
+- **File types** you are working on (e.g., `.ts` triggers surgical editing)
+- **Actions** you perform (e.g., using `bash` triggers context reminders)
 
-For more details, see IMPLEMENTATION_SUMMARY.md
+For configuration details, check `skills/skill-rules.json`.

@@ -129,53 +129,53 @@ npm update -g @jaggerxtrm/unified-ai-mcp-tool
 Once configured, you can use any of the three AI tools through your MCP client:
 
 ```
-# Query Qwen about your codebase
-@src/ Explain the architecture of this project
-
-# Ask Rovo Dev to refactor code safely
-@utils/helper.ts Refactor this with shadow mode
-
-# Get Gemini to review documentation
+# Ask Gemini to review documentation
 @README.md Is this documentation clear and complete?
+
+# Run Cursor Agent for a refactor plan
+@src/utils/aiExecutor.ts Proponi un refactor modulare per gestire i backend
+
+# Chiedi a Droid una checklist di remediation
+symptoms: Upload 50MB → 500 error  
+maxActions: 5
 ```
 
 ---
 
 ## Available Tools
 
-### ask-qwen
+### cursor-agent
 
-Query Qwen AI with support for file analysis, codebase exploration, and large context windows.
+Cursor Agent headless CLI per refactor, bug fixing e patch chirurgiche multi-modello (GPT-5.x/Sonnet/Composer).
 
 <details>
 <summary><b>Parameters & Examples</b></summary>
 
 **Parameters:**
-- `prompt` *(required)*: Query for Qwen. Use `@filename` or `#filename` to include files
-- `model` *(optional)*: Model to use (default: `qwen3-coder-plus`)
-  - `qwen3-coder-plus` - Best balance
-  - `qwen3-coder-turbo` - Faster
-  - `qwen3-coder-pro` - Highest quality
-  - `qwen3-coder` - Base model
-  - `qwen3-coder-fallback` - Fallback
-- `sandbox` *(optional)*: Use sandbox mode for safe code execution
-- `approvalMode` *(optional)*: Approval mode: `plan`/`default`/`auto-edit`/`yolo`
-- `yolo` *(optional)*: Auto-approve all operations
+- `prompt` *(required)*: Richiesta principale (`@file` per allegare file)
+- `model` *(optional)*: Uno tra `gpt-5.1`, `gpt-5`, `composer-1`, `sonnet-4.5`, `haiku-5`, `deepseek-v3`
+- `outputFormat` *(optional)*: `text` (default) o `json`
+- `projectRoot` *(optional)*: Passato a `--cwd`
+- `files` *(optional)*: Array di percorsi da passare come `--file`
+- `autoApprove` *(optional)*: Abilita `--auto-approve`
 
 **Examples:**
 
 ```json
 {
-  "prompt": "@src/ Explain this codebase structure",
-  "model": "qwen3-coder-plus"
+  "prompt": "@src/workflows/parallel-review.workflow.ts Proponi un refactor modulare",
+  "model": "sonnet-4.5",
+  "files": ["src/workflows/parallel-review.workflow.ts"],
+  "projectRoot": "/home/dawid/Projects/unified-ai-mcp-tool"
 }
 ```
 
 ```json
 {
-  "prompt": "Create a sorting algorithm and test it",
-  "sandbox": true,
-  "yolo": true
+  "prompt": "Genera una checklist di test per il modulo aiExecutor",
+  "model": "composer-1",
+  "outputFormat": "json",
+  "autoApprove": true
 }
 ```
 
@@ -183,34 +183,39 @@ Query Qwen AI with support for file analysis, codebase exploration, and large co
 
 ---
 
-### ask-rovodev
+### droid
 
-Query Atlassian Rovo Dev AI with shadow mode and session management.
+Factory Droid CLI (`droid exec`) basato su GLM-4.6 per generare checklist operative e remediation plan autonomi.
 
 <details>
 <summary><b>Parameters & Examples</b></summary>
 
 **Parameters:**
-- `prompt` *(required)*: Query for Rovodev. Use `@filename` to reference files
-- `yolo` *(optional)*: Auto-approve all operations
-- `shadow` *(optional)*: Shadow mode for safe changes
-- `verbose` *(optional)*: Verbose output
-- `restore` *(optional)*: Continue last session
+- `prompt` *(required)*: Descrizione del task/sintomi
+- `auto` *(optional)*: `low`, `medium`, `high` (default `low`)
+- `outputFormat` *(optional)*: `text` o `json`
+- `sessionId` *(optional)*: Continua una sessione esistente
+- `skipPermissionsUnsafe` *(optional)*: Consente `--skip-permissions-unsafe` (solo autonomia HIGH)
+- `files` *(optional)*: Allegati passati con `--file`
+- `cwd` *(optional)*: Working directory
 
 **Examples:**
 
 ```json
 {
-  "prompt": "@package.json Analyze dependencies",
-  "verbose": true
+  "prompt": "Sintomi: errori 500 su upload >50MB. Genera un piano di fix in 5 step.",
+  "auto": "medium",
+  "files": ["logs/upload-error.log"],
+  "outputFormat": "text"
 }
 ```
 
 ```json
 {
-  "prompt": "@src/utils/ Refactor these utilities",
-  "shadow": true,
-  "yolo": true
+  "prompt": "Continua la sessione precedente e verifica i nuovi log",
+  "sessionId": "session-42",
+  "auto": "low",
+  "cwd": "/home/dawid/Projects/unified-ai-mcp-tool"
 }
 ```
 
@@ -529,8 +534,8 @@ unified-ai-mcp-tool/
 │   │   ├── ImplementerAgent.ts
 │   │   └── TesterAgent.ts
 │   ├── tools/              # Tool definitions
-│   │   ├── ask-qwen.tool.ts
-│   │   ├── ask-rovodev.tool.ts
+│   │   ├── cursor-agent.tool.ts
+│   │   ├── droid.tool.ts
 │   │   ├── ask-gemini.tool.ts
 │   │   └── smart-workflows.tool.ts
 │   ├── workflows/          # Workflow implementations

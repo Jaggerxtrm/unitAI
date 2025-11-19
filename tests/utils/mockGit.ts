@@ -13,36 +13,15 @@ export interface MockGitCommand {
 /**
  * Mock git command with custom output
  */
-export function mockGitCommand(command: string, output: string, exitCode = 0): void {
-  // Store parameters to ensure proper closure
-  const commandRef = command;
-  const outputRef = output;
-  const exitCodeRef = exitCode;
+let registeredCommands: MockGitCommand[] = [];
 
+function updateCommandMock(): void {
+  const commandsSnapshot = [...registeredCommands];
   vi.doMock('../../src/utils/commandExecutor.js', () => ({
-    executeCommand: vi.fn().mockImplementation(async (cmd: string) => {
-      if (cmd.includes(commandRef)) {
-        if (exitCodeRef !== 0) {
-          throw new Error(`Command failed with exit code ${exitCodeRef}`);
-        }
-        return outputRef;
-      }
-      return '';
-    })
-  }));
-}
-
-/**
- * Mock multiple git commands
- */
-export function mockGitCommands(commands: MockGitCommand[]): void {
-  // Store commands array to ensure proper closure
-  const commandsRef = [...commands];
-
-  vi.doMock('../../src/utils/commandExecutor.js', () => ({
-    executeCommand: vi.fn().mockImplementation(async (cmd: string) => {
-      for (const mock of commandsRef) {
-        if (cmd.includes(mock.command)) {
+    executeCommand: vi.fn().mockImplementation(async (cmd: string, args: string[] = []) => {
+      const invoked = [cmd, ...args].join(' ').trim();
+      for (const mock of commandsSnapshot) {
+        if (invoked.includes(mock.command)) {
           if (mock.exitCode && mock.exitCode !== 0) {
             throw new Error(`Command failed with exit code ${mock.exitCode}`);
           }
@@ -52,6 +31,30 @@ export function mockGitCommands(commands: MockGitCommand[]): void {
       return '';
     })
   }));
+}
+
+function registerMockCommand(mock: MockGitCommand): void {
+  registeredCommands = registeredCommands.filter(entry => entry.command !== mock.command);
+  registeredCommands.push(mock);
+  updateCommandMock();
+}
+
+export function resetMockGitCommands(): void {
+  registeredCommands = [];
+  updateCommandMock();
+}
+
+export function mockGitCommand(command: string, output: string, exitCode = 0): void {
+  registerMockCommand({ command, output, exitCode });
+}
+
+/**
+ * Mock multiple git commands
+ */
+export function mockGitCommands(commands: MockGitCommand[]): void {
+  for (const mock of commands) {
+    registerMockCommand(mock);
+  }
 }
 
 /**

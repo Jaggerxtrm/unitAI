@@ -12,6 +12,7 @@ import type {
   ReviewFocus,
   BaseWorkflowParams
 } from "./types.js";
+import type { AIExecutionOptions } from "../utils/aiExecutor.js";
 
 /**
  * Esegue un'analisi AI con un backend specifico
@@ -19,17 +20,26 @@ import type {
 export async function runAIAnalysis(
   backend: string,
   prompt: string,
-  model?: string,
+  options: Partial<Omit<AIExecutionOptions, "backend" | "prompt">> = {},
   onProgress?: ProgressCallback
 ): Promise<AIAnalysisResult> {
   try {
     onProgress?.(`Avvio analisi con ${backend}...`);
+
+    const {
+      onProgress: optionProgress,
+      model,
+      ...restOptions
+    } = options;
     
     const output = await executeAIClient({
       backend,
       prompt,
-      model,
-      onProgress: (msg) => onProgress?.(`${backend}: ${msg}`)
+      ...restOptions,
+      onProgress: (msg) => {
+        optionProgress?.(msg);
+        onProgress?.(`${backend}: ${msg}`);
+      }
     });
     
     return {
@@ -41,7 +51,7 @@ export async function runAIAnalysis(
   } catch (error) {
     return {
       backend,
-      model,
+      model: options.model,
       output: "",
       success: false,
       error: error instanceof Error ? error.message : String(error)
@@ -55,12 +65,18 @@ export async function runAIAnalysis(
 export async function runParallelAnalysis(
   backends: string[],
   promptBuilder: (backend: string) => string,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
+  optionsBuilder?: (backend: string) => Partial<Omit<AIExecutionOptions, "backend" | "prompt">>
 ): Promise<ParallelAnalysisResult> {
   onProgress?.(`Avvio analisi parallela con ${backends.length} backend...`);
   
   const promises = backends.map(backend => 
-    runAIAnalysis(backend, promptBuilder(backend), undefined, onProgress)
+    runAIAnalysis(
+      backend,
+      promptBuilder(backend),
+      optionsBuilder ? optionsBuilder(backend) || {} : {},
+      onProgress
+    )
   );
   
   const results = await Promise.all(promises);

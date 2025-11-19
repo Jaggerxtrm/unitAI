@@ -34,7 +34,7 @@ export interface UnifiedTool {
 /**
  * Global tool registry
  */
-const toolRegistry: UnifiedTool[] = [];
+export const toolRegistry: UnifiedTool[] = [];
 
 /**
  * Register a tool

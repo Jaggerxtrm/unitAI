@@ -25,11 +25,14 @@ This guide provides comprehensive documentation for all workflows available in u
 | Workflow | Backends | Parallel | Duration | Primary Use Case |
 |----------|----------|----------|----------|------------------|
 | init-session | Gemini + Qwen | Sequential | 15-30s | Session initialization |
-| pre-commit-validate | All 3 | Parallel | 5-90s | Pre-commit quality gates |
-| parallel-review | Gemini + Rovodev | Yes | 10-30s | Code review |
+| pre-commit-validate | Gemini + Qwen + Droid (depth-based) | Parallel | 5-120s | Pre-commit quality gates |
+| parallel-review | Gemini + Rovodev (+ Cursor/Droid con `strategy=double-check`) | Yes | 10-45s | Code review multi-prospettiva |
 | validate-last-commit | Gemini + Qwen | Parallel | 15-25s | Post-commit validation |
-| bug-hunt | All 3 | Sequential | 30-60s | Bug investigation |
-| feature-design | All 3 (agents) | Parallel | 45-90s | Feature planning |
+| bug-hunt | Gemini + Cursor + Droid (sequenziale) | Sequenziale | 30-90s | Bug investigation |
+| feature-design | Architect/Implementer/Tester (Gemini + Rovodev + Droid + Qwen) | Parallel | 45-120s | Feature planning |
+| triangulated-review | Gemini + Cursor + Droid | Misto | 20-60s | Refactor/bugfix con doppia conferma |
+| refactor-sprint | Cursor + Gemini + Droid | Sequenziale | 40-120s | Refactor organizzato in sprint |
+| auto-remediation | Droid | Sequenziale | 15-45s | Piani di remediation autonomi |
 
 ### When to Use Each Workflow
 
@@ -145,10 +148,11 @@ Multi-stage validation of staged files including security scanning, code quality
 - Before code review requests
 
 **Backends:**  
-All three in parallel:
-- Qwen: Security and secret detection
-- Gemini: Code quality and best practices
-- Rovodev: Breaking change analysis
+Esecuzione parallela con pipeline dinamica:
+- Qwen: Security e secret detection
+- Gemini: Code quality e best practice
+- Rovodev: Breaking change analysis (shadow mode)
+- Droid (solo depth `paranoid`): tentativa di remediation autonoma / checklist finale
 
 **Parameters:**
 
@@ -172,11 +176,11 @@ All three in parallel:
 - Best practices validation
 - Use for: Standard pre-commit validation (recommended)
 
-**paranoid** (60-90 seconds):
-- All thorough checks
-- Extended security analysis
-- Performance impact analysis
-- Comprehensive edge case detection
+**paranoid** (60-120 seconds):
+- Tutto ciò che offre `thorough`
+- Analisi estesa di sicurezza/performance
+- Attivazione di Droid (`auto=low/medium`) per sintetizzare un piano di remediation
+- Edge case detection avanzata + suggerimenti di rollback
 - Use for: Critical code, production releases
 
 **Example Usage:**
@@ -238,10 +242,10 @@ exit 0
 
 ### parallel-review
 
-Perform multi-perspective code review using parallel AI backends for comprehensive analysis.
+Perform multi-perspective code review orchestrando Gemini (architettura), Rovodev (implementazione), Cursor Agent (refactor plan) e Droid (verifica autonoma).
 
 **Purpose:**  
-Get complementary perspectives on code by running Gemini (architectural thinking) and Rovodev (practical implementation) in parallel.
+Ottenere punti di vista complementari sul codice: architettura, best practice, refactor pratici e checklist operative in un’unica esecuzione.
 
 **When to Use:**
 - Pre-pull request reviews
@@ -251,7 +255,8 @@ Get complementary perspectives on code by running Gemini (architectural thinking
 - Learning from existing code
 
 **Backends:**  
-Gemini + Rovodev (parallel execution)
+- `strategy="standard"` → Gemini + Rovodev  
+- `strategy="double-check"` → Gemini + Rovodev + Cursor + Droid (con attachments opzionali)
 
 **Parameters:**
 
@@ -260,6 +265,9 @@ Gemini + Rovodev (parallel execution)
 | files | string[] | Yes | - | List of file paths to review |
 | focus | string | No | all | Review focus area |
 | autonomyLevel | string | No | read-only | Permission level |
+| strategy | string | No | standard | `standard` oppure `double-check` (aggiunge Cursor+Droid) |
+| backendOverrides | string[] | No | - | Specifica manualmente i backend da usare |
+| attachments | string[] | No | - | File allegati a Cursor/Droid (max 5 consigliati) |
 
 **Focus Areas:**
 - `all`: Comprehensive review (architecture, quality, security)
@@ -273,8 +281,13 @@ Gemini + Rovodev (parallel execution)
 {
   "workflow": "parallel-review",
   "params": {
-    "files": ["src/workflows/parallel-review.workflow.ts", "src/utils/aiExecutor.ts"],
-    "focus": "security"
+    "files": [
+      "src/workflows/parallel-review.workflow.ts",
+      "src/utils/aiExecutor.ts"
+    ],
+    "focus": "security",
+    "strategy": "double-check",
+    "attachments": ["src/utils/aiExecutor.ts"]
   }
 }
 ```
@@ -299,6 +312,18 @@ The workflow provides synthesized analysis combining both perspectives:
       output: string,
       success: boolean,
       duration: number
+    },
+    {
+      backend: "cursor-agent",
+      output: string,
+      success: boolean,
+      duration: number
+    },
+    {
+      backend: "droid",
+      output: string,
+      success: boolean,
+      duration: number
     }
   ],
   cacheHit: boolean
@@ -306,9 +331,9 @@ The workflow provides synthesized analysis combining both perspectives:
 ```
 
 **Performance:**
-- Parallel execution: ~45% faster than sequential
-- Caching: 50%+ cache hit rate (1-hour TTL)
-- Typical duration: 10-30 seconds depending on file size
+- Modalità standard: ~45% più veloce della sequenziale (Gemini + Rovodev).
+- Modalità double-check: +10/15s per coinvolgere Cursor/Droid ma con checklist pronta all’uso.
+- Caching: 50%+ cache hit rate (1-hour TTL) per i backend deterministici (Gemini/Rovodev).
 
 **Sample Synthesis:**
 
@@ -417,10 +442,10 @@ Investigate bugs by analyzing symptoms, discovering relevant files, and identify
 - Root cause analysis needed
 
 **Backends:**  
-Sequential execution across all three:
-1. Qwen: File discovery based on symptoms
-2. Gemini: Root cause analysis
-3. Rovodev: Practical fix recommendations
+Esecuzione sequenziale ottimizzata:
+1. **Gemini**: individua file sospetti (usa claude-context se `suspected_files` è vuoto)
+2. **Cursor Agent**: genera ipotesi e patch candidate sui file emersi
+3. **Droid**: costruisce un piano operativo / remediation checklist
 
 **Parameters:**
 
@@ -444,20 +469,17 @@ Sequential execution across all three:
 
 **Workflow Steps:**
 
-1. **File Discovery** (if suspected_files empty):
-   - Qwen analyzes symptoms and searches codebase
-   - Pattern matching and semantic analysis
-   - Returns list of likely relevant files
+1. **Discovery**  
+   - Gemini legge i sintomi e usa claude-context per proporre file target (se `suspected_files` è vuoto)  
+   - Classifica i file per priorità e rischio.
 
-2. **Analysis**:
-   - Gemini performs deep analysis of each file
-   - Identifies potential root causes
-   - Assigns severity levels
+2. **Hypothesis + Patch Draft**  
+   - Cursor Agent analizza i file (max 5 allegati) e produce possibili root cause + patch suggerite.  
+   - Restituisce anche i test consigliati.
 
-3. **Fix Recommendations**:
-   - Rovodev provides practical fix suggestions
-   - Includes code examples
-   - Suggests test cases
+3. **Remediation Plan**  
+   - Droid trasforma le ipotesi in una checklist operativa (max `maxActions` step).  
+   - Ogni step include controlli/metriche e rischi residui.
 
 **Output:**
 
@@ -658,6 +680,137 @@ Create `src/services/AuthService.ts` with methods:
 3. Week 3: Testing and security hardening
 4. Week 4: Documentation and deployment
 ```
+
+---
+
+### triangulated-review
+
+Triangula bugfix/refactor critici confrontando Gemini (architettura), Cursor Agent (piani concreti) e Droid (checklist autonoma) in un’unica esecuzione.
+
+**Purpose:**  
+Ridurre il rischio di regressioni quando si toccano file sensibili o quando serve una doppia conferma prima di procedere.
+
+**When to Use:**
+- Refactor strutturali che toccano più moduli
+- Bugfix ad alto impatto (sicurezza, performance)
+- Revisione prima di merge/rilascio
+
+**Backends:**  
+Gemini + Cursor Agent (in parallelo) + Droid (verifica sequenziale).
+
+**Parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| files | string[] | Yes | - | File da analizzare (max consigliato: 5) |
+| goal | string | No | refactor | `refactor` oppure `bugfix` (influenza i prompt) |
+| autonomyLevel | string | No | read-only | Livello di autonomia dei passaggi aggiuntivi |
+
+**Example Usage:**
+
+```json
+{
+  "workflow": "triangulated-review",
+  "params": {
+    "files": ["src/utils/aiExecutor.ts", "src/workflows/utils.ts"],
+    "goal": "refactor"
+  }
+}
+```
+
+**Output Highlights:**
+- Sintesi combinata Gemini + Cursor (markdown)
+- Checklist Droid con step operativi, metriche e rischi
+- Stato dei backend (success/failure) per auditing
+
+---
+
+### refactor-sprint
+
+Orchestra un mini-sprint di refactoring: Cursor genera il piano, Gemini lo valida e Droid produce la checklist operativa.
+
+**Purpose:**  
+Organizzare refactor multi-step con tracking chiaro di piano, rischi e attività da svolgere.
+
+**When to Use:**
+- Refactor programmati (light/balanced/deep)
+- Debt cleanup con più file coinvolti
+- Coordinamento tra più sviluppatori (checklist condivisa)
+
+**Backends:**  
+Cursor Agent → Gemini → Droid (sequenziale, con progress bar).
+
+**Parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| targetFiles | string[] | Yes | - | File coinvolti nel refactor |
+| scope | string | Yes | - | Descrizione sintetica dell’obiettivo |
+| depth | string | No | balanced | `light`, `balanced`, `deep` (modifica tono del piano) |
+| autonomyLevel | string | No | read-only | Permessi del workflow |
+| attachments | string[] | No | [] | File allegati a Cursor (fallback ai primi 5 target) |
+
+**Example Usage:**
+
+```json
+{
+  "workflow": "refactor-sprint",
+  "params": {
+    "targetFiles": ["src/utils/aiExecutor.ts"],
+    "scope": "Separare la logica dei backend dal core executor",
+    "depth": "deep"
+  }
+}
+```
+
+**Output:**
+- Piano Cursor (step numerati + patch/test suggeriti)
+- Review architetturale Gemini con rischi
+- Checklist Droid pronta da seguire (con criteri di completamento)
+
+---
+
+### auto-remediation
+
+Genera automaticamente un piano di remediation (max 10 step) a partire dai sintomi forniti, sfruttando Droid con autonomia controllata.
+
+**Purpose:**  
+Ottenere rapidamente una sequenza di azioni ripetibili per incidenti o bug complessi, con note su output atteso e rischi residui.
+
+**When to Use:**
+- Incidente in produzione e necessità di piano immediato
+- Handoff fra turni/on-call
+- Validazione di ipotesi emerse da altri workflow
+
+**Backends:**  
+Factory Droid CLI (`droid exec`).
+
+**Parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| symptoms | string | Yes | - | Descrizione dei sintomi / errori |
+| maxActions | number | No | 5 | Numero massimo di step generati |
+| autonomyLevel | string | No | read-only | Se `high` permette `skipPermissionsUnsafe` |
+| attachments | string[] | No | [] | Log o file di supporto da allegare |
+
+**Example Usage:**
+
+```json
+{
+  "workflow": "auto-remediation",
+  "params": {
+    "symptoms": "Timeout API upload oltre 50MB",
+    "maxActions": 6,
+    "attachments": ["logs/upload-error.log"]
+  }
+}
+```
+
+**Output:**
+- Sezione “Symptoms” con il testo originale
+- Piano in markdown con step numerati (azione, output atteso, controlli, rischi)
+- Metadati con numero di azioni e allegati utilizzati
 
 ---
 

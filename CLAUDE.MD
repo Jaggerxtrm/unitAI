@@ -53,13 +53,13 @@ mcp__unified-ai-mcp__smart-workflows({
 
 **UNIFIED-AI-MCP** (Parallel analysis)
 - ask-gemini: Architecture, best practices, security
-- ask-qwen: Code quality, patterns, edge cases
-- ask-rovodev: Production implementation, bug fixes
+- cursor-agent: Refactor plan, patch chirurgiche, bugfix guidati
+- droid: Checklist autonome, remediation plan
 
 **3.1) MANUAL PATTERNS** (See 3.5 for automated workflows)
-*Feature:* claude-context → Serena → ask-gemini+qwen → ask-rovodev → Serena verify
-*Bug:* claude-context locate → Serena impact → ask-gemini+qwen → Serena fix
-*Refactor:* Serena find_referencing_symbols → ask-gemini+qwen → Serena rename_symbol
+*Feature:* claude-context → Serena → ask-gemini + cursor-agent → droid (piano) → Serena verify
+*Bug:* claude-context locate → Serena impact → cursor-agent (fix) → droid (remediation) → Serena apply
+*Refactor:* Serena find_referencing_symbols → cursor-agent (patch) → ask-gemini review → Serena rename_symbol
 
 **3.5) SMART WORKFLOWS** (Automated Multi-Agent Orchestration)
 
@@ -85,7 +85,7 @@ mcp__unified-ai-mcp__smart-workflows({
 **Decision Tree:**
 ```
 Standard process (commit/bug/review/feature)? → smart-workflows
-Custom exploration? → Tool direct (Serena/claude-context/ask-*)
+Custom exploration? → Tool direct (Serena / claude-context / ask-gemini / cursor-agent / droid)
 ```
 
 **Auto-Suggestions:** `workflow-pattern-detector` hook suggests workflows on pattern match (always ask user before executing)
@@ -123,7 +123,7 @@ Task({ subagent_type: "AGENT_NAME", prompt: "task description" })
 
 **Decision:**
 - Multi-phase complex task (architecture, high-risk refactor)? → Agent
-- Simple query/analysis? → Tool direct (Serena/ask-*)
+- Simple query/analysis? → Tool direct (Serena / ask-gemini / cursor-agent)
 - See: docs/AGENT_MIGRATION_GUIDE.md
 
 ## 4) FILE SIZE DECISION TREE
@@ -173,7 +173,7 @@ mcp__unified-ai-mcp__smart-workflows({
 **Manual (fallback if workflow unavailable):**
 1. Serena: find_referencing_symbols → ALL usages
 2. claude-context: "What depends on changes?"
-3. Parallel: ask-gemini + ask-qwen validation
+3. Parallel: ask-gemini + cursor-agent (aggiungi droid per checklist se necessario)
 4. openmemory-add-memory "Validated [scope]"
 
 ## 10) KEY CONFIGS & LOCATIONS
@@ -195,7 +195,7 @@ mcp__unified-ai-mcp__smart-workflows({
 - Features: feature-design workflow
 - Before edit: Serena find_referencing_symbols (impact analysis)
 - Before implementation: claude-context (discover related code)
-- Complex analysis: ask-gemini + ask-qwen (parallel)
+- Complex analysis: ask-gemini + cursor-agent (parallel) + droid (checklist)
 - After changes: update memory
 
 **DON'T:**
@@ -220,7 +220,7 @@ mcp__unified-ai-mcp__smart-workflows({
 | **Feature design** | feature-design workflow | Multi-agent orchestration |
 | **Complex multi-phase** | Task agents (5 types) | Specialized orchestration; parallel validation; 50-95% savings |
 | **Codebase search** | claude-context | Semantic; finds ALL related code |
-| **Custom AI analysis** | ask-gemini/qwen/rovodev | Parallel for best results |
+| **Custom AI analysis** | ask-gemini / cursor-agent / droid | Scegli tool in base a contesto (architettura vs refactor vs remediation) |
 | **Simple non-code** | Read | Only if <300 LOC |
 
 **Decision Rules:**
@@ -228,7 +228,7 @@ mcp__unified-ai-mcp__smart-workflows({
 2. Standard process (commit/bug/review/feature)? → **smart-workflows**
 3. Complex multi-phase (architecture/high-risk)? → **Task agents**
 4. Need to find related code? → **claude-context**
-5. Custom analysis? → **ask-*** (parallel)
+5. Custom analysis? → **ask-gemini / cursor-agent / droid** (parallel)
 6. Simple config file? → Read ok
 
 ## 13) AUTONOMOUS TOKEN-AWARE ENFORCEMENT

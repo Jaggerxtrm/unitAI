@@ -10,7 +10,14 @@ import type { WorkflowDefinition, ProgressCallback, GitCommitInfo } from "./type
  */
 const initSessionSchema = z.object({
   autonomyLevel: z.enum(["read-only", "low", "medium", "high"])
-    .optional().describe("Livello di autonomia per le operazioni del workflow (default: read-only)")
+    .optional()
+    .describe("Livello di autonomia per le operazioni del workflow (default: read-only)"),
+  commitCount: z.number()
+    .int()
+    .min(1)
+    .max(50)
+    .optional()
+    .describe("Numero massimo di commit recenti da analizzare (default: 10)")
 });
 
 /**
@@ -97,11 +104,12 @@ Please provide a synthesized analysis of these commits.`;
 /**
  * Esegue il workflow di inizializzazione sessione
  */
-async function executeInitSession(
+export async function executeInitSession(
   params: z.infer<typeof initSessionSchema>,
   onProgress?: ProgressCallback
 ): Promise<string> {
-  onProgress?.("Avvio inizializzazione sessione...");
+  const { autonomyLevel, commitCount } = initSessionSchema.parse(params);
+  onProgress?.("Avvio inizializzazione sessione... (Starting session initialization...)");
 
   const sections: string[] = [];
   const metadata: Record<string, any> = {};
@@ -125,8 +133,9 @@ async function executeInitSession(
 `);
 
       // Ottieni gli ultimi 10 commits con diffs completi
-      onProgress?.("Recupero ultimi 10 commits con diffs...");
-      const recentCommits = await getRecentCommitsWithDiffs(10);
+      const commitsToAnalyze = commitCount ?? 10;
+      onProgress?.(`Recupero ultimi ${commitsToAnalyze} commits con diffs...`);
+      const recentCommits = await getRecentCommitsWithDiffs(commitsToAnalyze);
       metadata.commitsAnalyzed = recentCommits.length;
 
       // Commit recenti (sommario)
@@ -136,28 +145,39 @@ async function executeInitSession(
 ${recentCommits.map((commit, i) => `${i + 1}. [${commit.hash.substring(0, 8)}] ${commit.message} - ${commit.author}`).join("\n")}
 `);
 
-      // Analisi AI con Rovodev
-      onProgress?.("Analisi AI dei commit con Rovodev...");
+      // Analisi AI con fallback tra più backend
+      const analysisPrompt = buildCommitAnalysisPrompt(recentCommits);
+      const analysisBackends = [BACKENDS.ROVODEV, BACKENDS.GEMINI];
       let aiAnalysis = "";
-      try {
-        const analysisPrompt = buildCommitAnalysisPrompt(recentCommits);
-        aiAnalysis = await executeAIClient({
-          backend: BACKENDS.ROVODEV,
-          prompt: analysisPrompt
-        });
+      let lastAnalysisError: string | undefined;
 
+      for (const backend of analysisBackends) {
+        onProgress?.(`Analisi AI dei commit con ${backend}...`);
+        try {
+          aiAnalysis = await executeAIClient({
+            backend,
+            prompt: analysisPrompt
+          });
+          metadata.aiAnalysisCompleted = true;
+          metadata.aiAnalysisBackend = backend;
+          break;
+        } catch (error) {
+          lastAnalysisError = error instanceof Error ? error.message : String(error);
+          onProgress?.(`Analisi con ${backend} fallita: ${lastAnalysisError}`);
+        }
+      }
+
+      if (aiAnalysis) {
         sections.push(`
 ## AI Analysis of Recent Work
 
 ${aiAnalysis}
 `);
-        metadata.aiAnalysisCompleted = true;
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
+      } else {
         sections.push(`
 ## AI Analysis
 
-⚠️ Could not complete AI analysis: ${errorMsg}
+⚠️ Could not complete AI analysis${lastAnalysisError ? `: ${lastAnalysisError}` : ""}
 `);
         metadata.aiAnalysisCompleted = false;
       }
@@ -283,7 +303,7 @@ ${errorMsg}
   
   onProgress?.("Sessione inizializzata con successo");
   
-  return formatWorkflowOutput("Report Inizializzazione Sessione", sections.join("\n"), metadata);
+  return formatWorkflowOutput("Report Inizializzazione Sessione (Session Initialization Report)", sections.join("\n"), metadata);
 }
 
 /**

@@ -18,9 +18,7 @@ logs/
 .claude/tsc-cache/
 .rovodev/
 
-# MCP config (contains API keys)
-.mcp.json
-.cursor/mcp.json
+
 
 # Debug files
 gemini-error.json

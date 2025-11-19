@@ -1,6 +1,13 @@
 ---
 name: code-validation
-description: Use before commits, memory additions, or implementing plans to ensure code quality, functionality, and completeness. Guides verification using Serena, claude-context, and AI tools for impact analysis and quality review. Use when making significant changes, before git commits, or before openmemory-add-memory.
+description: Pre-commit validation workflow using Serena, claude-context, and AI review. Use before git commits, after significant changes, or before adding memories. Ensures quality and completeness.
+relatedSkills:
+  - name: serena-surgical-editing
+    when: During validation
+    reason: Check impact with find_referencing_symbols
+  - name: unified-ai-orchestration
+    when: For comprehensive review
+    reason: Get multiple AI perspectives (Gemini + Qwen)
 ---
 
 # Code Validation Skill

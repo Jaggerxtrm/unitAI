@@ -2,6 +2,7 @@
 
 # Post-tool-use hook that reminds Claude to use claude-context semantic search
 # This runs after Claude's response to check if semantic search should have been used
+# Now with smart throttling to reduce noise
 
 # Set project directory to current working directory if not set
 if [ -z "$CLAUDE_PROJECT_DIR" ]; then
@@ -15,6 +16,33 @@ tool_info=$(cat)
 tool_name=$(echo "$tool_info" | jq -r '.tool_name // empty')
 session_id=$(echo "$tool_info" | jq -r '.session_id // empty')
 
+# Setup cache directory
+cache_dir="$CLAUDE_PROJECT_DIR/.claude/tsc-cache/${session_id:-default}"
+mkdir -p "$cache_dir"
+
+# Throttling configuration
+COOLDOWN_SECONDS=300  # 5 minutes cooldown
+LAST_REMINDER_FILE="$cache_dir/last-context-reminder-timestamp"
+
+# Check if we should throttle
+if [ -f "$LAST_REMINDER_FILE" ]; then
+    LAST_REMINDER=$(cat "$LAST_REMINDER_FILE")
+    NOW=$(date +%s)
+    TIME_SINCE=$((NOW - LAST_REMINDER))
+    
+    if [ $TIME_SINCE -lt $COOLDOWN_SECONDS ]; then
+        # Too soon, skip reminder
+        exit 0
+    fi
+fi
+
+# Function to show reminder and update timestamp
+show_reminder() {
+    local message="$1"
+    echo "$message"
+    date +%s > "$LAST_REMINDER_FILE"
+}
+
 # Only process for Claude's responses (when tool is completed)
 if [[ "$tool_name" == "Bash" ]]; then
     # Check if Claude used direct file reading when claude-context would be better
@@ -23,12 +51,10 @@ if [[ "$tool_name" == "Bash" ]]; then
     # If Claude used direct file reading tools that suggest they should have used claude-context first
     if [[ "$command_used" =~ ^(cat|grep|rg|find).* ]] && [[ ! "$command_used" =~ claude-context ]]; then
         # Log to file for analytics
-        cache_dir="$CLAUDE_PROJECT_DIR/.claude/tsc-cache/${session_id:-default}"
-        mkdir -p "$cache_dir"
         echo "$(date): Claude used direct search instead of claude-context: $command_used" >> "$cache_dir/context-reminders.log"
 
-        # Output reminder to Claude (stdout)
-        cat <<EOF
+        # Output reminder to Claude (stdout) and update timestamp
+        show_reminder "$(cat <<EOF
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💡 REMINDER: Consider claude-context semantic search
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -43,18 +69,17 @@ Consider using mcp__claude-context__search_code for:
 This can be more effective than direct file commands.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EOF
+)"
     fi
 elif [[ "$tool_name" == "Read" ]]; then
     # If Claude used direct file reading for code files
     file_path=$(echo "$tool_info" | jq -r '.tool_input.absolute_path // empty')
     if [[ -n "$file_path" ]] && [[ "$file_path" =~ \.(ts|js|tsx|jsx|py|java|go|rs|cpp|c|h)$ ]]; then
         # Log to file
-        cache_dir="$CLAUDE_PROJECT_DIR/.claude/tsc-cache/${session_id:-default}"
-        mkdir -p "$cache_dir"
         echo "$(date): Claude read file directly instead of using claude-context: $file_path" >> "$cache_dir/context-reminders.log"
 
-        # Output reminder to Claude (stdout)
-        cat <<EOF
+        # Output reminder to Claude (stdout) and update timestamp
+        show_reminder "$(cat <<EOF
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💡 TIP: Consider Serena or claude-context first
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -69,6 +94,7 @@ For code files, consider:
 These are more efficient than reading entire files.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EOF
+)"
     fi
 fi
 

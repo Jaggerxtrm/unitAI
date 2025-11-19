@@ -1,12 +1,18 @@
 {
-    "version": "1.0",
-    "description": "Skill activation triggers for Claude Code. Controls when skills automatically suggest or block actions.",
+    "version": "2.0",
+    "description": "Skill activation triggers for Claude Code with behavior flags for intelligent activation.",
     "skills": {
         "memory-search-reminder": {
             "type": "domain",
             "enforcement": "suggest",
             "priority": "high",
             "description": "Reminds Claude to search memories before starting new work, implementing features, or making decisions. Ensures Claude checks for past solutions, decisions, and patterns using openmemory-search-memories before diving into new implementations.",
+            "behaviorFlags": {
+                "showEveryTime": false,
+                "minimumConfidence": 0.75,
+                "canBeDismissed": true,
+                "dismissDurationMinutes": 60
+            },
             "promptTriggers": {
                 "keywords": [
                     "implement",
@@ -56,11 +62,63 @@
                 ]
             }
         },
+        "openspec-workflow": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "medium",
+            "description": "Reminds to use OpenSpec for spec-driven development before implementing new features. Create specs first with `/openspec add` or `mcp__openspec-init`, then track implementation alignment with `/openspec track`.",
+            "behaviorFlags": {
+                "showEveryTime": false,
+                "minimumConfidence": 0.70,
+                "canBeDismissed": true,
+                "dismissDurationMinutes": 90
+            },
+            "promptTriggers": {
+                "keywords": [
+                    "implement",
+                    "feature",
+                    "new",
+                    "add functionality",
+                    "build",
+                    "create",
+                    "develop",
+                    "spec",
+                    "specification",
+                    "design document"
+                ],
+                "intentPatterns": [
+                    "(implement|create|add|build).*?(feature|functionality|component)",
+                    "(new|fresh).*?(feature|implementation|module)",
+                    "(spec|specification|design).*?(first|before|doc)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/src/**",
+                    "**/features/**",
+                    "**/components/**"
+                ]
+            },
+            "relatedTools": [
+                "openspec-init",
+                "openspec-add",
+                "openspec-track"
+            ],
+            "relatedSkills": [
+                "feature-design"
+            ]
+        },
         "claude-context-usage": {
             "type": "domain",
             "enforcement": "suggest",
             "priority": "critical",
             "description": "Ensures Claude always uses claude-context semantic search before any other search method. claude-context provides hybrid search (BM25 + vectors) and finds related code across the codebase without reading files. Use BEFORE feature implementation, bug hunting, refactoring, schema changes, or any code search.",
+            "behaviorFlags": {
+                "showEveryTime": true,
+                "minimumConfidence": 0.7,
+                "canBeDismissed": false,
+                "dismissDurationMinutes": 0
+            },
             "promptTriggers": {
                 "keywords": [
                     "search",
@@ -110,6 +168,12 @@
             "enforcement": "suggest",
             "priority": "high",
             "description": "Use to efficiently access project documentation using claude-context, Qwen, or Gemini to avoid token waste and find precise information. Use when working with Docker containers, connection methods, configuration files, or project-specific implementations.",
+            "behaviorFlags": {
+                "showEveryTime": false,
+                "minimumConfidence": 0.8,
+                "canBeDismissed": true,
+                "dismissDurationMinutes": 90
+            },
             "promptTriggers": {
                 "keywords": [
                     "documentation",
@@ -152,6 +216,12 @@
             "enforcement": "suggest",
             "priority": "high",
             "description": "Guides verification and validation workflows before commits, memory additions, or implementing plans. Ensures code quality, functionality, and completeness using Serena, claude-context, and AI tools. Use when making significant changes, before git commits, or before openmemory-add-memory.",
+            "behaviorFlags": {
+                "showEveryTime": false,
+                "minimumConfidence": 0.8,
+                "canBeDismissed": true,
+                "dismissDurationMinutes": 120
+            },
             "promptTriggers": {
                 "keywords": [
                     "commit",
@@ -208,6 +278,12 @@
             "enforcement": "suggest",
             "priority": "high",
             "description": "Helps Claude effectively resume work after an interruption or stop by assessing the current situation, understanding what occurred before the stop, and seeking assistance from MCP tools to understand how to proceed.",
+            "behaviorFlags": {
+                "showEveryTime": true,
+                "minimumConfidence": 0.6,
+                "canBeDismissed": false,
+                "dismissDurationMinutes": 0
+            },
             "promptTriggers": {
                 "keywords": [
                     "resume",
@@ -237,6 +313,12 @@
             "enforcement": "suggest",
             "priority": "high",
             "description": "Use Serena for symbol-level code surgery when editing TypeScript/JavaScript. ALWAYS use find_referencing_symbols before modifications to prevent breaking changes. Achieves 75-80% token savings vs full file reads.",
+            "behaviorFlags": {
+                "showEveryTime": false,
+                "minimumConfidence": 0.75,
+                "canBeDismissed": true,
+                "dismissDurationMinutes": 60
+            },
             "promptTriggers": {
                 "keywords": [
                     "edit",
@@ -287,6 +369,12 @@
             "enforcement": "suggest",
             "priority": "medium",
             "description": "Use unified-ai-mcp for multi-model AI analysis when complexity requires different perspectives. Run ask-gemini + ask-qwen in parallel for comprehensive validation. Add ask-rovodev for production-ready code generation.",
+            "behaviorFlags": {
+                "showEveryTime": false,
+                "minimumConfidence": 0.85,
+                "canBeDismissed": true,
+                "dismissDurationMinutes": 120
+            },
             "promptTriggers": {
                 "keywords": [
                     "review",
@@ -334,24 +422,217 @@
                     "handler"
                 ]
             }
+        },
+        "slash-init-session": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Suggerisce l'uso del comando /init-session quando l'utente vuole iniziare una nuova sessione di lavoro, analizzare lo stato del progetto o ottenere un overview del lavoro recente.",
+            "promptTriggers": {
+                "keywords": [
+                    "init session",
+                    "start session",
+                    "new session",
+                    "session init",
+                    "project status",
+                    "recent work",
+                    "what's new",
+                    "catch up",
+                    "status update",
+                    "begin work",
+                    "start working",
+                    "initialize work"
+                ],
+                "intentPatterns": [
+                    "(start|begin|init).*?(session|work|working)",
+                    "(what|show).*?(status|recent|new)",
+                    "(catch|bring).*?(up|me)",
+                    "(analyze|check).*?(project|repo|repository)"
+                ]
+            }
+        },
+        "slash-save-commit": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Suggerisce l'uso del comando /save-commit quando l'utente vuole salvare il lavoro stabile, creare un commit con validazione automatica e memorizzare il contesto per future sessioni.",
+            "promptTriggers": {
+                "keywords": [
+                    "save commit",
+                    "commit changes",
+                    "create commit",
+                    "commit work",
+                    "save work",
+                    "memory commit",
+                    "commit with memory",
+                    "stable commit",
+                    "finish work",
+                    "complete task",
+                    "commit ready"
+                ],
+                "intentPatterns": [
+                    "(save|create|make).*?(commit|memory)",
+                    "(commit|save).*?(work|changes|task)",
+                    "(ready|finished).*?(commit|work)",
+                    "(complete|finish).*?(task|work).*?commit"
+                ]
+            }
+        },
+        "slash-ai-task": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Suggerisce l'uso del comando /ai-task quando l'utente vuole eseguire workflow AI, vedere la lista dei workflow disponibili o eseguire task automatizzati come validazione, review o bug hunting.",
+            "promptTriggers": {
+                "keywords": [
+                    "run workflow",
+                    "execute workflow",
+                    "ai workflow",
+                    "workflow run",
+                    "list workflows",
+                    "available workflows",
+                    "pre-commit validate",
+                    "code review",
+                    "bug hunt",
+                    "feature design",
+                    "validate commit"
+                ],
+                "intentPatterns": [
+                    "(run|execute|start).*?(workflow|ai.*task)",
+                    "(list|show).*?(workflow|workflows)",
+                    "(pre.*commit|commit.*validate)",
+                    "(code|review|validate)",
+                    "(bug.*hunt|find.*bug)",
+                    "(feature.*design|design.*feature)"
+                ]
+            }
+        },
+        "slash-create-spec": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "medium",
+            "description": "Suggerisce l'uso del comando /create-spec quando l'utente vuole creare documentazione tecnica per nuove feature, includendo specifiche API, UI o database.",
+            "promptTriggers": {
+                "keywords": [
+                    "create spec",
+                    "new feature",
+                    "feature spec",
+                    "technical spec",
+                    "api spec",
+                    "ui spec",
+                    "database spec",
+                    "spec document",
+                    "design document",
+                    "requirements doc",
+                    "feature documentation"
+                ],
+                "intentPatterns": [
+                    "(create|write|make).*?(spec|specification|document)",
+                    "(new|design).*?(feature|api|ui|database)",
+                    "(document|spec).*?(feature|requirements|api)"
+                ]
+            }
+        },
+        "slash-check-docs": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "medium",
+            "description": "Suggerisce l'uso del comando /check-docs quando l'utente cerca documentazione su librerie esterne, repository GitHub o documentazione del progetto locale.",
+            "promptTriggers": {
+                "keywords": [
+                    "check docs",
+                    "find docs",
+                    "search docs",
+                    "documentation",
+                    "library docs",
+                    "api docs",
+                    "github docs",
+                    "project docs",
+                    "external docs",
+                    "context7",
+                    "deepwiki"
+                ],
+                "intentPatterns": [
+                    "(check|find|search|look).*?(docs|documentation)",
+                    "(how.*to|how.*does|what.*is).*?(library|api|framework)",
+                    "(docs|documentation).*?(react|node|typescript|mongodb)"
+                ]
+            }
         }
     },
-    "notes": {
-        "enforcement_types": {
-            "suggest": "Skill suggestion appears but doesn't block execution",
-            "block": "Requires skill to be used before proceeding (guardrail)",
-            "warn": "Shows warning but allows proceeding"
+    "quick-exploration": {
+        "type": "domain",
+        "enforcement": "suggest",
+        "priority": "medium",
+        "description": "Fast codebase exploration workflow for session start or unfamiliar code. Uses glob, grep, and overview commands for rapid context without large file reads.",
+        "behaviorFlags": {
+            "showEveryTime": false,
+            "minimumConfidence": 0.8,
+            "canBeDismissed": true,
+            "dismissDurationMinutes": 180
         },
-        "priority_levels": {
-            "critical": "Highest - Always trigger when matched",
-            "high": "Important - Trigger for most matches",
-            "medium": "Moderate - Trigger for clear matches",
-            "low": "Optional - Trigger only for explicit matches"
+        "promptTriggers": {
+            "keywords": [
+                "explore",
+                "overview",
+                "start",
+                "unfamiliar",
+                "new codebase",
+                "where to start",
+                "understand structure",
+                "map codebase"
+            ],
+            "intentPatterns": [
+                "(where|how).*?(start|begin|explore)",
+                "(understand|learn|explore).*?(codebase|structure|project)",
+                "(new|unfamiliar|unknown).*?(code|project|codebase)"
+            ]
+        }
+    },
+    "token-budget-awareness": {
+        "type": "domain",
+        "enforcement": "suggest",
+        "priority": "low",
+        "description": "Token efficiency guidance and education. Suggests efficient alternatives to token-heavy operations. Educational, not blocking.",
+        "behaviorFlags": {
+            "showEveryTime": false,
+            "minimumConfidence": 0.9,
+            "canBeDismissed": true,
+            "dismissDurationMinutes": 240
         },
-        "customization": {
-            "pathPatterns": "Adjust to match your project structure",
-            "keywords": "Add domain-specific terms relevant to your project",
-            "intentPatterns": "Use regex for flexible user intent matching"
+        "promptTriggers": {
+            "keywords": [
+                "token",
+                "efficiency",
+                "context window",
+                "compact",
+                "too many tokens",
+                "token limit"
+            ],
+            "intentPatterns": [
+                "(token|context).*?(limit|budget|window|full)",
+                "(save|reduce|optimize).*?tokens",
+                "(efficient|better).*?(way|approach|tool)"
+            ]
         }
     }
+},
+"notes": {
+    "enforcement_types": {
+        "suggest": "Skill suggestion appears but doesn't block execution",
+        "block": "Requires skill to be used before proceeding (guardrail)",
+        "warn": "Shows warning but allows proceeding"
+    },
+    "priority_levels": {
+        "critical": "Highest - Always trigger when matched",
+        "high": "Important - Trigger for most matches",
+        "medium": "Moderate - Trigger for clear matches",
+        "low": "Optional - Trigger only for explicit matches"
+    },
+    "customization": {
+        "pathPatterns": "Adjust to match your project structure",
+        "keywords": "Add domain-specific terms relevant to your project",
+        "intentPatterns": "Use regex for flexible user intent matching"
+    }
+}
 }

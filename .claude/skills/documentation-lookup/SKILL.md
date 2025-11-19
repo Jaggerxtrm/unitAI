@@ -1,6 +1,6 @@
 ---
 name: documentation-lookup
-description: Use this skill when searching for specific documentation about project components, connection methods, container configurations, or specific implementations. This skill helps Claude efficiently access relevant documentation using claude-context, Qwen, or Gemini to avoid token waste and find precise information. Use when working with Docker containers, connection methods, configuration files, or project-specific implementations.
+description: Efficient documentation access via claude-context and AI tools. Use for container configs, connection methods, or implementation patterns. Avoids full-file reads for specific information.
 ---
 
 # Documentation Lookup Skill

@@ -1,6 +1,13 @@
 ---
 name: unified-ai-orchestration
-description: Use unified-ai-mcp for multi-model AI analysis when complexity requires different perspectives. Run ask-gemini + ask-qwen in parallel for comprehensive validation. Add ask-rovodev for production-ready code generation. Choose the right model(s) based on task complexity and iteration speed.
+description: Multi-model AI analysis via unified-ai-mcp. Use Gemini for architecture, Qwen for quick checks, Rovodev for code generation. Run parallel for comprehensive validation.
+relatedSkills:
+  - name: code-validation
+    when: Part of validation workflow
+    reason: Use parallel AI review for pre-commit validation
+  - name: serena-surgical-editing
+    when: After AI suggestions
+    reason: Implement changes with surgical precision
 ---
 
 # Unified AI Orchestration Skill

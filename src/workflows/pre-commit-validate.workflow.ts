@@ -15,6 +15,67 @@ import { executeAIClient, BACKENDS } from '../utils/aiExecutor.js';
 import { getStagedDiff } from '../utils/gitHelper.js';
 import { formatWorkflowOutput } from './utils.js';
 import { logAudit } from '../utils/auditTrail.js';
+import { estimateFileTokens } from '../utils/tokenEstimator.js';
+import { resolve } from 'path';
+import { logger } from '../utils/logger.js';
+async function estimateDiffTokens(stagedDiff: string): Promise<{ files: string[]; tokens: number; }> {
+  const fileRegex = /^\+\+\+\sb\/([^\n]+)/gm;
+  const files = new Set<string>();
+  let match: RegExpExecArray | null;
+
+  while ((match = fileRegex.exec(stagedDiff)) !== null) {
+    const relativePath = match[1].trim();
+    if (relativePath === "/dev/null") {
+      continue;
+    }
+    files.add(relativePath);
+  }
+
+  let totalTokens = 0;
+  for (const relativePath of files) {
+    try {
+      const absolutePath = resolve(process.cwd(), relativePath);
+      const estimate = await estimateFileTokens(absolutePath);
+      totalTokens += estimate.estimatedTokens;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      logger.warn(`Token estimation fallback for ${relativePath}: ${errorMsg}`);
+      totalTokens += 400;
+    }
+  }
+
+  return {
+    files: Array.from(files),
+    tokens: totalTokens
+  };
+}
+
+async function generateAutonomousRemediationPlan(
+  stagedDiff: string,
+  depth: string
+): Promise<string> {
+  const prompt = `Agisci come Factory Droid (GLM-4.6) e genera un piano di remediation autonomo per questo diff git.
+
+Profondità richiesta: ${depth}
+
+Diff:
+\`\`\`diff
+${stagedDiff}
+\`\`\`
+
+Produci un piano strutturato con:
+1. Priorità delle azioni (CRITICAL/HIGH/MEDIUM)
+2. Step consigliati (max 5)
+3. Verifiche automatiche suggerite
+4. Rischi residui`;
+
+  return executeAIClient({
+    backend: BACKENDS.DROID,
+    prompt,
+    auto: "low",
+    outputFormat: "text"
+  });
+}
 
 /**
  * Schema dei parametri per pre-commit-validate
@@ -202,7 +263,7 @@ ${breaking.hasBreakingChanges ? '⚠️ Breaking changes detected' : '✅ No bre
 /**
  * Execute pre-commit validation workflow
  */
-async function executePreCommitValidate(
+export async function executePreCommitValidate(
   params: PreCommitValidateParams,
   onProgress?: ProgressCallback
 ): Promise<string> {
@@ -212,6 +273,12 @@ async function executePreCommitValidate(
   
   if (!stagedDiff.trim()) {
     return formatWorkflowOutput('Pre-Commit Validation', '✅ No staged files to validate');
+  }
+
+  const diffEstimation = await estimateDiffTokens(stagedDiff);
+  if (diffEstimation.tokens > 0) {
+    onProgress?.(`📏 Token stimati per il diff: ~${diffEstimation.tokens}`);
+    logger.info(`[pre-commit-validate] Estimated token budget: ~${diffEstimation.tokens}`);
   }
 
   await logAudit({
@@ -236,13 +303,43 @@ async function executePreCommitValidate(
     breakingChangesCheck
   );
 
+  let remediationSection = '';
+  if (params.depth === 'paranoid') {
+    onProgress?.('🤖 Generazione piano di remediation con Droid...');
+    try {
+      const remediationPlan = await generateAutonomousRemediationPlan(stagedDiff, params.depth);
+      remediationSection = `
+## Autonomous Remediation Plan (Droid)
+
+${remediationPlan}
+`;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      remediationSection = `
+## Autonomous Remediation Plan (Droid)
+
+Impossibile generare il piano: ${errorMsg}
+`;
+    }
+  }
+
+  const tokenSection = diffEstimation.tokens > 0 ? `
+## Token Estimate
+
+~${diffEstimation.tokens.toLocaleString()} token stimati per i file modificati (${diffEstimation.files.length} file)
+` : '';
+
+  const finalReport = `${report}
+${tokenSection}
+${remediationSection}`;
+
   await logAudit({
     operation: 'pre-commit-validate-complete',
     autonomyLevel: params.autonomyLevel || 'MEDIUM',
     details: `Validation verdict: ${verdict}`
   });
 
-  return formatWorkflowOutput('Pre-Commit Validation', report);
+  return formatWorkflowOutput('Pre-Commit Validation', finalReport);
 }
 
 /**

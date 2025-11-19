@@ -1,6 +1,13 @@
 ---
 name: memory-search-reminder
-description: Use this skill to remind Claude to search memories before starting new work, implementing features, or making decisions. This skill ensures Claude checks for past solutions, decisions, and patterns using openmemory-search-memories before diving into new implementations. Use before implementing features, solving problems, or making design decisions to ensure consistency with previous work.
+description: Search past solutions and decisions via openmemory before new work. Use at session start, before implementations, or when solving familiar problems. Maintains consistency with previous approaches.
+relatedSkills:
+  - name: claude-context-usage
+    when: After checking memories
+    reason: Search codebase for current implementations
+  - name: code-validation
+    when: Before adding new memories
+    reason: Validate solution works before memorizing
 ---
 
 # Memory Search Reminder Skill

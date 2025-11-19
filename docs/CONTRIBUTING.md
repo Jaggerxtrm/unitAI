@@ -73,8 +73,8 @@ unified-ai-mcp-tool/
 │   │   └── TesterAgent.ts
 │   ├── tools/               # MCP tool definitions
 │   │   ├── ask-gemini.tool.ts
-│   │   ├── ask-qwen.tool.ts
-│   │   ├── ask-rovodev.tool.ts
+│   │   ├── cursor-agent.tool.ts
+│   │   ├── droid.tool.ts
 │   │   └── smart-workflows.tool.ts
 │   ├── workflows/           # Workflow implementations
 │   │   ├── init-session.workflow.ts
