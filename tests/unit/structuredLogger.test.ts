@@ -412,7 +412,7 @@ describe('WorkflowLogger', () => {
     const timingLog = logs.find(l => l.operation === 'test-operation');
 
     expect(timingLog).toBeDefined();
-    // Allow for small timing variations (±5ms)
+    // Allow for small timing variations (±5ms) in CI environments
     expect(timingLog?.metadata?.duration).toBeGreaterThanOrEqual(45);
   });
 
