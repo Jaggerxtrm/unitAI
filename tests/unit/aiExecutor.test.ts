@@ -98,7 +98,7 @@ describe('AIExecutor', () => {
       await executeGeminiCLI({ prompt: 'Test', model: 'gemini-2.0-flash-exp' });
 
       const callArgs = mockExecuteCommand.mock.calls[0];
-      expect(callArgs[1]).toContain('--model');
+      expect(callArgs[1]).toContain('-m');
       expect(callArgs[1]).toContain('gemini-2.0-flash-exp');
     });
 
@@ -154,30 +154,138 @@ describe('AIExecutor', () => {
     });
   });
 
+  describe('executeCursorAgentCLI', () => {
+    it('should execute cursor agent with default options', async () => {
+      const mockExecuteCommand = vi.fn().mockResolvedValue('Cursor response');
+      vi.doMock('../../src/utils/commandExecutor.js', () => ({
+        executeCommand: mockExecuteCommand
+      }));
+
+      const { executeCursorAgentCLI } = await import('../../src/utils/aiExecutor.js');
+      const result = await executeCursorAgentCLI({ prompt: 'Fix bug' });
+
+      expect(mockExecuteCommand).toHaveBeenCalled();
+      expect(result).toBe('Cursor response');
+    });
+
+    it('should include attachments, cwd and auto-approve flags', async () => {
+      const mockExecuteCommand = vi.fn().mockResolvedValue('Cursor response');
+      vi.doMock('../../src/utils/commandExecutor.js', () => ({
+        executeCommand: mockExecuteCommand
+      }));
+
+      const { executeCursorAgentCLI } = await import('../../src/utils/aiExecutor.js');
+      await executeCursorAgentCLI({
+        prompt: 'Plan refactor',
+        attachments: ['/repo/src/file.ts'],
+        projectRoot: '/repo',
+        autoApprove: true,
+        outputFormat: 'json'
+      });
+
+      const args = mockExecuteCommand.mock.calls[0][1];
+      expect(args).toContain('--file');
+      expect(args).toContain('/repo/src/file.ts');
+      expect(args).toContain('--cwd');
+      expect(args).toContain('/repo');
+      expect(args).toContain('--auto-approve');
+      expect(args).toContain('--output-format');
+      expect(args).toContain('json');
+    });
+  });
+
+  describe('executeDroidCLI', () => {
+    it('should execute droid with exec subcommand', async () => {
+      const mockExecuteCommand = vi.fn().mockResolvedValue('Droid response');
+      vi.doMock('../../src/utils/commandExecutor.js', () => ({
+        executeCommand: mockExecuteCommand
+      }));
+
+      const { executeDroidCLI } = await import('../../src/utils/aiExecutor.js');
+      const result = await executeDroidCLI({ prompt: 'Investigate issue' });
+
+      expect(mockExecuteCommand).toHaveBeenCalled();
+      expect(mockExecuteCommand.mock.calls[0][1][0]).toBe('exec');
+      expect(result).toBe('Droid response');
+    });
+
+    it('should include auto level, session id and attachments', async () => {
+      const mockExecuteCommand = vi.fn().mockResolvedValue('Droid response');
+      vi.doMock('../../src/utils/commandExecutor.js', () => ({
+        executeCommand: mockExecuteCommand
+      }));
+
+      const { executeDroidCLI } = await import('../../src/utils/aiExecutor.js');
+      await executeDroidCLI({
+        prompt: 'Generate checklist',
+        auto: 'medium',
+        sessionId: 'session-123',
+        skipPermissionsUnsafe: true,
+        attachments: ['/repo/log.txt'],
+        cwd: '/repo',
+        outputFormat: 'json'
+      });
+
+      const args = mockExecuteCommand.mock.calls[0][1];
+      expect(args).toContain('--auto');
+      expect(args).toContain('medium');
+      expect(args).toContain('--session-id');
+      expect(args).toContain('session-123');
+      expect(args).toContain('--skip-permissions-unsafe');
+      expect(args).toContain('--file');
+      expect(args).toContain('/repo/log.txt');
+      expect(args).toContain('--cwd');
+      expect(args).toContain('/repo');
+      expect(args).toContain('--output-format');
+      expect(args).toContain('json');
+    });
+  });
+
   describe('executeAIClient', () => {
     it('should route to qwen for qwen backend', async () => {
-      const mockExecuteQwen = vi.fn().mockResolvedValue('Qwen response');
-      vi.doMock('../../src/utils/aiExecutor.js', async () => {
-        const actual = await vi.importActual('../../src/utils/aiExecutor.js');
-        return {
-          ...actual,
-          executeQwenCLI: mockExecuteQwen
-        };
-      });
+      const mockExecuteCommand = vi.fn().mockResolvedValue('Qwen response');
+      vi.doMock('../../src/utils/commandExecutor.js', () => ({
+        executeCommand: mockExecuteCommand
+      }));
 
       const { executeAIClient } = await import('../../src/utils/aiExecutor.js');
       await executeAIClient({ backend: BACKENDS.QWEN, prompt: 'Test' });
 
-      expect(mockExecuteQwen).toHaveBeenCalledWith(
-        expect.objectContaining({ prompt: 'Test' })
-      );
+      expect(mockExecuteCommand).toHaveBeenCalled();
+      expect(mockExecuteCommand.mock.calls[0][0]).toBe('qwen');
+    });
+
+    it('should route to cursor backend', async () => {
+      const mockExecuteCommand = vi.fn().mockResolvedValue('Cursor response');
+      vi.doMock('../../src/utils/commandExecutor.js', () => ({
+        executeCommand: mockExecuteCommand
+      }));
+
+      const { executeAIClient } = await import('../../src/utils/aiExecutor.js');
+      await executeAIClient({ backend: BACKENDS.CURSOR, prompt: 'Cursor prompt' });
+
+      expect(mockExecuteCommand).toHaveBeenCalled();
+      expect(mockExecuteCommand.mock.calls[0][0]).toBe('cursor-agent');
+    });
+
+    it('should route to droid backend', async () => {
+      const mockExecuteCommand = vi.fn().mockResolvedValue('Droid response');
+      vi.doMock('../../src/utils/commandExecutor.js', () => ({
+        executeCommand: mockExecuteCommand
+      }));
+
+      const { executeAIClient } = await import('../../src/utils/aiExecutor.js');
+      await executeAIClient({ backend: BACKENDS.DROID, prompt: 'Droid prompt' });
+
+      expect(mockExecuteCommand).toHaveBeenCalled();
+      expect(mockExecuteCommand.mock.calls[0][0]).toBe('droid');
     });
 
     it('should throw error for unknown backend', async () => {
       const { executeAIClient } = await import('../../src/utils/aiExecutor.js');
       await expect(
         executeAIClient({ backend: 'unknown', prompt: 'Test' })
-      ).rejects.toThrow(/Unknown backend/);
+      ).rejects.toThrow(/Unsupported backend/);
     });
 
     it('should throw error for empty prompt', async () => {
@@ -185,48 +293,6 @@ describe('AIExecutor', () => {
       await expect(
         executeAIClient({ backend: BACKENDS.QWEN, prompt: '' })
       ).rejects.toThrow();
-    });
-  });
-
-  describe('Fallback mechanism', () => {
-    it('should fallback to gemini when qwen fails', async () => {
-      const mockExecuteQwen = vi.fn().mockRejectedValue(new Error('Qwen failed'));
-      const mockExecuteGemini = vi.fn().mockResolvedValue('Gemini fallback response');
-
-      vi.doMock('../../src/utils/aiExecutor.js', async () => {
-        const actual = await vi.importActual('../../src/utils/aiExecutor.js');
-        return {
-          ...actual,
-          executeQwenCLI: mockExecuteQwen,
-          executeGeminiCLI: mockExecuteGemini
-        };
-      });
-
-      const { executeAIClient } = await import('../../src/utils/aiExecutor.js');
-      const result = await executeAIClient({ 
-        backend: BACKENDS.QWEN, 
-        prompt: 'Test',
-        fallback: BACKENDS.GEMINI
-      });
-
-      expect(result).toBe('Gemini fallback response');
-    });
-
-    it('should not fallback if fallback is disabled', async () => {
-      const mockExecuteQwen = vi.fn().mockRejectedValue(new Error('Qwen failed'));
-
-      vi.doMock('../../src/utils/aiExecutor.js', async () => {
-        const actual = await vi.importActual('../../src/utils/aiExecutor.js');
-        return {
-          ...actual,
-          executeQwenCLI: mockExecuteQwen
-        };
-      });
-
-      const { executeAIClient } = await import('../../src/utils/aiExecutor.js');
-      await expect(
-        executeAIClient({ backend: BACKENDS.QWEN, prompt: 'Test', fallback: null })
-      ).rejects.toThrow('Qwen failed');
     });
   });
 

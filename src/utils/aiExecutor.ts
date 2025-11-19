@@ -19,10 +19,20 @@ export interface AIExecutionOptions {
   yolo?: boolean; // Qwen and Rovodev support this
   allFiles?: boolean; // Only for Qwen
   debug?: boolean; // Only for Qwen
+  outputFormat?: "text" | "json"; // Cursor Agent / Droid preferred format
+  projectRoot?: string; // Cursor Agent working directory
+  attachments?: string[]; // Shared attachment mechanism
+  autoApprove?: boolean; // Cursor Agent auto-approve flag
+  autonomyLevel?: string; // Cursor Agent autonomy level flag
   // Rovodev-specific options (based on acli rovodev run --help)
   shadow?: boolean; // Rovodev only
   verbose?: boolean; // Rovodev only
   restore?: boolean; // Rovodev only
+  // Droid-specific options
+  auto?: "low" | "medium" | "high";
+  sessionId?: string;
+  skipPermissionsUnsafe?: boolean;
+  cwd?: string;
   onProgress?: (output: string) => void;
 }
 
@@ -278,6 +288,166 @@ export async function executeGeminiCLI(
 }
 
 /**
+ * Execute Cursor Agent CLI with the given options
+ */
+export async function executeCursorAgentCLI(
+  options: Omit<AIExecutionOptions, 'backend'>
+): Promise<string> {
+  const {
+    prompt,
+    model = AI_MODELS.CURSOR_AGENT.GPT_5_1,
+    outputFormat = "text",
+    projectRoot,
+    attachments = [],
+    autoApprove = false,
+    autonomyLevel,
+    onProgress
+  } = options;
+
+  if (!prompt || !prompt.trim()) {
+    throw new Error(ERROR_MESSAGES.NO_PROMPT_PROVIDED);
+  }
+
+  const args: string[] = [];
+
+  args.push(CLI.FLAGS.CURSOR.PROMPT, prompt);
+
+  if (model) {
+    args.push(CLI.FLAGS.CURSOR.MODEL, model);
+  }
+
+  if (outputFormat) {
+    args.push(CLI.FLAGS.CURSOR.OUTPUT, outputFormat);
+  }
+
+  const cwd = projectRoot || process.cwd();
+  if (cwd) {
+    args.push(CLI.FLAGS.CURSOR.CWD, cwd);
+  }
+
+  if (autoApprove) {
+    args.push(CLI.FLAGS.CURSOR.AUTO_APPROVE);
+  }
+
+  if (autonomyLevel) {
+    args.push(CLI.FLAGS.CURSOR.AUTONOMY, autonomyLevel);
+  }
+
+  if (attachments.length > 0) {
+    attachments.forEach(file => {
+      args.push(CLI.FLAGS.CURSOR.FILE, file);
+    });
+  }
+
+  logger.info(`Executing Cursor Agent CLI with model: ${model}`);
+
+  if (onProgress) {
+    onProgress(STATUS_MESSAGES.STARTING_ANALYSIS);
+  }
+
+  try {
+    const result = await executeCommand(CLI.COMMANDS.CURSOR_AGENT, args, {
+      onProgress,
+      timeout: 600000
+    });
+
+    if (onProgress) {
+      onProgress(STATUS_MESSAGES.COMPLETED);
+    }
+
+    return result;
+  } catch (error) {
+    if (onProgress) {
+      onProgress(STATUS_MESSAGES.FAILED);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Execute Droid CLI (Factory Droid) with the given options
+ */
+export async function executeDroidCLI(
+  options: Omit<AIExecutionOptions, 'backend'>
+): Promise<string> {
+  const {
+    prompt,
+    model = AI_MODELS.DROID.PRIMARY,
+    outputFormat = "text",
+    auto = "low",
+    sessionId,
+    skipPermissionsUnsafe = false,
+    attachments = [],
+    cwd,
+    onProgress
+  } = options;
+
+  if (!prompt || !prompt.trim()) {
+    throw new Error(ERROR_MESSAGES.NO_PROMPT_PROVIDED);
+  }
+
+  const args: string[] = [];
+  args.push(CLI.FLAGS.DROID.EXEC);
+
+  if (outputFormat) {
+    args.push(CLI.FLAGS.DROID.OUTPUT, outputFormat);
+  }
+
+  if (model) {
+    args.push(CLI.FLAGS.DROID.MODEL, model);
+  }
+
+  if (auto) {
+    args.push(CLI.FLAGS.DROID.AUTO, auto);
+  }
+
+  if (sessionId) {
+    args.push(CLI.FLAGS.DROID.SESSION, sessionId);
+  }
+
+  if (skipPermissionsUnsafe) {
+    args.push(CLI.FLAGS.DROID.SKIP_PERMISSIONS);
+  }
+
+  if (cwd) {
+    args.push(CLI.FLAGS.DROID.CWD, cwd);
+  }
+
+  if (attachments.length > 0) {
+    attachments.forEach(file => {
+      args.push(CLI.FLAGS.DROID.FILE, file);
+    });
+  }
+
+  // Prompt is positional argument at end
+  args.push(prompt);
+
+  logger.info(`Executing Droid CLI with model: ${model} (auto=${auto})`);
+
+  if (onProgress) {
+    onProgress(STATUS_MESSAGES.STARTING_ANALYSIS);
+  }
+
+  try {
+    const result = await executeCommand(CLI.COMMANDS.DROID, args, {
+      onProgress,
+      timeout: 900000
+    });
+
+    if (onProgress) {
+      onProgress(STATUS_MESSAGES.COMPLETED);
+    }
+
+    return result;
+  } catch (error) {
+    if (onProgress) {
+      onProgress(STATUS_MESSAGES.FAILED);
+    }
+    throw error;
+  }
+}
+
+/**
  * Execute a simple command (like echo or help)
  */
 export async function executeSimpleCommand(
@@ -301,6 +471,10 @@ export async function executeAIClient(options: AIExecutionOptions): Promise<stri
       return executeRovodevCLI(rest);
     case BACKENDS.GEMINI:
       return executeGeminiCLI(rest);
+    case BACKENDS.CURSOR:
+      return executeCursorAgentCLI(rest);
+    case BACKENDS.DROID:
+      return executeDroidCLI(rest);
     default:
       throw new Error(`Unsupported backend: ${backend}`);
   }

@@ -19,6 +19,17 @@ export const AI_MODELS = {
   GEMINI: {
     PRIMARY: "gemini-2.5-pro",
     FLASH: "gemini-2.5-flash"
+  },
+  CURSOR_AGENT: {
+    GPT_5_1: "gpt-5.1",
+    GPT_5: "gpt-5",
+    COMPOSER_1: "composer-1",
+    SONNET_4_5: "sonnet-4.5",
+    HAIKU_5: "haiku-5",
+    DEEPSEEK_V3: "deepseek-v3"
+  },
+  DROID: {
+    PRIMARY: "glm-4.6"
   }
 } as const;
 
@@ -28,6 +39,8 @@ export const CLI = {
     ROVODEV: "acli",
     ROVODEV_SUBCOMMAND: "rovodev",
     GEMINI: "gemini",
+    CURSOR_AGENT: "cursor-agent",
+    DROID: "droid",
     ECHO: "echo"
   },
   FLAGS: {
@@ -54,6 +67,25 @@ export const CLI = {
       SANDBOX: "-s",
       HELP: "-help",
       MODEL: "-m"
+    },
+    CURSOR: {
+      PROMPT: "-p",
+      MODEL: "--model",
+      OUTPUT: "--output-format",
+      CWD: "--cwd",
+      AUTO_APPROVE: "--auto-approve",
+      FILE: "--file",
+      AUTONOMY: "--autonomy-level"
+    },
+    DROID: {
+      EXEC: "exec",
+      MODEL: "--model",
+      AUTO: "--auto",
+      OUTPUT: "--output-format",
+      SESSION: "--session-id",
+      SKIP_PERMISSIONS: "--skip-permissions-unsafe",
+      FILE: "--file",
+      CWD: "--cwd"
     }
   }
 } as const;
@@ -100,7 +132,9 @@ export const APPROVAL_MODES = {
 export const BACKENDS = {
   QWEN: "qwen",
   ROVODEV: "rovodev",
-  GEMINI: "gemini"
+  GEMINI: "gemini",
+  CURSOR: "cursor-agent",
+  DROID: "droid"
 } as const;
 
 // Export BACKENDS values for easier importing
@@ -127,9 +161,9 @@ export const AGENT_ROLES = {
   IMPLEMENTER: {
     name: "ImplementerAgent",
     backend: BACKENDS.ROVODEV,
-    fallbackBackend: BACKENDS.GEMINI,
+    fallbackBackend: BACKENDS.DROID,
     specialization: "Precise code implementation with production-quality standards",
-    description: "Uses Rovodev for generating production-ready code with proper error handling and best practices"
+    description: "Uses Rovodev primarily and falls back to Droid for autonomous fix plans when the main backend is unavailable"
   },
   TESTER: {
     name: "TesterAgent",

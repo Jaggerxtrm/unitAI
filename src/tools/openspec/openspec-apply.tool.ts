@@ -58,6 +58,10 @@ export const openspecApplyTool: UnifiedTool = {
   execute: async (args, onProgress) => {
     const { changeId } = args;
 
+    if (!changeId || !changeId.trim()) {
+      throw new Error("Parameter 'changeId' is required to apply an OpenSpec change.");
+    }
+
     try {
       onProgress?.(`Applying OpenSpec change: ${changeId}`);
 

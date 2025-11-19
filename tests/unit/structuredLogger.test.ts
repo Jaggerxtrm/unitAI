@@ -163,6 +163,7 @@ describe('StructuredLogger', () => {
 
       // Wait for file to be written
       await new Promise(resolve => setTimeout(resolve, 100));
+      logger.close();
 
       const errorsPath = path.join(testLogDir, 'errors.log');
       expect(fs.existsSync(errorsPath)).toBe(true);
@@ -179,6 +180,7 @@ describe('StructuredLogger', () => {
 
       // Wait for files to be written
       await new Promise(resolve => setTimeout(resolve, 100));
+      logger.close();
 
       const debugPath = path.join(testLogDir, 'debug.log');
       const content = fs.readFileSync(debugPath, 'utf-8');
@@ -199,6 +201,7 @@ describe('StructuredLogger', () => {
 
       // Wait for logs to be written to files
       await new Promise(resolve => setTimeout(resolve, 100));
+      logger.close(); // Flush streams to ensure query reads latest entries
     });
 
     it('should query logs by category', () => {

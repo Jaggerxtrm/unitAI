@@ -30,7 +30,7 @@ Main documentation organized by topic:
 
 Complete API specifications:
 
-- **[Base Tools API](./reference/api-tools.md)** - ask-gemini, ask-qwen, ask-rovodev
+- **[Base Tools API](./reference/api-tools.md)** - ask-gemini, cursor-agent, droid
 - **[Workflows API](./reference/api-workflows.md)** - All 6 workflow specifications
 - **[Error Codes](./reference/error-codes.md)** - Complete error reference
 
@@ -80,7 +80,7 @@ Want to contribute?
 - [Workflows API Reference](./reference/api-workflows.md) - Complete specifications
 
 **Using Base Tools:**
-- [Base Tools API](./reference/api-tools.md) - ask-gemini, ask-qwen, ask-rovodev
+- [Base Tools API](./reference/api-tools.md) - ask-gemini, cursor-agent, droid
 
 **Understanding Skills and Hooks:**
 - [Skills and Hooks Guide](./guides/skills-hooks.md) - Simplified overview

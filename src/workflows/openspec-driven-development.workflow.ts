@@ -253,7 +253,7 @@ Il codice implementato segue le best practices del linguaggio utilizzato e manti
  */
 export const openspecDrivenDevelopmentWorkflow: WorkflowDefinition = {
   name: "openspec-driven-development",
-  description: "Complete spec-driven development workflow using OpenSpec integration. Creates specifications, refines them with AI, implements features, and archives changes.",
+  description: "Complete, language-agnostic spec-driven development workflow using OpenSpec integration. Creates specifications, refines them with AI, implements features, and archives changes.",
   schema: openspecDrivenDevelopmentSchema,
   execute: executeOpenspecDrivenDevelopment
 };

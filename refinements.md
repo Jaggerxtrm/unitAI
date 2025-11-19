@@ -2,13 +2,14 @@
 
 ## 1) 
 Il sistema di hooks deve risultare meno restrittivo e più flessibile. Favorire uno stile più libero e meno vincolante. Deve comunque trovare uno sweet-spot suggerendo e guidando claude nell'uso dei tool ricordandogli di usare:
-    - serena per retrieval di codice senza leggere interi file e sprecando token inutilmente (evitare dunque che legga file di 1000 LOC per capire una piccola modifica). DOCUMENTAZIONE:
-    - claude-context per effettuare ricerche sulla repository con ricerca semantica, come primo approccio per capire il contesto e le relazioni tra i file. DOCUMENTAZIONE:
+    - serena per retrieval di codice senza leggere interi file e sprecando token inutilmente (evitare dunque che legga file di 1000 LOC per capire una piccola modifica). DOCUMENTAZIONE: https://github.com/oraios/serena
+    - claude-context per effettuare ricerche sulla repository con ricerca semantica, come primo approccio per capire il contesto e le relazioni tra i file. DOCUMENTAZIONE: https://github.com/zilliztech/claude-context
     - Usare unified-ai-mcp per task agentiche complesse, nello specifico:
-        - ask-gemini per leggere interi file, particolarmente lunghi, cartelle e codebase in generale. Può anche utilizzarlo in modo per avere una seconda opinione su un task complesso, per esempio per capire se una modifica è necessaria o meno, o per capire se una modifica è vincolante o meno. Per comprendere se una modifica introduce over-engineering ed è davvero necessaria. 
-        - cursor-agent,  agente multi funzione estremamente potente, permette l'uso di molti modelli a seconda della complessità della task, ottimo per bug fixing e proposte di refactoring DOCUMENTAZIONE: https://cursor.com/docs/cli/headless
-        - ask-qwen come alternativa a ask-gemini.
-        - smart-workflows, strumenti predefiniti potenti per task agentiche complesse. @dist/workflows  DOCUMENTAZIONE: https://github.com/unified-ai/mcp-tool/blob/main/docs/workflows.md
+        - ask-gemini per leggere interi file, particolarmente lunghi, cartelle e codebase in generale. Ottimo come seconda opinione per capire se una modifica è necessaria (evita over-engineering).
+        - cursor-agent (integrato): agente multi-modello (GPT-5.1, Sonnet, Composer) per bugfix e refactor guidati. DOCUMENTAZIONE: https://cursor.com/docs/cli/headless
+        - droid (integrato): GLM-4.6 via Factory Droid CLI per checklist e remediation autonome. DOCUMENTAZIONE: https://docs.factory.ai/cli/droid-exec/overview#droid-exec-headless-cli 
+        - (Deprecato) ask-qwen / ask-rovodev → usare cursor-agent + droid come sostituti.
+        - smart-workflows, strumenti predefiniti potenti per task agentiche complesse. `dist/workflows` è già integrato ma deve essere mantenuto allineato alla roadmap.
     - deepwiki per accedere a github per documentazioni specifiche e ricerca semantica.
     - context7 per ricerca documentazioni su librerie, pacchetti e framework specifiche, sempre aggiornate per colmare la conoscenza outdated dei modelli.
     - openmemory-cloud per accedere a memories salvate in remoto/cloud, per evitare di perdere memoria tra sessioni. I tools sono semplici, va utilizzato anche quando si incappa in un problema, oppure per vedere come una funzione o refactoring o altro modulo è stato implementato in passato. Memories vanno aggiunto al termine di un task, una volta CONFERMATO CHE IL CODICE FUNZIONA E È STABILE.
@@ -27,3 +28,5 @@ Voglio slash-commands custom per invocare l'uso di certi tools in modo semplice,
     - SPEC creation
     - use unified-ai-mcp for ...
     - check docs
+
+I woul like you to split @refinements.md in 3-4 different, sub-tasks and save them .md in docs/enhancement-plan. The tasks should be pertinent to eachother by theme, we must enforce checking the documentations link before starting any proposal work. The agent that we make the request to shouldn't immediately implement, but propose a clear plan, and update the task it belongs to (the .md you create now). Please understand the requirement and my request thoroughly, explore the documentations yourself and the codebase if you need more specific context. Also, before starting any work, create a new branch now.

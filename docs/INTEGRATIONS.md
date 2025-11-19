@@ -115,6 +115,27 @@ Before Refactoring:
 - `mcp__openmemory__openmemory-add-memory`: Store memory
 - `mcp__openmemory__openmemory-search-memories`: Search memories
 
+### unified-ai-mcp (Toolset)
+
+**Purpose:** Esporre i tool principali (`ask-gemini`, `cursor-agent`, `droid`, `smart-workflows`) attraverso un unico server MCP.
+
+**When to Use:**
+- Analisi/lettura profonda di codice o documentazione (`ask-gemini`)
+- Refactor, bug fixing, patch chirurgiche (`cursor-agent`)
+- Piani operativi autonomi e remediation (`droid`)
+- Processi standardizzati (pre-commit, bug-hunt, feature-design, ecc.) tramite `smart-workflows`
+
+**Key Operations:**
+- `mcp__unified-ai-mcp__ask-gemini({ ... })`
+- `mcp__unified-ai-mcp__cursor-agent({ ... })`
+- `mcp__unified-ai-mcp__droid({ ... })`
+- `mcp__unified-ai-mcp__smart-workflows({ workflow: "...", params: { ... } })`
+
+**Notes:**
+- Impostare `CURSOR_AGENT_TOKEN` e `DROID_API_KEY` nell'env del server MCP.
+- Allegare file reali (no glob) quando si usano `files`/`attachments`.
+- `smart-workflows` sfrutta automaticamente Cursor e Droid nei workflow (`parallel-review` con `strategy=double-check`, `bug-hunt`, `refactor-sprint`, `auto-remediation`).
+
 ---
 
 ## Skills System

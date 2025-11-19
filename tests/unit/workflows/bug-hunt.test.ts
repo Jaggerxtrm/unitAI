@@ -36,7 +36,7 @@ describe('bug-hunt workflow', () => {
 
     expect(result).toContain('Bug Hunt Report');
     expect(result).toContain('Root cause');
-    expect(aiExecutor.executeAIClient).toHaveBeenCalledTimes(2); // Gemini + Rovodev
+    expect(aiExecutor.executeAIClient).toHaveBeenCalledTimes(4); // Gemini + Cursor + Droid + verification
   });
 
   it('should discover files when not provided', async () => {

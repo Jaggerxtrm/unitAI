@@ -17,17 +17,27 @@ const parallelReviewSchema = z.object({
   focus: z.enum(["architecture", "security", "performance", "quality", "all"])
     .optional().default("all").describe("Area di focus dell'analisi"),
   autonomyLevel: z.enum(["read-only", "low", "medium", "high"])
-    .optional().describe("Livello di autonomia per le operazioni del workflow (default: read-only)")
+    .optional().describe("Livello di autonomia per le operazioni del workflow (default: read-only)"),
+  strategy: z.enum(["standard", "double-check"])
+    .optional()
+    .default("standard")
+    .describe("Strategia di revisione (double-check aggiunge Cursor + Droid)"),
+  backendOverrides: z.array(z.string())
+    .optional()
+    .describe("Override esplicito dei backend da utilizzare"),
+  attachments: z.array(z.string())
+    .optional()
+    .describe("File da allegare alle analisi (passati a Cursor/Droid)")
 });
 
 /**
  * Esegue il workflow di revisione parallela
  */
-async function executeParallelReview(
+export async function executeParallelReview(
   params: z.infer<typeof parallelReviewSchema>,
   onProgress?: ProgressCallback
 ): Promise<string> {
-  const { files, focus } = params;
+  const { files, focus, strategy = "standard", backendOverrides, attachments = [] } = params;
   
   // Setup structured logging
   const workflowId = generateWorkflowId();
@@ -74,6 +84,24 @@ Come Rovodev, fornisci un'analisi pratica con focus su:
 - Suggerimenti di refactoring
 - Best practices di sviluppo
 `;
+      case BACKENDS.CURSOR:
+        return `${basePrompt}
+
+Come Cursor Agent, genera un piano di refactoring dettagliato:
+- Evidenzia rischi tecnici a medio termine
+- Suggerisci patch chirurgiche con contesto minimo
+- Prioritizza interventi in base all'impatto
+- Proponi test da aggiungere
+`;
+      case BACKENDS.DROID:
+        return `${basePrompt}
+
+Come Factory Droid, agisci come verificatore autonomo:
+- Valuta se i suggerimenti precedenti sono sufficienti
+- Identifica eventuali lacune operative
+- Disegna un piano di remediation multi-step
+- Elenca check-list di convalida finale
+`;
         
       default:
         return basePrompt;
@@ -81,17 +109,42 @@ Come Rovodev, fornisci un'analisi pratica con focus su:
   };
   
   // Esecuzione dell'analisi parallela
+  const defaultBackends = strategy === "double-check"
+    ? [BACKENDS.GEMINI, BACKENDS.ROVODEV, BACKENDS.CURSOR, BACKENDS.DROID]
+    : [BACKENDS.GEMINI, BACKENDS.ROVODEV];
+  const backendsToUse = backendOverrides && backendOverrides.length > 0
+    ? backendOverrides
+    : defaultBackends;
+
   logger.step('parallel-analysis-start', 'Starting parallel analysis', {
-    backends: [BACKENDS.GEMINI, BACKENDS.ROVODEV]
+    backends: backendsToUse
   });
   
-  onProgress?.("Avvio analisi parallela con Gemini e Rovodev...");
+  onProgress?.(`Avvio analisi con i backend: ${backendsToUse.join(", ")}`);
   
   const analysisResult = await logger.timing('parallel-analysis', async () => {
     return await runParallelAnalysis(
-      [BACKENDS.GEMINI, BACKENDS.ROVODEV],
+      backendsToUse,
       promptBuilder,
-      onProgress
+      onProgress,
+      (backend) => {
+        if (backend === BACKENDS.CURSOR) {
+            return {
+              attachments,
+              projectRoot: process.cwd(),
+              outputFormat: "text",
+              autoApprove: strategy === "double-check"
+            };
+        }
+        if (backend === BACKENDS.DROID) {
+          return {
+            attachments,
+            auto: strategy === "double-check" ? "medium" : "low",
+            outputFormat: "text"
+          };
+        }
+        return {};
+      }
     );
   });
   
@@ -107,7 +160,9 @@ Come Rovodev, fornisci un'analisi pratica con focus su:
     backendsUsed: successful.map(r => r.backend),
     failedBackends: failed.map(r => r.backend),
     analysisCount: successful.length,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    strategy,
+    attachments
   };
   
   // Se abbiamo risultati, usiamo la sintesi già preparata
@@ -163,7 +218,7 @@ L'analisi potrebbe essere incompleta. Si consiglia di risolvere i problemi e rip
     totalBackends: analysisResult.results.length
   });
   
-  return formatWorkflowOutput("Revisione Parallela del Codice", outputContent, metadata);
+  return formatWorkflowOutput("Revisione Parallela del Codice (Parallel Review)", outputContent, metadata);
 }
 
 /**

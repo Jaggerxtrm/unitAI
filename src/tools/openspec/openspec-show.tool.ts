@@ -58,6 +58,10 @@ export const openspecShowTool: UnifiedTool = {
   execute: async (args, onProgress) => {
     const { changeId } = args;
 
+    if (!changeId || !changeId.trim()) {
+      throw new Error("Parameter 'changeId' is required to show an OpenSpec change.");
+    }
+
     try {
       onProgress?.(`Showing OpenSpec change details: ${changeId}`);
 

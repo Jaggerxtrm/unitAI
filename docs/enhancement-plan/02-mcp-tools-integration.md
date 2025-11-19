@@ -4,13 +4,13 @@
 Ensure all MCP tools are properly integrated, documented, and optimally configured. Add missing tools (cursor-agent, droid) and remove deprecated ones (ask-qwen, ask-rovodev).
 
 ## Status
-- [ ] Documentation review completed
-- [ ] Current MCP configuration analyzed
-- [ ] Missing tools identified
-- [ ] Proposal created
-- [ ] Implementation plan approved
-- [ ] Integration completed
-- [ ] Documentation updated
+- [x] Documentation review completed
+- [x] Current MCP configuration analyzed
+- [x] Missing tools identified
+- [x] Proposal created
+- [x] Implementation plan approved
+- [x] Integration completed
+- [x] Documentation updated
 - [ ] Testing completed
 
 ## Required Documentation Review
@@ -102,7 +102,7 @@ After creating your proposal:
 2. Check off "Current MCP configuration analyzed"
 3. Check off "Missing tools identified"
 4. Check off "Proposal created"
-5. Link your proposal document here: `[Proposal](file://path/to/proposal.md)`
+5. Link your proposal document here: `[Proposal](file:///home/dawid/Projects/unified-ai-mcp-tool/docs/enhancement-plan/02-proposal-mcp-tools.md)`
 
 ## Success Criteria
 - [ ] cursor-agent and droid are fully integrated and functional

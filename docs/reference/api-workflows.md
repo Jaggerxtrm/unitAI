@@ -1,10 +1,10 @@
 # API Reference: Workflows
 
-**Version:** 1.1  
-**Last Updated:** 2025-11-14  
+**Version:** 1.2  
+**Last Updated:** 2025-11-19  
 **Status:** Production Ready
 
-Complete API reference for all 6 smart workflows. For usage guide and examples, see [Workflows Guide](../WORKFLOWS.md).
+Complete API reference for tutti i 9 smart workflows. Per esempi dettagliati, consulta la [Workflows Guide](../WORKFLOWS.md).
 
 ---
 
@@ -62,13 +62,13 @@ Initialize development session with git analysis and AI synthesis.
 
 Validate staged changes with configurable depth levels.
 
-**Backends:** All 3 (Qwen, Gemini, Rovodev) in parallel
+**Backends:** Qwen + Gemini + Rovodev (sempre), Droid aggiunto automaticamente per `depth="paranoid"`.
 
 ### Parameters
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| depth | string | No | thorough | Validation depth: quick (5-10s), thorough (20-30s), paranoid (60-90s) |
+| depth | string | No | thorough | `quick`, `thorough`, `paranoid` (attiva Droid con `auto=low/medium`) |
 | autonomyLevel | string | No | read-only | Permission level |
 
 ### Returns
@@ -107,7 +107,7 @@ Validate staged changes with configurable depth levels.
 
 Multi-perspective code review with parallel AI backends.
 
-**Backends:** Gemini + Rovodev (parallel)
+**Backends:** Gemini + Rovodev (`strategy="standard"`). Aggiunge Cursor Agent e Droid quando `strategy="double-check"` o con `backendOverrides`.
 
 ### Parameters
 
@@ -116,6 +116,9 @@ Multi-perspective code review with parallel AI backends.
 | files | string[] | Yes | - | File paths to review |
 | focus | string | No | all | Focus area: all, security, performance, architecture |
 | autonomyLevel | string | No | read-only | Permission level |
+| strategy | string | No | standard | `standard` o `double-check` |
+| backendOverrides | string[] | No | - | Lista manuale di backend da usare |
+| attachments | string[] | No | [] | File allegati a Cursor/Droid |
 
 ### Returns
 
@@ -296,6 +299,141 @@ End-to-end feature planning with multi-agent collaboration.
 
 ---
 
+## triangulated-review
+
+Cross-check refactor/bugfix critici con Gemini + Cursor Agent + Droid.
+
+**Backends:** Gemini + Cursor (paralleli) con verifica di Droid (sequenziale).
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| files | string[] | Yes | - | File da analizzare |
+| goal | string | No | refactor | `refactor` oppure `bugfix` |
+| autonomyLevel | string | No | read-only | Livello di autonomia (per Droid) |
+
+### Returns
+
+```typescript
+{
+  success: boolean,
+  synthesis: string,            // Sintesi Gemini + Cursor
+  droidChecklist: string,       // Piano operativo generato da Droid
+  analyses: Array<AIAnalysisResult>,
+  metadata: {
+    files: string[],
+    goal: string,
+    backendsSuccess: string[],
+    backendsFailed: string[]
+  }
+}
+```
+
+### Example
+
+```json
+{
+  "workflow": "triangulated-review",
+  "params": {
+    "files": ["src/utils/aiExecutor.ts"],
+    "goal": "bugfix"
+  }
+}
+```
+
+---
+
+## refactor-sprint
+
+Orchestrates Cursor → Gemini → Droid per creare un mini-sprint di refactoring.
+
+**Backends:** Cursor (piano), Gemini (validazione), Droid (checklist).
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| targetFiles | string[] | Yes | - | File coinvolti |
+| scope | string | Yes | - | Descrizione dello scopo |
+| depth | string | No | balanced | `light`, `balanced`, `deep` |
+| autonomyLevel | string | No | read-only | Livello di permessi |
+| attachments | string[] | No | [] | File allegati a Cursor |
+
+### Returns
+
+```typescript
+{
+  success: boolean,
+  plan: string,            // Piano Cursor (markdown)
+  review: string,          // Review architetturale Gemini
+  checklist: string,       // Checklist operativa Droid
+  metadata: {
+    targetFiles: string[],
+    scope: string,
+    depth: string
+  }
+}
+```
+
+### Example
+
+```json
+{
+  "workflow": "refactor-sprint",
+  "params": {
+    "targetFiles": ["src/workflows/utils.ts"],
+    "scope": "Modularizzare runParallelAnalysis",
+    "depth": "deep"
+  }
+}
+```
+
+---
+
+## auto-remediation
+
+Genera automaticamente un piano di remediation sfruttando Droid.
+
+**Backends:** Factory Droid CLI (`droid exec`).
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| symptoms | string | Yes | - | Descrizione dei sintomi |
+| maxActions | number | No | 5 | Numero massimo di step |
+| autonomyLevel | string | No | read-only | Livello di autonomia |
+| attachments | string[] | No | [] | Log o file da allegare |
+
+### Returns
+
+```typescript
+{
+  success: boolean,
+  plan: string,         // Piano di remediation formattato
+  metadata: {
+    maxActions: number,
+    attachments: string[]
+  }
+}
+```
+
+### Example
+
+```json
+{
+  "workflow": "auto-remediation",
+  "params": {
+    "symptoms": "Timeout durante upload file >50MB",
+    "maxActions": 6,
+    "attachments": ["logs/upload.log"]
+  }
+}
+```
+
+---
+
 ## Workflow Comparison
 
 | Workflow | Backends | Parallel | Typical Duration | Cache | Primary Use Case |
@@ -339,5 +477,5 @@ All workflows return standardized error responses:
 ## See Also
 
 - [Workflows Guide](../WORKFLOWS.md) - Usage guide with examples
-- [Base Tools API](./api-tools.md) - ask-gemini, ask-qwen, ask-rovodev
+- [Base Tools API](./api-tools.md) - ask-gemini, cursor-agent, droid
 - [Error Codes](./error-codes.md) - Complete error reference

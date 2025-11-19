@@ -16,6 +16,14 @@ export interface BaseWorkflowParams {
    * @default AutonomyLevel.READ_ONLY
    */
   autonomyLevel?: AutonomyLevel;
+  /**
+   * Override dei backend AI da utilizzare durante l'esecuzione
+   */
+  backendOverrides?: string[];
+  /**
+   * Allegati da passare agli strumenti AI (per prompt contestuali)
+   */
+  attachments?: string[];
 }
 
 /**

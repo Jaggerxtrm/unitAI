@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
+import "../../src/tools/index.js";
 import { toolRegistry } from "../../src/tools/registry.js";
 import { listWorkflows, getWorkflow, getWorkflowSchema } from "../../src/workflows/index.js";
 import {

@@ -24,6 +24,13 @@ import { openspecDrivenDevelopmentWorkflow } from "./openspec-driven-development
  * Registro di tutti i workflow disponibili
  */
 const workflowRegistry: Record<string, WorkflowDefinition> = {};
+let workflowsInitialized = false;
+
+function ensureWorkflowsInitialized(): void {
+  if (!workflowsInitialized) {
+    initializeWorkflowRegistry();
+  }
+}
 
 /**
  * Registra un workflow nel registro
@@ -39,6 +46,7 @@ export function registerWorkflow<TParams>(
  * Ottiene un workflow dal registro
  */
 export function getWorkflow(name: string): WorkflowDefinition | undefined {
+  ensureWorkflowsInitialized();
   return workflowRegistry[name];
 }
 
@@ -46,6 +54,7 @@ export function getWorkflow(name: string): WorkflowDefinition | undefined {
  * Elenca tutti i workflow disponibili
  */
 export function listWorkflows(): string[] {
+  ensureWorkflowsInitialized();
   return Object.keys(workflowRegistry);
 }
 
@@ -57,6 +66,7 @@ export async function executeWorkflow(
   params: any,
   onProgress?: ProgressCallback
 ): Promise<string> {
+  ensureWorkflowsInitialized();
   const workflow = getWorkflow(name);
   if (!workflow) {
     throw new Error(`Workflow non trovato: ${name}`);
@@ -103,7 +113,14 @@ export const workflowSchemas = {
   "parallel-review": z.object({
     files: z.array(z.string()).describe("File da analizzare"),
     focus: z.enum(["architecture", "security", "performance", "quality", "all"])
-      .optional().default("all").describe("Area di focus dell'analisi")
+      .optional().default("all").describe("Area di focus dell'analisi"),
+    strategy: z.enum(["standard", "double-check"]).optional().default("standard")
+      .describe("Strategia di revisione"),
+    backendOverrides: z.array(z.string()).optional()
+      .describe("Override manuale dei backend"),
+    attachments: z.array(z.string()).optional()
+      .describe("File da allegare a Cursor/Droid"),
+    writeReport: z.boolean().optional().describe("Parametro legacy (non utilizzato)")
   }),
   
   "pre-commit-validate": z.object({
@@ -111,7 +128,10 @@ export const workflowSchemas = {
       .optional().default("thorough").describe("Profondità della validazione")
   }),
   
-  "init-session": z.object({}).describe("Nessun parametro richiesto"),
+  "init-session": z.object({
+    autonomyLevel: z.enum(["read-only", "low", "medium", "high"]).optional(),
+    commitCount: z.number().int().min(1).max(50).optional()
+  }).describe("Parametri opzionali per init-session"),
   
   "validate-last-commit": z.object({
     commit_ref: z.string().optional().default("HEAD")
@@ -133,7 +153,12 @@ export const workflowSchemas = {
   "bug-hunt": z.object({
     symptoms: z.string().describe("Descrizione dei sintomi del problema"),
     suspected_files: z.array(z.string()).optional()
-      .describe("File sospetti da analizzare")
+      .describe("File sospetti da analizzare"),
+    attachments: z.array(z.string()).optional()
+      .describe("File aggiuntivi da allegare all'analisi (log, dump, ecc.)"),
+    backendOverrides: z.array(z.string()).optional()
+      .describe("Override manuale dei backend AI"),
+    autonomyLevel: z.enum(["LOW", "MEDIUM", "HIGH", "AUTONOMOUS"]).optional()
   }),
   "triangulated-review": z.object({
     files: z.array(z.string()).describe("File da analizzare"),
@@ -171,6 +196,10 @@ export const workflowSchemas = {
  * Questa funzione sarà chiamata dopo l'import di tutti i workflow
  */
 export function initializeWorkflowRegistry(): void {
+  if (workflowsInitialized) {
+    return;
+  }
+  workflowsInitialized = true;
   // I workflow saranno registrati qui quando implementati
   registerWorkflow("parallel-review", parallelReviewWorkflow);
   registerWorkflow("pre-commit-validate", preCommitValidateWorkflow);
@@ -191,5 +220,6 @@ export function initializeWorkflowRegistry(): void {
  * Ottiene lo schema Zod per un workflow specifico
  */
 export function getWorkflowSchema(workflowName: string): z.ZodSchema | undefined {
+  ensureWorkflowsInitialized();
   return workflowSchemas[workflowName as keyof typeof workflowSchemas];
 }

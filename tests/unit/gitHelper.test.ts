@@ -3,12 +3,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mockGitCommand, mockGitCommands, createMockGitDiff } from '../utils/mockGit.js';
+import { mockGitCommand, mockGitCommands, createMockGitDiff, resetMockGitCommands } from '../utils/mockGit.js';
 
 describe('GitHelper', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.resetAllMocks();
+    resetMockGitCommands();
   });
 
   afterEach(() => {

@@ -2,6 +2,31 @@
 
 All notable changes to the Unified AI MCP Tool project.
 
+# Changelog
+
+All notable changes to the Unified AI MCP Tool project.
+
+## [1.3.0] - 2025-11-19
+
+### ✨ Added
+- **New tools:** `cursor-agent` e `droid` completamente integrati (CLI wrapper, registry, test unitari).
+- **Workflow estesi:** aggiunti `triangulated-review`, `refactor-sprint`, `auto-remediation` e potenziati `parallel-review`, `pre-commit-validate`, `bug-hunt`.
+- **AI Executor:** supporto completo per Cursor/Droid (attachments, projectRoot, autonomy flags) + opzioni extra nei workflow utils.
+- **Documentazione aggiornata:** `docs/mcp_tools_documentations.md`, `docs/WORKFLOWS.md`, `docs/INTEGRATIONS.md`, `docs/reference/api-tools.md`, `docs/reference/api-workflows.md`, `README.md`, `CLAUDE.MD`, guide/CONTRIBUTING.
+- **Nuova guida:** `docs/guides/cursor-droid-playbook.md` (pattern operativi e snippet).
+- **Config:** `.mcp.json` ora espone `CURSOR_AGENT_TOKEN` e `DROID_API_KEY`.
+
+### 🔧 Changed
+- `ImplementerAgent` ora usa Droid come fallback primario.
+- `smart-workflows` supporta `strategy`, `backendOverrides`, `attachments` dove richiesto.
+- Rimosse tutte le occorrenze dei tool deprecati `ask-qwen`/`ask-rovodev` dal codice e dai documenti attivi.
+
+### ✅ Tests
+- Aggiornato `tests/unit/aiExecutor.test.ts` con casi per Cursor/Droid e routing dei backend.
+- Nuove suite `tests/unit/tools/cursor-agent.tool.test.ts` e `tests/unit/tools/droid.tool.test.ts`.
+
+---
+
 ## [1.1.1] - 2025-11-07
 
 ### 🚀 Phase 2: Specialized Agent Interfaces (UNIFIED_AUTONOMOUS_SYSTEM_PLAN)

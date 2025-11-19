@@ -278,7 +278,7 @@ Or via MCP:
 }
 ```
 
-### Qwen (Fast Iteration)
+### Cursor Agent (Refactor & Bug Fix)
 
 ```
 @tests/auth.test.ts Add test cases for edge cases
@@ -288,15 +288,16 @@ Or via MCP:
 
 ```json
 {
-  "tool": "ask-qwen",
+  "tool": "cursor-agent",
   "params": {
-    "prompt": "@tests/auth.test.ts Add test cases",
-    "approvalMode": "auto-edit"
+    "prompt": "@tests/auth.test.ts Proponi nuovi test edge case",
+    "model": "composer-1",
+    "projectRoot": "/home/dawid/Projects/unified-ai-mcp-tool"
   }
 }
 ```
 
-### Rovodev (Production Code)
+### Droid (Remediation Plan)
 
 ```
 @src/api/ Refactor these API endpoints to use async/await
@@ -306,10 +307,11 @@ Or via MCP:
 
 ```json
 {
-  "tool": "ask-rovodev",
+  "tool": "droid",
   "params": {
-    "prompt": "@src/api/ Refactor to use async/await",
-    "shadow": true
+    "prompt": "Sintomi: API upload 50MB → 500 error. Genera piano remediation.",
+    "auto": "medium",
+    "files": ["logs/upload-error.log"]
   }
 }
 ```

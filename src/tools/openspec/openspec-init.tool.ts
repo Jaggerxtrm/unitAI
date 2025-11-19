@@ -110,7 +110,7 @@ async function executeOpenSpecCommand(
  */
 export const openspecInitTool: UnifiedTool = {
   name: "openspec-init",
-  description: "Initialize OpenSpec in the current project directory",
+  description: "initialize OpenSpec in the current project directory",
   category: "spec-management",
   zodSchema: z.object({
     aiTools: z

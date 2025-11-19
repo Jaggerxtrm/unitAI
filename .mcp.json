@@ -28,7 +28,10 @@
       "args": [
         "@jaggerxtrm/unified-ai-mcp-tool@latest"
       ],
-      "env": {}
+      "env": {
+        "CURSOR_AGENT_TOKEN": "set-me",
+        "DROID_API_KEY": "set-me"
+      }
     },
     "serena": {
       "type": "stdio",

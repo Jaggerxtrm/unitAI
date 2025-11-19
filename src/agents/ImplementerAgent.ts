@@ -1,7 +1,7 @@
 /**
  * ImplementerAgent - Precise code implementation with production quality
  *
- * Uses Rovodev (fallback: Gemini) for:
+ * Uses Rovodev (fallback: Droid) for:
  * - Production-ready code generation
  * - Bug fixing and code modifications
  * - Incremental implementation
@@ -24,14 +24,14 @@ import type {
 /**
  * ImplementerAgent specializes in code implementation and modification
  *
- * Backend: Rovodev (primary), Gemini (fallback)
+ * Backend: Rovodev (primary), Droid (fallback)
  * Specialization: Production code generation, bug fixes, incremental changes
  */
 export class ImplementerAgent extends BaseAgent<ImplementerInput, ImplementerOutput> {
   readonly name = "ImplementerAgent";
   readonly description = "Precise code implementation with production-quality standards using Rovodev";
   readonly preferredBackend = BACKENDS.ROVODEV;
-  readonly fallbackBackend = BACKENDS.GEMINI; // Gemini can also generate code
+  readonly fallbackBackend = BACKENDS.DROID;
 
   /**
    * Build specialized prompt for code implementation

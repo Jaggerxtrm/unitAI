@@ -69,6 +69,18 @@ export async function getGitRepoInfo(): Promise<GitRepoInfo> {
 }
 
 /**
+ * Restituisce il branch corrente
+ */
+export async function getCurrentBranch(): Promise<string> {
+  if (!await isGitRepository()) {
+    throw new Error("Directory corrente non è un repository Git");
+  }
+
+  const branchOutput = await runGitCommand(["branch", "--show-current"]);
+  return branchOutput.trim();
+}
+
+/**
  * Ottiene informazioni su un commit specifico
  */
 export async function getGitCommitInfo(commitRef: string = "HEAD"): Promise<GitCommitInfo> {
@@ -193,8 +205,12 @@ export async function getRecentCommitsWithDiffs(count: number = 10): Promise<Git
 
   try {
     // Ottieni gli hash degli ultimi N commits
-    const logOutput = await runGitCommand(["log", "--format=%H", `-${count}`]);
-    const hashes = logOutput.trim().split("\n").filter(line => line.trim());
+    const logOutput = await runGitCommand(["log", "--oneline", `-${count}`]);
+    const hashes = logOutput
+      .trim()
+      .split("\n")
+      .map(line => line.trim().split(" ")[0])
+      .filter(hash => !!hash);
 
     // Per ogni hash, ottieni le informazioni complete
     const commits: GitCommitInfo[] = [];
