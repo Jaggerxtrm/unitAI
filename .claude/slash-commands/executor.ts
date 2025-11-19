@@ -4,7 +4,8 @@ import { executeSaveCommit } from './commands/save-commit';
 import { executeAiTask } from './commands/ai-task';
 import { executeCreateSpec } from './commands/create-spec';
 import { executeCheckDocs } from './commands/check-docs';
-import { getHelpText } from './commands/help';
+import { executeOpenspec } from './commands/openspec';
+import { executeHelp } from './commands/help';
 
 const commandHandlers: Record<string, (params: string[]) => Promise<CommandResult>> = {
   'init-session': executeInitSession,
@@ -12,7 +13,8 @@ const commandHandlers: Record<string, (params: string[]) => Promise<CommandResul
   'ai-task': executeAiTask,
   'create-spec': executeCreateSpec,
   'check-docs': executeCheckDocs,
-  'help': async () => ({ success: true, output: getHelpText(), duration: 0 })
+  'openspec': executeOpenspec,
+  'help': executeHelp
 };
 
 export async function executeSlashCommand(command: SlashCommand): Promise<CommandResult> {
@@ -38,10 +40,11 @@ export async function executeSlashCommand(command: SlashCommand): Promise<Comman
     };
 
   } catch (error) {
+    const err = error as Error;
     return {
       success: false,
       output: '',
-      error: `Errore durante l'esecuzione del comando /${command.command}: ${error.message}`,
+      error: `Errore durante l'esecuzione del comando /${command.command}: ${err.message}`,
       duration: Date.now() - startTime
     };
   }

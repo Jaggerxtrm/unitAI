@@ -1,5 +1,7 @@
-export function getHelpText(): string {
-  return `# Comandi Slash Disponibili
+import { CommandResult } from '../types';
+
+export function getHelpText(command?: string): string {
+  const generalHelpText = `# Comandi Slash Disponibili
 
 ## Sessione e Workflow
 - \`/init-session [opzioni]\` - Inizializza una nuova sessione di lavoro
@@ -44,4 +46,14 @@ export function getHelpText(): string {
 - I comandi che coinvolgono memoria (\`/save-commit\`) salvano **solo dopo** aver verificato che il codice sia stabile e funzionante
 - Tutti i comandi rispettano le policy di sicurezza del progetto
 `;
+
+  return generalHelpText;
 }
+
+export async function executeHelp(params: string[]): Promise<CommandResult> {
+  return {
+    success: true,
+    output: getHelpText(params[0])
+  };
+}
+

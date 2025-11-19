@@ -23,19 +23,26 @@ export async function executeAiTask(params: string[]): Promise<CommandResult> {
       case 'status':
         return await getWorkflowStatus();
 
+      case 'cursor':
+        return await executeCursor(subParams);
+
+      case 'droid':
+        return await executeDroid(subParams);
+
       default:
         return {
           success: false,
           output: '',
-          error: `Sottocomando sconosciuto: ${subcommand}. Usa list, run, o status.`
+          error: `Sottocomando sconosciuto: ${subcommand}. Usa list, run, status, cursor, o droid.`
         };
     }
 
   } catch (error) {
+    const err = error as Error;
     return {
       success: false,
       output: '',
-      error: `Errore durante l'esecuzione ai-task: ${error.message}`
+      error: `Errore durante l'esecuzione ai-task: ${err.message}`
     };
   }
 }
@@ -138,10 +145,11 @@ async function runWorkflow(params: string[]): Promise<CommandResult> {
     };
 
   } catch (error) {
+    const err = error as Error;
     return {
       success: false,
       output: '',
-      error: `Errore durante l'esecuzione del workflow ${workflowName}: ${error.message}`
+      error: `Errore durante l'esecuzione del workflow ${workflowName}: ${err.message}`
     };
   }
 }
@@ -200,4 +208,124 @@ async function executeWorkflow(params: any): Promise<any> {
     output: 'Workflow completato con successo. Output dettagliato qui.',
     duration: 1500
   };
+}
+
+async function executeCursor(params: string[]): Promise<CommandResult> {
+  if (params.length === 0) {
+    return {
+      success: false,
+      output: '',
+      error: 'Prompt richiesto. Uso: /ai-task cursor "prompt" [--model model-name] [--files file1,file2]'
+    };
+  }
+
+  const options = parseCursorOptions(params);
+  const prompt = extractPrompt(params);
+
+  if (!prompt) {
+    return {
+      success: false,
+      output: '',
+      error: 'Prompt non valido. Racchiudilo tra virgolette.'
+    };
+  }
+
+  try {
+    // This would call the MCP cursor-agent tool
+    // For now, return formatted result
+    let output = `# Cursor Agent Execution\n\n`;
+    output += `**Prompt:** "${prompt}"\n`;
+    output += `**Model:** ${options.model || 'gpt-5.1 (default)'}\n`;
+    if (options.files) {
+      output += `**Files:** ${options.files.join(', ')}\n`;
+    }
+    output += `\n## Result\n\n`;
+    output += `Cursor agent analysis completed successfully.\n`;
+    output += `\n*Note: This is a mock result. Integration with actual cursor-agent MCP tool pending.*\n`;
+
+    return {
+      success: true,
+      output
+    };
+  } catch (error) {
+    const err = error as Error;
+    return {
+      success: false,
+      output: '',
+      error: `Errore durante l'esecuzione cursor-agent: ${err.message}`
+    };
+  }
+}
+
+async function executeDroid(params: string[]): Promise<CommandResult> {
+  if (params.length === 0) {
+    return {
+      success: false,
+      output: '',
+      error: 'Prompt richiesto. Uso: /ai-task droid "prompt" [--auto low|medium|high] [--files file1,file2]'
+    };
+  }
+
+  const options = parseDroidOptions(params);
+  const prompt = extractPrompt(params);
+
+  if (!prompt) {
+    return {
+      success: false,
+      output: '',
+      error: 'Prompt non valido. Racchiudilo tra virgolette.'
+    };
+  }
+
+  try {
+    // This would call the MCP droid tool
+    // For now, return formatted result
+    let output = `# Droid Execution\n\n`;
+    output += `**Prompt:** "${prompt}"\n`;
+    output += `**Autonomy:** ${options.auto || 'low (default)'}\n`;
+    if (options.files) {
+      output += `**Files:** ${options.files.join(', ')}\n`;
+    }
+    output += `\n## Result\n\n`;
+    output += `Droid analysis completed successfully.\n`;
+    output += `\n*Note: This is a mock result. Integration with actual droid MCP tool pending.*\n`;
+
+    return {
+      success: true,
+      output
+    };
+  } catch (error) {
+    const err = error as Error;
+    return {
+      success: false,
+      output: '',
+      error: `Errore durante l'esecuzione droid: ${err.message}`
+    };
+  }
+}
+
+function parseCursorOptions(params: string[]) {
+  const modelIndex = params.indexOf('--model');
+  const filesIndex = params.indexOf('--files');
+
+  return {
+    model: modelIndex !== -1 && params[modelIndex + 1] ? params[modelIndex + 1] : undefined,
+    files: filesIndex !== -1 && params[filesIndex + 1] ? params[filesIndex + 1].split(',') : undefined
+  };
+}
+
+function parseDroidOptions(params: string[]) {
+  const autoIndex = params.indexOf('--auto');
+  const filesIndex = params.indexOf('--files');
+
+  return {
+    auto: autoIndex !== -1 && params[autoIndex + 1] ? params[autoIndex + 1] : undefined,
+    files: filesIndex !== -1 && params[filesIndex + 1] ? params[filesIndex + 1].split(',') : undefined
+  };
+}
+
+function extractPrompt(params: string[]): string | null {
+  // Find the first quoted string
+  const promptMatch = params.join(' ').match(/"([^"]+)"/);
+  return promptMatch ? promptMatch[1] : null;
 }

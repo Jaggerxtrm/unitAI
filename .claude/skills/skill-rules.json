@@ -62,6 +62,52 @@
                 ]
             }
         },
+        "openspec-workflow": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "medium",
+            "description": "Reminds to use OpenSpec for spec-driven development before implementing new features. Create specs first with `/openspec add` or `mcp__openspec-init`, then track implementation alignment with `/openspec track`.",
+            "behaviorFlags": {
+                "showEveryTime": false,
+                "minimumConfidence": 0.70,
+                "canBeDismissed": true,
+                "dismissDurationMinutes": 90
+            },
+            "promptTriggers": {
+                "keywords": [
+                    "implement",
+                    "feature",
+                    "new",
+                    "add functionality",
+                    "build",
+                    "create",
+                    "develop",
+                    "spec",
+                    "specification",
+                    "design document"
+                ],
+                "intentPatterns": [
+                    "(implement|create|add|build).*?(feature|functionality|component)",
+                    "(new|fresh).*?(feature|implementation|module)",
+                    "(spec|specification|design).*?(first|before|doc)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/src/**",
+                    "**/features/**",
+                    "**/components/**"
+                ]
+            },
+            "relatedTools": [
+                "openspec-init",
+                "openspec-add",
+                "openspec-track"
+            ],
+            "relatedSkills": [
+                "feature-design"
+            ]
+        },
         "claude-context-usage": {
             "type": "domain",
             "enforcement": "suggest",
@@ -514,79 +560,79 @@
             }
         }
     },
-        "quick-exploration": {
-            "type": "domain",
-            "enforcement": "suggest",
-            "priority": "medium",
-            "description": "Fast codebase exploration workflow for session start or unfamiliar code. Uses glob, grep, and overview commands for rapid context without large file reads.",
-            "behaviorFlags": {
-                "showEveryTime": false,
-                "minimumConfidence": 0.8,
-                "canBeDismissed": true,
-                "dismissDurationMinutes": 180
-            },
-            "promptTriggers": {
-                "keywords": [
-                    "explore",
-                    "overview",
-                    "start",
-                    "unfamiliar",
-                    "new codebase",
-                    "where to start",
-                    "understand structure",
-                    "map codebase"
-                ],
-                "intentPatterns": [
-                    "(where|how).*?(start|begin|explore)",
-                    "(understand|learn|explore).*?(codebase|structure|project)",
-                    "(new|unfamiliar|unknown).*?(code|project|codebase)"
-                ]
-            }
+    "quick-exploration": {
+        "type": "domain",
+        "enforcement": "suggest",
+        "priority": "medium",
+        "description": "Fast codebase exploration workflow for session start or unfamiliar code. Uses glob, grep, and overview commands for rapid context without large file reads.",
+        "behaviorFlags": {
+            "showEveryTime": false,
+            "minimumConfidence": 0.8,
+            "canBeDismissed": true,
+            "dismissDurationMinutes": 180
         },
-        "token-budget-awareness": {
-            "type": "domain",
-            "enforcement": "suggest",
-            "priority": "low",
-            "description": "Token efficiency guidance and education. Suggests efficient alternatives to token-heavy operations. Educational, not blocking.",
-            "behaviorFlags": {
-                "showEveryTime": false,
-                "minimumConfidence": 0.9,
-                "canBeDismissed": true,
-                "dismissDurationMinutes": 240
-            },
-            "promptTriggers": {
-                "keywords": [
-                    "token",
-                    "efficiency",
-                    "context window",
-                    "compact",
-                    "too many tokens",
-                    "token limit"
-                ],
-                "intentPatterns": [
-                    "(token|context).*?(limit|budget|window|full)",
-                    "(save|reduce|optimize).*?tokens",
-                    "(efficient|better).*?(way|approach|tool)"
-                ]
-            }
+        "promptTriggers": {
+            "keywords": [
+                "explore",
+                "overview",
+                "start",
+                "unfamiliar",
+                "new codebase",
+                "where to start",
+                "understand structure",
+                "map codebase"
+            ],
+            "intentPatterns": [
+                "(where|how).*?(start|begin|explore)",
+                "(understand|learn|explore).*?(codebase|structure|project)",
+                "(new|unfamiliar|unknown).*?(code|project|codebase)"
+            ]
         }
     },
-    "notes": {
-        "enforcement_types": {
-            "suggest": "Skill suggestion appears but doesn't block execution",
-            "block": "Requires skill to be used before proceeding (guardrail)",
-            "warn": "Shows warning but allows proceeding"
+    "token-budget-awareness": {
+        "type": "domain",
+        "enforcement": "suggest",
+        "priority": "low",
+        "description": "Token efficiency guidance and education. Suggests efficient alternatives to token-heavy operations. Educational, not blocking.",
+        "behaviorFlags": {
+            "showEveryTime": false,
+            "minimumConfidence": 0.9,
+            "canBeDismissed": true,
+            "dismissDurationMinutes": 240
         },
-        "priority_levels": {
-            "critical": "Highest - Always trigger when matched",
-            "high": "Important - Trigger for most matches",
-            "medium": "Moderate - Trigger for clear matches",
-            "low": "Optional - Trigger only for explicit matches"
-        },
-        "customization": {
-            "pathPatterns": "Adjust to match your project structure",
-            "keywords": "Add domain-specific terms relevant to your project",
-            "intentPatterns": "Use regex for flexible user intent matching"
+        "promptTriggers": {
+            "keywords": [
+                "token",
+                "efficiency",
+                "context window",
+                "compact",
+                "too many tokens",
+                "token limit"
+            ],
+            "intentPatterns": [
+                "(token|context).*?(limit|budget|window|full)",
+                "(save|reduce|optimize).*?tokens",
+                "(efficient|better).*?(way|approach|tool)"
+            ]
         }
     }
+},
+"notes": {
+    "enforcement_types": {
+        "suggest": "Skill suggestion appears but doesn't block execution",
+        "block": "Requires skill to be used before proceeding (guardrail)",
+        "warn": "Shows warning but allows proceeding"
+    },
+    "priority_levels": {
+        "critical": "Highest - Always trigger when matched",
+        "high": "Important - Trigger for most matches",
+        "medium": "Moderate - Trigger for clear matches",
+        "low": "Optional - Trigger only for explicit matches"
+    },
+    "customization": {
+        "pathPatterns": "Adjust to match your project structure",
+        "keywords": "Add domain-specific terms relevant to your project",
+        "intentPatterns": "Use regex for flexible user intent matching"
+    }
+}
 }
