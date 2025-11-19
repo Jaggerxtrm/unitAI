@@ -72,7 +72,8 @@ describe('Workflow Integration Tests', () => {
       // Mock AI responses for parallel execution
       mockAIExecutor({
         gemini: 'Gemini analysis: Good architecture, consider adding error handling',
-        rovodev: 'Rovodev review: Code is production-ready with minor improvements'
+        'cursor-agent': 'Cursor Agent review: Refactoring suggestions for better maintainability',
+        droid: 'Droid review: Code is production-ready with minor improvements'
       });
 
       const { executeParallelReview } = await import('../../src/workflows/parallel-review.workflow.js');
@@ -86,7 +87,7 @@ describe('Workflow Integration Tests', () => {
 
       expect(result).toContain('Parallel Review');
       expect(result).toContain('Gemini');
-      expect(result).toContain('Rovodev');
+      expect(result).toContain('Cursor');
       expect(messages.length).toBeGreaterThan(0);
     });
 

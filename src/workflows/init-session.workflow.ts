@@ -40,8 +40,8 @@ function generateMemorySearchQueries(aiAnalysis: string): string[] {
   }
 
   // Query 3: AI/backend integration
-  if (aiAnalysis.toLowerCase().includes('gemini') || aiAnalysis.toLowerCase().includes('qwen') || aiAnalysis.toLowerCase().includes('rovodev')) {
-    queries.push('AI analysis Gemini Qwen Rovodev parallel backends');
+  if (aiAnalysis.toLowerCase().includes('gemini') || aiAnalysis.toLowerCase().includes('cursor') || aiAnalysis.toLowerCase().includes('droid')) {
+    queries.push('AI analysis Gemini Cursor Droid parallel backends');
   }
 
   // Query 4: Architecture e refactoring
@@ -147,7 +147,7 @@ ${recentCommits.map((commit, i) => `${i + 1}. [${commit.hash.substring(0, 8)}] $
 
       // Analisi AI con fallback tra più backend
       const analysisPrompt = buildCommitAnalysisPrompt(recentCommits);
-      const analysisBackends = [BACKENDS.ROVODEV, BACKENDS.GEMINI];
+      const analysisBackends = [BACKENDS.GEMINI, BACKENDS.CURSOR];
       let aiAnalysis = "";
       let lastAnalysisError: string | undefined;
 
@@ -251,26 +251,26 @@ ${errorMsg}
 La directory corrente non è un repository Git.
 `);
   }
-  
+
   // Verifica disponibilità CLI
   onProgress?.("Verifica disponibilità CLI...");
   try {
     const cliAvailability = await checkCLIAvailability();
     metadata.cliAvailability = cliAvailability;
-    
+
     sections.push(`
 ## Disponibilità CLI
 
-- **Qwen**: ${cliAvailability.qwen ? "✅ Disponibile" : "❌ Non disponibile"}
 - **Gemini**: ${cliAvailability.gemini ? "✅ Disponibile" : "❌ Non disponibile"}
-- **ACLI**: ${cliAvailability.acli ? "✅ Disponibile" : "❌ Non disponibile"}
+- **Cursor Agent**: ${cliAvailability['cursor-agent'] ? "✅ Disponibile" : "❌ Non disponibile"}
+- **Droid**: ${cliAvailability.droid ? "✅ Disponibile" : "❌ Non disponibile"}
 `);
-    
+
     // Avvisi se qualche CLI non è disponibile
     const unavailable = Object.entries(cliAvailability)
       .filter(([_, available]) => !available)
       .map(([name]) => name);
-    
+
     if (unavailable.length > 0) {
       sections.push(`
 ### ⚠️ Avviso
@@ -287,12 +287,12 @@ Alcuni workflow potrebbero non funzionare correttamente.
 ${errorMsg}
 `);
   }
-  
+
   // Informazioni sulla sessione
   const now = new Date();
   metadata.sessionStartTime = now.toISOString();
   metadata.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  
+
   sections.push(`
 ## Informazioni Sessione
 
@@ -300,9 +300,9 @@ ${errorMsg}
 - **Timezone**: ${metadata.timezone}
 - **Directory di lavoro**: ${process.cwd()}
 `);
-  
+
   onProgress?.("Sessione inizializzata con successo");
-  
+
   return formatWorkflowOutput("Report Inizializzazione Sessione (Session Initialization Report)", sections.join("\n"), metadata);
 }
 

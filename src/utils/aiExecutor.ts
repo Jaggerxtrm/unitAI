@@ -4,7 +4,7 @@ import { CLI, AI_MODELS, ERROR_MESSAGES, STATUS_MESSAGES, BACKENDS } from "../co
 export { BACKENDS };
 import { executeCommand } from "./commandExecutor.js";
 import { logger } from "./logger.js";
-import type { QwenModel, RovodevModel, ApprovalMode, GeminiModel } from "../constants.js";
+import type { GeminiModel } from "../constants.js";
 
 /**
  * Options for executing AI CLI commands
@@ -12,232 +12,20 @@ import type { QwenModel, RovodevModel, ApprovalMode, GeminiModel } from "../cons
 export interface AIExecutionOptions {
   backend: string;
   prompt: string;
-  // Qwen-specific options
-  model?: string; // Qwen or Gemini model name
-  sandbox?: boolean; // Qwen or Gemini sandbox flag
-  approvalMode?: ApprovalMode; // Only for Qwen
-  yolo?: boolean; // Qwen and Rovodev support this
-  allFiles?: boolean; // Only for Qwen
-  debug?: boolean; // Only for Qwen
+  // Common options
+  model?: string; // Model name
+  sandbox?: boolean; // Sandbox flag (Gemini)
   outputFormat?: "text" | "json"; // Cursor Agent / Droid preferred format
   projectRoot?: string; // Cursor Agent working directory
   attachments?: string[]; // Shared attachment mechanism
   autoApprove?: boolean; // Cursor Agent auto-approve flag
   autonomyLevel?: string; // Cursor Agent autonomy level flag
-  // Rovodev-specific options (based on acli rovodev run --help)
-  shadow?: boolean; // Rovodev only
-  verbose?: boolean; // Rovodev only
-  restore?: boolean; // Rovodev only
   // Droid-specific options
   auto?: "low" | "medium" | "high";
   sessionId?: string;
   skipPermissionsUnsafe?: boolean;
   cwd?: string;
   onProgress?: (output: string) => void;
-}
-
-/**
- * Execute Qwen CLI with the given options
- */
-export async function executeQwenCLI(
-  options: Omit<AIExecutionOptions, 'backend'>
-): Promise<string> {
-  const {
-    prompt,
-    model,
-    sandbox = false,
-    approvalMode,
-    yolo = false,
-    allFiles = false,
-    debug = false,
-    onProgress
-  } = options;
-
-  if (!prompt || !prompt.trim()) {
-    throw new Error(ERROR_MESSAGES.NO_PROMPT_PROVIDED);
-  }
-
-  // Build command arguments
-  const args: string[] = [];
-
-  // Add model flag if specified
-  if (model) {
-    args.push(CLI.FLAGS.QWEN.MODEL, model);
-  }
-
-  // Add sandbox flag if enabled
-  if (sandbox) {
-    args.push(CLI.FLAGS.QWEN.SANDBOX);
-  }
-
-  // Add approval mode if specified
-  if (approvalMode) {
-    args.push(CLI.FLAGS.QWEN.APPROVAL_MODE, approvalMode);
-  }
-
-  // Add yolo flag if enabled
-  if (yolo) {
-    args.push(CLI.FLAGS.QWEN.YOLO);
-  }
-
-  // Add all-files flag if enabled
-  if (allFiles) {
-    args.push(CLI.FLAGS.QWEN.ALL_FILES);
-  }
-
-  // Add debug flag if enabled
-  if (debug) {
-    args.push(CLI.FLAGS.QWEN.DEBUG);
-  }
-
-  // Prompt as positional argument (FIXED: -p flag is deprecated in Qwen CLI)
-  // No need to manually quote - spawn with shell:false handles special characters
-  args.push(prompt);
-
-  logger.info(`Executing Qwen CLI with model: ${model || "default"}`);
-
-  if (onProgress) {
-    onProgress(STATUS_MESSAGES.STARTING_ANALYSIS);
-  }
-
-  try {
-    const result = await executeCommand(CLI.COMMANDS.QWEN, args, {
-      onProgress,
-      timeout: 600000 // 10 minutes
-    });
-
-    if (onProgress) {
-      onProgress(STATUS_MESSAGES.COMPLETED);
-    }
-
-    return result;
-  } catch (error) {
-    // Check if this is a quota/rate limit error and we used the primary model
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    const isQuotaError = errorMsg.toLowerCase().includes("quota") ||
-                         errorMsg.toLowerCase().includes("rate limit");
-
-    // If quota error with primary model, try fallback
-    if (isQuotaError && model === AI_MODELS.QWEN.PRIMARY) {
-      logger.warn(STATUS_MESSAGES.SWITCHING_MODEL);
-
-      if (onProgress) {
-        onProgress(STATUS_MESSAGES.SWITCHING_MODEL);
-      }
-
-      // Retry with fallback model
-      const fallbackArgs = [...args];
-      const modelIndex = fallbackArgs.indexOf(CLI.FLAGS.QWEN.MODEL);
-      if (modelIndex !== -1 && modelIndex + 1 < fallbackArgs.length) {
-        fallbackArgs[modelIndex + 1] = AI_MODELS.QWEN.FALLBACK;
-      } else {
-        // Model wasn't specified, add it
-        fallbackArgs.unshift(CLI.FLAGS.QWEN.MODEL, AI_MODELS.QWEN.FALLBACK);
-      }
-
-      try {
-        const fallbackResult = await executeCommand(CLI.COMMANDS.QWEN, fallbackArgs, {
-          onProgress,
-          timeout: 600000
-        });
-
-        if (onProgress) {
-          onProgress(STATUS_MESSAGES.COMPLETED);
-        }
-
-        return fallbackResult;
-      } catch (fallbackError) {
-        const fallbackErrorMsg = fallbackError instanceof Error ?
-          fallbackError.message : String(fallbackError);
-        throw new Error(
-          `Both primary and fallback models failed:\n` +
-          `Primary: ${errorMsg}\n` +
-          `Fallback: ${fallbackErrorMsg}`
-        );
-      }
-    }
-
-    // Not a quota error or already tried fallback
-    if (onProgress) {
-      onProgress(STATUS_MESSAGES.FAILED);
-    }
-
-    throw error;
-  }
-}
-
-/**
- * Execute Rovodev CLI with the given options
- * Note: Rovodev CLI only supports: --shadow, --verbose, --restore, --yolo flags
- * The prompt is passed as a positional argument (not with -p flag)
- */
-export async function executeRovodevCLI(
-  options: Omit<AIExecutionOptions, 'backend'>
-): Promise<string> {
-  const {
-    prompt,
-    yolo = false,
-    shadow = false,
-    verbose = false,
-    restore = false,
-    onProgress
-  } = options;
-
-  if (!prompt || !prompt.trim()) {
-    throw new Error(ERROR_MESSAGES.NO_PROMPT_PROVIDED);
-  }
-
-  // Build command arguments for acli rovodev run [OPTIONS] [MESSAGE]
-  const args: string[] = [];
-
-  // Add subcommand 'run'
-  args.push(CLI.COMMANDS.ROVODEV_SUBCOMMAND);
-
-  // Add only supported rovodev-specific flags
-  if (shadow) {
-    args.push(CLI.FLAGS.ROVODEV.SHADOW);
-  }
-
-  if (verbose) {
-    args.push(CLI.FLAGS.ROVODEV.VERBOSE);
-  }
-
-  if (restore) {
-    args.push(CLI.FLAGS.ROVODEV.RESTORE);
-  }
-
-  if (yolo) {
-    args.push(CLI.FLAGS.ROVODEV.YOLO);
-  }
-
-  // Add prompt as POSITIONAL argument (not with a flag)
-  // Rovodev CLI expects: acli rovodev run [OPTIONS] [MESSAGE]
-  args.push(prompt);
-
-  logger.info(`Executing Rovodev CLI`);
-
-  if (onProgress) {
-    onProgress(STATUS_MESSAGES.STARTING_ANALYSIS);
-  }
-
-  try {
-    const result = await executeCommand(CLI.COMMANDS.ROVODEV, args, {
-      onProgress,
-      timeout: 600000 // 10 minutes
-    });
-
-    if (onProgress) {
-      onProgress(STATUS_MESSAGES.COMPLETED);
-    }
-
-    return result;
-  } catch (error) {
-    if (onProgress) {
-      onProgress(STATUS_MESSAGES.FAILED);
-    }
-
-    throw error;
-  }
 }
 
 /**
@@ -463,12 +251,9 @@ export async function executeSimpleCommand(
  */
 export async function executeAIClient(options: AIExecutionOptions): Promise<string> {
   const { backend, ...rest } = options;
-  
+
   switch (backend) {
-    case BACKENDS.QWEN:
-      return executeQwenCLI(rest);
-    case BACKENDS.ROVODEV:
-      return executeRovodevCLI(rest);
+
     case BACKENDS.GEMINI:
       return executeGeminiCLI(rest);
     case BACKENDS.CURSOR:

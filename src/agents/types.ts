@@ -34,7 +34,7 @@ export interface AgentConfig {
  */
 export interface AgentMetadata {
   /**
-   * AI backend used for execution (e.g., "gemini", "qwen", "rovodev")
+   * AI backend used for execution (e.g., "gemini", "cursor-agent", "droid")
    */
   backend: string;
 

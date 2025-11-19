@@ -24,9 +24,10 @@ describe('bug-hunt workflow', () => {
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.readFileSync).mockReturnValue(testContent);
-    
+
     vi.mocked(aiExecutor.executeAIClient)
       .mockResolvedValueOnce('Root cause: null pointer dereference')
+      .mockResolvedValueOnce('Hypothesis: missing null check')
       .mockResolvedValueOnce('Fix: Add null check before calling toString()');
 
     const result = await bugHuntWorkflow.execute({
@@ -36,7 +37,7 @@ describe('bug-hunt workflow', () => {
 
     expect(result).toContain('Bug Hunt Report');
     expect(result).toContain('Root cause');
-    expect(aiExecutor.executeAIClient).toHaveBeenCalledTimes(4); // Gemini + Cursor + Droid + verification
+    expect(aiExecutor.executeAIClient).toHaveBeenCalledTimes(3); // Gemini + Cursor + Droid (no file discovery needed)
   });
 
   it('should discover files when not provided', async () => {

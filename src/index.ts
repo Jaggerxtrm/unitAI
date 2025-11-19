@@ -4,7 +4,7 @@
  * Unified AI MCP Tool - Model Context Protocol server for multiple AI clients
  *
  * This server enables AI assistants like Claude to interact with multiple 
- * AI coding assistants (Qwen, Rovodev, etc.) through the Model Context Protocol.
+ * AI coding assistants (Gemini, Cursor Agent, Droid) through the Model Context Protocol.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";

@@ -2,11 +2,11 @@ import { z } from "zod";
 import { BACKENDS } from "../constants.js";
 import { runParallelAnalysis, buildCodeReviewPrompt, formatWorkflowOutput } from "./utils.js";
 import { generateWorkflowId, structuredLogger } from "../utils/structuredLogger.js";
-import type { 
-  WorkflowDefinition, 
-  ProgressCallback, 
+import type {
+  WorkflowDefinition,
+  ProgressCallback,
   ParallelReviewParams,
-  ReviewFocus 
+  ReviewFocus
 } from "./types.js";
 
 /**
@@ -38,31 +38,31 @@ export async function executeParallelReview(
   onProgress?: ProgressCallback
 ): Promise<string> {
   const { files, focus, strategy = "standard", backendOverrides, attachments = [] } = params;
-  
+
   // Setup structured logging
   const workflowId = generateWorkflowId();
   const logger = structuredLogger.forWorkflow(workflowId, 'parallel-review');
-  
+
   logger.step('start', 'Starting parallel review workflow', {
     filesCount: files.length,
     focus,
     autonomyLevel: params.autonomyLevel
   });
-  
+
   onProgress?.(`Avvio revisione parallela di ${files.length} file con focus: ${focus}`);
-  
+
   // Validazione dei file
   if (files.length === 0) {
     logger.error('validation-failed', new Error('No files specified'));
     throw new Error("È necessario specificare almeno un file da analizzare");
   }
-  
+
   logger.step('validation', 'File validation passed', { filesCount: files.length });
-  
+
   // Preparazione dei prompt per ogni backend
   const promptBuilder = (backend: string): string => {
     const basePrompt = buildCodeReviewPrompt(files, focus as ReviewFocus);
-    
+
     // Personalizzazione per backend specifici
     switch (backend) {
       case BACKENDS.GEMINI:
@@ -74,16 +74,8 @@ Come Gemini, fornisci un'analisi approfondita con particolare attenzione a:
 - Considerazioni sulla scalabilità
 - Best practices di ingegneria del software
 `;
-        
-      case BACKENDS.ROVODEV:
-        return `${basePrompt}
 
-Come Rovodev, fornisci un'analisi pratica con focus su:
-- Code quality e leggibilità
-- Problemi potenziali e bug
-- Suggerimenti di refactoring
-- Best practices di sviluppo
-`;
+
       case BACKENDS.CURSOR:
         return `${basePrompt}
 
@@ -102,16 +94,16 @@ Come Factory Droid, agisci come verificatore autonomo:
 - Disegna un piano di remediation multi-step
 - Elenca check-list di convalida finale
 `;
-        
+
       default:
         return basePrompt;
     }
   };
-  
+
   // Esecuzione dell'analisi parallela
   const defaultBackends = strategy === "double-check"
-    ? [BACKENDS.GEMINI, BACKENDS.ROVODEV, BACKENDS.CURSOR, BACKENDS.DROID]
-    : [BACKENDS.GEMINI, BACKENDS.ROVODEV];
+    ? [BACKENDS.GEMINI, BACKENDS.CURSOR, BACKENDS.DROID]
+    : [BACKENDS.GEMINI, BACKENDS.CURSOR];
   const backendsToUse = backendOverrides && backendOverrides.length > 0
     ? backendOverrides
     : defaultBackends;
@@ -119,9 +111,9 @@ Come Factory Droid, agisci come verificatore autonomo:
   logger.step('parallel-analysis-start', 'Starting parallel analysis', {
     backends: backendsToUse
   });
-  
+
   onProgress?.(`Avvio analisi con i backend: ${backendsToUse.join(", ")}`);
-  
+
   const analysisResult = await logger.timing('parallel-analysis', async () => {
     return await runParallelAnalysis(
       backendsToUse,
@@ -129,12 +121,12 @@ Come Factory Droid, agisci come verificatore autonomo:
       onProgress,
       (backend) => {
         if (backend === BACKENDS.CURSOR) {
-            return {
-              attachments,
-              projectRoot: process.cwd(),
-              outputFormat: "text",
-              autoApprove: strategy === "double-check"
-            };
+          return {
+            attachments,
+            projectRoot: process.cwd(),
+            outputFormat: "text",
+            autoApprove: strategy === "double-check"
+          };
         }
         if (backend === BACKENDS.DROID) {
           return {
@@ -147,11 +139,11 @@ Come Factory Droid, agisci come verificatore autonomo:
       }
     );
   });
-  
+
   // Analisi dei risultati
   const successful = analysisResult.results.filter(r => r.success);
   const failed = analysisResult.results.filter(r => !r.success);
-  
+
   // Preparazione dell'output
   let outputContent = "";
   const metadata: Record<string, any> = {
@@ -164,7 +156,7 @@ Come Factory Droid, agisci come verificatore autonomo:
     strategy,
     attachments
   };
-  
+
   // Se abbiamo risultati, usiamo la sintesi già preparata
   if (analysisResult.synthesis) {
     outputContent = analysisResult.synthesis;
@@ -172,7 +164,7 @@ Come Factory Droid, agisci come verificatore autonomo:
     outputContent = "# Analisi Parallela del Codice\n\n";
     outputContent += "Nessun risultato disponibile dall'analisi.\n";
   }
-  
+
   // Aggiunta di una sezione di riepilogo
   outputContent += `
 ## Riepilogo Analisi
@@ -197,7 +189,7 @@ Basandosi sull'analisi parallela, ecco le raccomandazioni principali:
 Per dettagli specifici, consulta le analisi individuali sopra.
 `;
   }
-  
+
   // Avvisi se alcuni backend sono falliti
   if (failed.length > 0) {
     outputContent += `
@@ -209,15 +201,15 @@ ${failed.map(f => `- **${f.backend}**: ${f.error}`).join("\n")}
 L'analisi potrebbe essere incompleta. Si consiglia di risolvere i problemi e riprovare.
 `;
   }
-  
+
   onProgress?.(`Revisione parallela completata: ${successful.length}/${analysisResult.results.length} analisi riuscite`);
-  
+
   logger.step('complete', 'Parallel review completed successfully', {
     successfulAnalyses: successful.length,
     failedAnalyses: failed.length,
     totalBackends: analysisResult.results.length
   });
-  
+
   return formatWorkflowOutput("Revisione Parallela del Codice (Parallel Review)", outputContent, metadata);
 }
 
@@ -226,7 +218,7 @@ L'analisi potrebbe essere incompleta. Si consiglia di risolvere i problemi e rip
  */
 export const parallelReviewWorkflow: WorkflowDefinition = {
   name: 'parallel-review',
-  description: "Esegue un'analisi parallela del codice utilizzando Gemini e Rovodev per fornire una revisione completa e multi-prospettiva",
+  description: "Esegue un'analisi parallela del codice utilizzando Gemini, Cursor e Droid per fornire una revisione completa e multi-prospettiva",
   schema: parallelReviewSchema,
   execute: executeParallelReview
 };

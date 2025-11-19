@@ -14,66 +14,6 @@ describe('AIExecutor', () => {
     vi.restoreAllMocks();
   });
 
-  describe('executeQwenCLI', () => {
-    it('should execute qwen with basic prompt', async () => {
-      const mockExecuteCommand = vi.fn().mockResolvedValue('Qwen response');
-      vi.doMock('../../src/utils/commandExecutor.js', () => ({
-        executeCommand: mockExecuteCommand
-      }));
-
-      const { executeQwenCLI } = await import('../../src/utils/aiExecutor.js');
-      const result = await executeQwenCLI({ prompt: 'Test prompt' });
-
-      expect(mockExecuteCommand).toHaveBeenCalled();
-      expect(result).toBe('Qwen response');
-    });
-
-    it('should include model flag when specified', async () => {
-      const mockExecuteCommand = vi.fn().mockResolvedValue('Response');
-      vi.doMock('../../src/utils/commandExecutor.js', () => ({
-        executeCommand: mockExecuteCommand
-      }));
-
-      const { executeQwenCLI } = await import('../../src/utils/aiExecutor.js');
-      await executeQwenCLI({ prompt: 'Test', model: 'qwen-max' });
-
-      const callArgs = mockExecuteCommand.mock.calls[0];
-      expect(callArgs[1]).toContain('--model');
-      expect(callArgs[1]).toContain('qwen-max');
-    });
-
-    it('should include sandbox flag when enabled', async () => {
-      const mockExecuteCommand = vi.fn().mockResolvedValue('Response');
-      vi.doMock('../../src/utils/commandExecutor.js', () => ({
-        executeCommand: mockExecuteCommand
-      }));
-
-      const { executeQwenCLI } = await import('../../src/utils/aiExecutor.js');
-      await executeQwenCLI({ prompt: 'Test', sandbox: true });
-
-      const callArgs = mockExecuteCommand.mock.calls[0];
-      expect(callArgs[1]).toContain('--sandbox');
-    });
-
-    it('should throw error for empty prompt', async () => {
-      const { executeQwenCLI } = await import('../../src/utils/aiExecutor.js');
-      await expect(executeQwenCLI({ prompt: '' })).rejects.toThrow();
-    });
-
-    it('should call onProgress callbacks', async () => {
-      const mockExecuteCommand = vi.fn().mockResolvedValue('Response');
-      vi.doMock('../../src/utils/commandExecutor.js', () => ({
-        executeCommand: mockExecuteCommand
-      }));
-
-      const onProgress = vi.fn();
-      const { executeQwenCLI } = await import('../../src/utils/aiExecutor.js');
-      await executeQwenCLI({ prompt: 'Test', onProgress });
-
-      expect(onProgress).toHaveBeenCalled();
-    });
-  });
-
   describe('executeGeminiCLI', () => {
     it('should execute gemini with basic prompt', async () => {
       const mockExecuteCommand = vi.fn().mockResolvedValue('Gemini response');
@@ -105,52 +45,6 @@ describe('AIExecutor', () => {
     it('should throw error for empty prompt', async () => {
       const { executeGeminiCLI } = await import('../../src/utils/aiExecutor.js');
       await expect(executeGeminiCLI({ prompt: '' })).rejects.toThrow();
-    });
-  });
-
-  describe('executeRovodevCLI', () => {
-    it('should execute rovodev with basic prompt', async () => {
-      const mockExecuteCommand = vi.fn().mockResolvedValue('Rovodev response');
-      vi.doMock('../../src/utils/commandExecutor.js', () => ({
-        executeCommand: mockExecuteCommand
-      }));
-
-      const { executeRovodevCLI } = await import('../../src/utils/aiExecutor.js');
-      const result = await executeRovodevCLI({ prompt: 'Test prompt' });
-
-      expect(mockExecuteCommand).toHaveBeenCalled();
-      expect(result).toBe('Rovodev response');
-    });
-
-    it('should include yolo flag when enabled', async () => {
-      const mockExecuteCommand = vi.fn().mockResolvedValue('Response');
-      vi.doMock('../../src/utils/commandExecutor.js', () => ({
-        executeCommand: mockExecuteCommand
-      }));
-
-      const { executeRovodevCLI } = await import('../../src/utils/aiExecutor.js');
-      await executeRovodevCLI({ prompt: 'Test', yolo: true });
-
-      const callArgs = mockExecuteCommand.mock.calls[0];
-      expect(callArgs[1]).toContain('--yolo');
-    });
-
-    it('should include shadow flag when enabled', async () => {
-      const mockExecuteCommand = vi.fn().mockResolvedValue('Response');
-      vi.doMock('../../src/utils/commandExecutor.js', () => ({
-        executeCommand: mockExecuteCommand
-      }));
-
-      const { executeRovodevCLI } = await import('../../src/utils/aiExecutor.js');
-      await executeRovodevCLI({ prompt: 'Test', shadow: true });
-
-      const callArgs = mockExecuteCommand.mock.calls[0];
-      expect(callArgs[1]).toContain('--shadow');
-    });
-
-    it('should throw error for empty prompt', async () => {
-      const { executeRovodevCLI } = await import('../../src/utils/aiExecutor.js');
-      await expect(executeRovodevCLI({ prompt: '' })).rejects.toThrow();
     });
   });
 
@@ -242,19 +136,6 @@ describe('AIExecutor', () => {
   });
 
   describe('executeAIClient', () => {
-    it('should route to qwen for qwen backend', async () => {
-      const mockExecuteCommand = vi.fn().mockResolvedValue('Qwen response');
-      vi.doMock('../../src/utils/commandExecutor.js', () => ({
-        executeCommand: mockExecuteCommand
-      }));
-
-      const { executeAIClient } = await import('../../src/utils/aiExecutor.js');
-      await executeAIClient({ backend: BACKENDS.QWEN, prompt: 'Test' });
-
-      expect(mockExecuteCommand).toHaveBeenCalled();
-      expect(mockExecuteCommand.mock.calls[0][0]).toBe('qwen');
-    });
-
     it('should route to cursor backend', async () => {
       const mockExecuteCommand = vi.fn().mockResolvedValue('Cursor response');
       vi.doMock('../../src/utils/commandExecutor.js', () => ({
@@ -291,7 +172,7 @@ describe('AIExecutor', () => {
     it('should throw error for empty prompt', async () => {
       const { executeAIClient } = await import('../../src/utils/aiExecutor.js');
       await expect(
-        executeAIClient({ backend: BACKENDS.QWEN, prompt: '' })
+        executeAIClient({ backend: BACKENDS.CURSOR, prompt: '' })
       ).rejects.toThrow();
     });
   });
@@ -303,13 +184,13 @@ describe('AIExecutor', () => {
         executeCommand: mockExecuteCommand
       }));
 
-      const { executeQwenCLI } = await import('../../src/utils/aiExecutor.js');
-      await expect(executeQwenCLI({ prompt: 'Test' })).rejects.toThrow();
+      const { executeGeminiCLI } = await import('../../src/utils/aiExecutor.js');
+      await expect(executeGeminiCLI({ prompt: 'Test' })).rejects.toThrow();
     });
 
     it('should handle timeout errors', async () => {
-      const mockExecuteCommand = vi.fn().mockImplementation(() => 
-        new Promise((_, reject) => 
+      const mockExecuteCommand = vi.fn().mockImplementation(() =>
+        new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Timeout')), 100)
         )
       );
@@ -317,8 +198,8 @@ describe('AIExecutor', () => {
         executeCommand: mockExecuteCommand
       }));
 
-      const { executeQwenCLI } = await import('../../src/utils/aiExecutor.js');
-      await expect(executeQwenCLI({ prompt: 'Test' })).rejects.toThrow();
+      const { executeGeminiCLI } = await import('../../src/utils/aiExecutor.js');
+      await expect(executeGeminiCLI({ prompt: 'Test' })).rejects.toThrow();
     });
   });
 });

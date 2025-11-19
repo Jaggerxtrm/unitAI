@@ -54,9 +54,9 @@ class BackendStats {
     }
 
     // Update average response time
-    current.avgResponseTime = 
+    current.avgResponseTime =
       (current.avgResponseTime * (current.totalCalls - 1) + responseTimeMs) / current.totalCalls;
-    
+
     current.lastUsed = new Date();
     this.stats.set(backend, current);
   }
@@ -97,76 +97,43 @@ export function selectOptimalBackend(
   task: TaskCharacteristics,
   allowedBackends?: string[]
 ): string {
-  const available = allowedBackends || [BACKENDS.QWEN, BACKENDS.GEMINI, BACKENDS.ROVODEV];
-
-  // Rule 1: Speed is critical + low complexity = Qwen
-  if (task.requiresSpeed && task.complexity === 'low' && available.includes(BACKENDS.QWEN)) {
-    return BACKENDS.QWEN;
-  }
-
-  // Rule 2: Architectural thinking = Gemini
-  if (task.requiresArchitecturalThinking && available.includes(BACKENDS.GEMINI)) {
+  // 1. Architectural tasks -> Gemini
+  if (task.requiresArchitecturalThinking || task.domain === 'architecture') {
+    logAudit({
+      operation: 'model-selection',
+      autonomyLevel: 'MEDIUM',
+      details: `Selected Gemini for architectural task. Task: ${JSON.stringify(task)}`
+    });
     return BACKENDS.GEMINI;
   }
 
-  // Rule 3: Code generation + high complexity = Rovodev
-  if (task.requiresCodeGeneration && task.complexity === 'high' && available.includes(BACKENDS.ROVODEV)) {
-    return BACKENDS.ROVODEV;
+  // 2. Code generation / Implementation -> Droid (GLM-4.6)
+  if (task.requiresCodeGeneration && !task.requiresSpeed) {
+    logAudit({
+      operation: 'model-selection',
+      autonomyLevel: 'MEDIUM',
+      details: `Selected Droid for implementation task. Task: ${JSON.stringify(task)}`
+    });
+    return BACKENDS.DROID;
   }
 
-  // Rule 4: Domain-specific selection
-  if (task.domain) {
-    switch (task.domain) {
-      case 'security':
-        // Qwen is fast for pattern matching (secrets, vulnerabilities)
-        if (available.includes(BACKENDS.QWEN)) return BACKENDS.QWEN;
-        break;
-      
-      case 'architecture':
-        // Gemini excels at high-level design
-        if (available.includes(BACKENDS.GEMINI)) return BACKENDS.GEMINI;
-        break;
-      
-      case 'debugging':
-        // Rovodev is practical for bug fixes
-        if (available.includes(BACKENDS.ROVODEV)) return BACKENDS.ROVODEV;
-        break;
-      
-      case 'performance':
-        // Gemini for analysis, Rovodev for optimization
-        if (task.requiresCodeGeneration && available.includes(BACKENDS.ROVODEV)) {
-          return BACKENDS.ROVODEV;
-        }
-        if (available.includes(BACKENDS.GEMINI)) return BACKENDS.GEMINI;
-        break;
-    }
+  // 3. Debugging / Testing / Refactoring -> Cursor Agent
+  if (task.domain === 'debugging' || task.domain === 'security' || task.requiresSpeed) {
+    logAudit({
+      operation: 'model-selection',
+      autonomyLevel: 'MEDIUM',
+      details: `Selected Cursor Agent for debugging/speed. Task: ${JSON.stringify(task)}`
+    });
+    return BACKENDS.CURSOR;
   }
 
-  // Rule 5: Token budget considerations
-  if (task.tokenBudget < 10000 && available.includes(BACKENDS.QWEN)) {
-    // Use cheaper model for limited budgets
-    return BACKENDS.QWEN;
-  }
-
-  // Rule 6: High complexity general task = Gemini
-  if (task.complexity === 'high' && available.includes(BACKENDS.GEMINI)) {
-    return BACKENDS.GEMINI;
-  }
-
-  // Rule 7: Consider success rates
-  const rankedBySuccess = available
-    .map(backend => ({
-      backend,
-      successRate: backendStats.getSuccessRate(backend)
-    }))
-    .sort((a, b) => b.successRate - a.successRate);
-
-  if (rankedBySuccess.length > 0 && rankedBySuccess[0].successRate > 0.7) {
-    return rankedBySuccess[0].backend;
-  }
-
-  // Default: Gemini (best balance)
-  return available.includes(BACKENDS.GEMINI) ? BACKENDS.GEMINI : available[0];
+  // 4. Default fallback -> Cursor Agent
+  logAudit({
+    operation: 'model-selection',
+    autonomyLevel: 'MEDIUM',
+    details: `Selected Cursor Agent as default fallback. Task: ${JSON.stringify(task)}`
+  });
+  return BACKENDS.CURSOR;
 }
 
 /**
@@ -177,7 +144,7 @@ export function selectParallelBackends(
   count: number = 2
 ): string[] {
   const selections: string[] = [];
-  const available = [BACKENDS.QWEN, BACKENDS.GEMINI, BACKENDS.ROVODEV];
+  const available = [BACKENDS.CURSOR, BACKENDS.GEMINI, BACKENDS.DROID];
 
   // Strategy: diversify for different strengths
   if (count >= 1) {
@@ -189,15 +156,15 @@ export function selectParallelBackends(
   if (count >= 2 && selections.length < count) {
     // Second choice: complementary backend
     const remaining = available.filter(b => !selections.includes(b));
-    
+
     if (selections[0] === BACKENDS.GEMINI) {
-      // Complement Gemini with practical Rovodev
-      selections.push(remaining.includes(BACKENDS.ROVODEV) ? BACKENDS.ROVODEV : remaining[0]);
-    } else if (selections[0] === BACKENDS.QWEN) {
-      // Complement Qwen with deep-thinking Gemini
+      // Complement Gemini with practical Droid
+      selections.push(remaining.includes(BACKENDS.DROID) ? BACKENDS.DROID : remaining[0]);
+    } else if (selections[0] === BACKENDS.DROID) {
+      // Complement Droid with deep-thinking Gemini
       selections.push(remaining.includes(BACKENDS.GEMINI) ? BACKENDS.GEMINI : remaining[0]);
     } else {
-      // Complement Rovodev with analytical Gemini
+      // Complement Cursor with analytical Gemini
       selections.push(remaining.includes(BACKENDS.GEMINI) ? BACKENDS.GEMINI : remaining[0]);
     }
   }
@@ -244,15 +211,15 @@ export function getBackendStats(): BackendMetrics[] {
  */
 export function getBackendRecommendations(): string {
   const stats = backendStats.getAllStats();
-  
+
   if (stats.length === 0) {
     return 'No backend usage data available yet.';
   }
 
   const sorted = stats.sort((a, b) => b.successfulCalls - a.successfulCalls);
-  
+
   let report = '# Backend Usage Statistics\n\n';
-  
+
   for (const stat of sorted) {
     const successRate = (stat.successfulCalls / stat.totalCalls * 100).toFixed(1);
     report += `## ${stat.backend}\n`;

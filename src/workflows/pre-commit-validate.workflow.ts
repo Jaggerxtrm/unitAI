@@ -114,7 +114,7 @@ Format as JSON:
 }`;
 
   return await executeAIClient({
-    backend: BACKENDS.QWEN,
+    backend: BACKENDS.GEMINI,
     prompt
   });
 }
@@ -123,11 +123,11 @@ Format as JSON:
  * Check code quality issues
  */
 async function checkCodeQuality(stagedDiff: string, depth: string): Promise<string> {
-  const analysisDepth = depth === 'paranoid' 
+  const analysisDepth = depth === 'paranoid'
     ? 'extremely detailed analysis including edge cases, error handling, performance implications'
     : depth === 'quick'
-    ? 'quick scan for obvious issues only'
-    : 'thorough analysis of code quality, patterns, and best practices';
+      ? 'quick scan for obvious issues only'
+      : 'thorough analysis of code quality, patterns, and best practices';
 
   const prompt = `Analyze this git diff for code quality issues. Perform ${analysisDepth}.
 
@@ -185,7 +185,7 @@ Respond with JSON:
 }`;
 
   return await executeAIClient({
-    backend: BACKENDS.ROVODEV,
+    backend: BACKENDS.GEMINI,
     prompt
   });
 }
@@ -268,9 +268,9 @@ export async function executePreCommitValidate(
   onProgress?: ProgressCallback
 ): Promise<string> {
   onProgress?.('🔍 Reading staged changes...');
-  
+
   const stagedDiff = await getStagedDiff();
-  
+
   if (!stagedDiff.trim()) {
     return formatWorkflowOutput('Pre-Commit Validation', '✅ No staged files to validate');
   }
@@ -296,7 +296,7 @@ export async function executePreCommitValidate(
   ]);
 
   onProgress?.('📊 Synthesizing validation report...');
-  
+
   const { verdict, report } = synthesizeValidationVerdict(
     secretsCheck,
     qualityCheck,

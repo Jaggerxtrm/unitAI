@@ -79,7 +79,7 @@ export class AgentFactory {
    * - Incremental implementation
    * - Code quality and best practices
    *
-   * Backend: Rovodev (fallback: Gemini)
+   * Backend: Droid (GLM-4.6)
    *
    * @returns New ImplementerAgent instance
    */
@@ -96,7 +96,7 @@ export class AgentFactory {
    * - Test coverage analysis
    * - Fast iteration on test cases
    *
-   * Backend: Qwen (no fallback - optimized for speed)
+   * Backend: Cursor Agent (no fallback - optimized for speed)
    *
    * @returns New TesterAgent instance
    */
@@ -179,7 +179,7 @@ export class AgentFactory {
 
     const agentInfo = agents.find(
       a => a.name.toLowerCase() === normalizedName ||
-           a.type.toLowerCase() === normalizedName
+        a.type.toLowerCase() === normalizedName
     );
 
     return agentInfo ? this.createAgent(agentInfo.type) : undefined;

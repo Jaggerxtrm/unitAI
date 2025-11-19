@@ -164,7 +164,7 @@ export abstract class BaseAgent<TInput, TOutput> implements IAgent<TInput, TOutp
   /**
    * Execute AI backend with prompt
    *
-   * @param backend - Backend to execute (gemini, qwen, rovodev)
+   * @param backend - Backend to execute (gemini, cursor-agent, droid)
    * @param prompt - Prompt to send to backend
    * @param config - Agent configuration
    * @returns Raw output from AI backend

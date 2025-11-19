@@ -37,7 +37,7 @@ export type BugHuntParams = z.infer<typeof bugHuntSchema>;
 function extractFilePaths(response: string): string[] {
   const lines = response.split('\n');
   const filePaths: string[] = [];
-  
+
   for (const line of lines) {
     // Match common file path patterns
     const matches = line.match(/(?:^|\s)([a-zA-Z0-9_\-./]+\.(?:ts|js|tsx|jsx|json|md))/g);
@@ -50,7 +50,7 @@ function extractFilePaths(response: string): string[] {
       }
     }
   }
-  
+
   return [...new Set(filePaths)]; // Remove duplicates
 }
 
@@ -62,7 +62,7 @@ function hasIssue(analysis: string): boolean {
     'bug', 'error', 'issue', 'problem', 'wrong', 'incorrect',
     'missing', 'broken', 'fail', 'crash', 'exception'
   ];
-  
+
   const lowerAnalysis = analysis.toLowerCase();
   return issueKeywords.some(keyword => lowerAnalysis.includes(keyword));
 }
@@ -74,17 +74,17 @@ async function findRelatedFiles(filePath: string): Promise<string[]> {
   try {
     const content = readFileSync(filePath, 'utf-8');
     const relatedFiles: string[] = [];
-    
+
     // Extract import statements
     const importMatches = content.matchAll(/import.*from\s+['"](.+?)['"]/g);
     for (const match of importMatches) {
       let importPath = match[1];
-      
+
       // Resolve relative imports
       if (importPath.startsWith('.')) {
         const dir = filePath.substring(0, filePath.lastIndexOf('/'));
         importPath = join(dir, importPath);
-        
+
         // Try adding common extensions
         for (const ext of ['.ts', '.js', '.tsx', '.jsx', '/index.ts', '/index.js']) {
           const fullPath = importPath + ext;
@@ -95,7 +95,7 @@ async function findRelatedFiles(filePath: string): Promise<string[]> {
         }
       }
     }
-    
+
     return [...new Set(relatedFiles)];
   } catch (error) {
     console.warn(`Failed to find related files for ${filePath}:`, error);
@@ -119,13 +119,13 @@ export async function executeBugHunt(
   });
 
   let filesToAnalyze = suspected_files || [];
-  
+
   // Step 1: Find files if not provided
   if (filesToAnalyze.length === 0) {
     onProgress?.('🔍 Searching codebase for relevant files...');
-    
+
     const searchResults = await executeAIClient({
-      backend: BACKENDS.QWEN,
+      backend: BACKENDS.GEMINI,
       prompt: `Given these bug symptoms, list the most likely files in the codebase that could be causing the issue.
 
 Symptoms: ${symptoms}
@@ -137,30 +137,28 @@ Consider:
 
 List only file paths, one per line, in order of likelihood.`
     });
-    
+
     filesToAnalyze = extractFilePaths(searchResults);
-    
+
     if (filesToAnalyze.length === 0) {
       return formatWorkflowOutput('Bug Hunt', 'Unable to identify relevant files. Please provide suspected files manually.');
     }
-    
+
     onProgress?.(`📁 Identified ${filesToAnalyze.length} files to analyze`);
   }
 
   // Step 2: Parallel analysis with different backends
   onProgress?.('🔬 Analyzing files with multiple AI backends...');
-  
+
   const fileContents = filesToAnalyze
     .filter(f => existsSync(f))
     .map(f => ({ path: f, content: readFileSync(f, 'utf-8') }));
 
   const runGemini = !backendOverrides || backendOverrides.includes(BACKENDS.GEMINI);
-  const runRovodev = !backendOverrides || backendOverrides.includes(BACKENDS.ROVODEV);
   const runCursor = !backendOverrides || backendOverrides.includes(BACKENDS.CURSOR);
   const runDroid = !backendOverrides || backendOverrides.includes(BACKENDS.DROID);
 
   let geminiAnalysis = runGemini ? '' : 'Analisi Gemini disabilitata via backendOverrides.';
-  let rovodevAnalysis = runRovodev ? '' : 'Analisi Rovodev disabilitata via backendOverrides.';
 
   const analysisTasks: Promise<void>[] = [];
 
@@ -189,30 +187,7 @@ Provide:
     );
   }
 
-  if (runRovodev) {
-    analysisTasks.push(
-      executeAIClient({
-        backend: BACKENDS.ROVODEV,
-        prompt: `Analyze these files and provide a practical fix for the bug.
 
-Symptoms: ${symptoms}
-
-Files:
-${fileContents.map(f => `\n--- ${f.path} ---\n${f.content}`).join('\n')}
-
-Provide:
-1. Specific code changes needed
-2. Step-by-step fix instructions
-3. How to test the fix
-4. Potential risks`
-      }).then(result => {
-        rovodevAnalysis = result;
-      }).catch(error => {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        rovodevAnalysis = `Impossibile completare l'analisi con Rovodev: ${errorMsg}`;
-      })
-    );
-  }
 
   await Promise.all(analysisTasks);
 
@@ -272,27 +247,27 @@ Output richiesto:
   }
 
   // Step 3: Check if we need to analyze related files
-  const problematicFiles = fileContents.filter(f => 
-    hasIssue(geminiAnalysis) || hasIssue(rovodevAnalysis)
+  const problematicFiles = fileContents.filter(f =>
+    hasIssue(geminiAnalysis)
   );
 
   let relatedFilesAnalysis = '';
   if (problematicFiles.length > 0) {
     onProgress?.('🔗 Searching for related files...');
-    
+
     const relatedFiles: string[] = [];
     for (const file of problematicFiles) {
       const related = await findRelatedFiles(file.path);
       relatedFiles.push(...related);
     }
-    
+
     const uniqueRelated = [...new Set(relatedFiles)].filter(
       f => !filesToAnalyze.includes(f)
     );
-    
+
     if (uniqueRelated.length > 0) {
       onProgress?.(`📎 Analyzing ${uniqueRelated.length} related files...`);
-      
+
       relatedFilesAnalysis = `\n\n### Related Files Impact\n${uniqueRelated.join(', ')}`;
     }
   }
@@ -316,8 +291,7 @@ ${geminiAnalysis}
 
 ---
 
-## Practical Fix Recommendations (Rovodev)
-${rovodevAnalysis}
+
 
 ${cursorHypothesis ? `---
 

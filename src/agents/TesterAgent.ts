@@ -1,7 +1,7 @@
 /**
  * TesterAgent - Fast test generation and validation
  *
- * Uses Qwen for:
+ * Uses Cursor Agent for:
  * - Unit test generation
  * - Integration test generation
  * - Test coverage analysis
@@ -21,14 +21,14 @@ import type {
 /**
  * TesterAgent specializes in fast test generation
  *
- * Backend: Qwen (no fallback - optimized for speed)
+ * Backend: Cursor Agent (no fallback - optimized for speed)
  * Specialization: Test generation, coverage analysis, edge case detection
  */
 export class TesterAgent extends BaseAgent<TesterInput, TesterOutput> {
   readonly name = "TesterAgent";
-  readonly description = "Fast test generation and coverage analysis using Qwen";
-  readonly preferredBackend = BACKENDS.QWEN;
-  readonly fallbackBackend = undefined; // Qwen-only for speed
+  readonly description = "Fast test generation and coverage analysis using Cursor Agent";
+  readonly preferredBackend = BACKENDS.CURSOR;
+  readonly fallbackBackend = undefined; // Cursor-only for speed
 
   /**
    * Build specialized prompt for test generation
@@ -135,7 +135,7 @@ Write idiomatic ${framework} tests with clear arrange-act-assert pattern.`;
   }
 
   /**
-   * Parse Qwen output into structured TesterOutput
+   * Parse Cursor Agent output into structured TesterOutput
    */
   protected parseOutput(rawOutput: string, input: TesterInput): TesterOutput {
     const testCode = this.extractCodeBlock(rawOutput);

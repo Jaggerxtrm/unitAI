@@ -1,7 +1,7 @@
 /**
  * ImplementerAgent - Precise code implementation with production quality
  *
- * Uses Rovodev (fallback: Droid) for:
+ * Uses Droid (GLM-4.6) for:
  * - Production-ready code generation
  * - Bug fixing and code modifications
  * - Incremental implementation
@@ -24,14 +24,14 @@ import type {
 /**
  * ImplementerAgent specializes in code implementation and modification
  *
- * Backend: Rovodev (primary), Droid (fallback)
+ * Backend: Droid (GLM-4.6)
  * Specialization: Production code generation, bug fixes, incremental changes
  */
 export class ImplementerAgent extends BaseAgent<ImplementerInput, ImplementerOutput> {
   readonly name = "ImplementerAgent";
-  readonly description = "Precise code implementation with production-quality standards using Rovodev";
-  readonly preferredBackend = BACKENDS.ROVODEV;
-  readonly fallbackBackend = BACKENDS.DROID;
+  readonly description = "Precise code implementation with production-quality standards using Droid (GLM-4.6)";
+  readonly preferredBackend = BACKENDS.DROID;
+  readonly fallbackBackend = undefined;
 
   /**
    * Build specialized prompt for code implementation
@@ -131,7 +131,7 @@ Description: [What changes were made]
   }
 
   /**
-   * Parse Rovodev/Gemini output into structured ImplementerOutput
+   * Parse Droid/Gemini output into structured ImplementerOutput
    */
   protected parseOutput(rawOutput: string, input: ImplementerInput): ImplementerOutput {
     const summary = this.extractSection(rawOutput, "Summary", "Changed Files") || "Implementation completed";

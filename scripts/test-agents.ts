@@ -81,15 +81,15 @@ test("Can create ImplementerAgent via factory", () => {
   const agent = AgentFactory.createImplementer();
   return agent.name === "ImplementerAgent" &&
          agent.description.length > 0 &&
-         agent.preferredBackend === "rovodev" &&
-         agent.fallbackBackend === "gemini";
+         agent.preferredBackend === "droid" &&
+         agent.fallbackBackend === undefined;
 });
 
 test("Can create TesterAgent via factory", () => {
   const agent = AgentFactory.createTester();
   return agent.name === "TesterAgent" &&
          agent.description.length > 0 &&
-         agent.preferredBackend === "qwen";
+         agent.preferredBackend === "cursor-agent";
 });
 
 test("Can create agents dynamically by type", () => {
@@ -228,14 +228,14 @@ test("ArchitectAgent uses Gemini with no fallback", () => {
   return agent.preferredBackend === "gemini" && agent.fallbackBackend === undefined;
 });
 
-test("ImplementerAgent uses Rovodev with Gemini fallback", () => {
+test("ImplementerAgent uses Droid with no fallback", () => {
   const agent = AgentFactory.createImplementer();
-  return agent.preferredBackend === "rovodev" && agent.fallbackBackend === "gemini";
+  return agent.preferredBackend === "droid" && agent.fallbackBackend === undefined;
 });
 
-test("TesterAgent uses Qwen with no fallback", () => {
+test("TesterAgent uses Cursor-Agent with no fallback", () => {
   const agent = AgentFactory.createTester();
-  return agent.preferredBackend === "qwen" && agent.fallbackBackend === undefined;
+  return agent.preferredBackend === "cursor-agent" && agent.fallbackBackend === undefined;
 });
 
 // ============================================================================

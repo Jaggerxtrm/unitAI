@@ -2,10 +2,10 @@ import { z } from "zod";
 import { BACKENDS } from "../constants.js";
 import { getGitCommitInfo, isGitRepository } from "../utils/gitHelper.js";
 import { runParallelAnalysis, formatWorkflowOutput } from "./utils.js";
-import type { 
-  WorkflowDefinition, 
-  ProgressCallback, 
-  ValidateLastCommitParams 
+import type {
+  WorkflowDefinition,
+  ProgressCallback,
+  ValidateLastCommitParams
 } from "./types.js";
 
 /**
@@ -26,14 +26,14 @@ export async function executeValidateLastCommit(
   onProgress?: ProgressCallback
 ): Promise<string> {
   const { commit_ref } = params;
-  
+
   onProgress?.(`Avvio validazione del commit: ${commit_ref}`);
-  
+
   // Verifica se siamo in un repository Git
   if (!await isGitRepository()) {
     throw new Error("Directory corrente non è un repository Git");
   }
-  
+
   // Recupero informazioni del commit
   onProgress?.("Recupero informazioni commit...");
   let commitInfo;
@@ -42,7 +42,7 @@ export async function executeValidateLastCommit(
   } catch (error) {
     throw new Error(`Impossibile recuperare informazioni per il commit ${commit_ref}: ${error instanceof Error ? error.message : String(error)}`);
   }
-  
+
   // Preparazione dei prompt per ogni backend
   const promptBuilder = (backend: string): string => {
     const basePrompt = `
@@ -70,7 +70,7 @@ Fornisci un'analisi dettagliata includendo:
 5. Raccomandazioni specifiche
 6. Verdetto complessivo (APPROVATO/RIFIUTATO/NECESSARIA REVISIONE)
 `;
-    
+
     // Personalizzazione per backend specifici
     switch (backend) {
       case BACKENDS.GEMINI:
@@ -82,34 +82,34 @@ Come Gemini, fornisci un'analisi architetturale con attenzione a:
 - Consistenza con i pattern di design del progetto
 - Considerazioni sull'integrazione con altri componenti
 `;
-        
-      case BACKENDS.QWEN:
+
+      case BACKENDS.CURSOR:
         return `${basePrompt}
 
-Come Qwen, fornisci un'analisi tecnica con focus su:
+Come Cursor Agent, fornisci un'analisi tecnica con focus su:
 - Correttezza del codice e potenziali bug
 - Efficienza degli algoritmi e complessità
 - Gestione degli errori e edge cases
 - Conformità con le convenzioni del linguaggio
 `;
-        
+
       default:
         return basePrompt;
     }
   };
-  
+
   // Esecuzione dell'analisi parallela
-  onProgress?.("Avvio analisi parallela con Gemini e Qwen...");
+  onProgress?.("Avvio analisi parallela con Gemini e Cursor...");
   const analysisResult = await runParallelAnalysis(
-    [BACKENDS.GEMINI, BACKENDS.QWEN],
+    [BACKENDS.GEMINI, BACKENDS.CURSOR],
     promptBuilder,
     onProgress
   );
-  
+
   // Analisi dei risultati
   const successful = analysisResult.results.filter(r => r.success);
   const failed = analysisResult.results.filter(r => !r.success);
-  
+
   // Preparazione dell'output
   let outputContent = "";
   const metadata: Record<string, any> = {
@@ -124,7 +124,7 @@ Come Qwen, fornisci un'analisi tecnica con focus su:
     analysisCount: successful.length,
     timestamp: new Date().toISOString()
   };
-  
+
   // Informazioni del commit
   outputContent += `
 ## Informazioni Commit
@@ -138,7 +138,7 @@ Come Qwen, fornisci un'analisi tecnica con focus su:
 ### File Modificati
 ${commitInfo.files.map(f => `- ${f}`).join("\n")}
 `;
-  
+
   // Se abbiamo risultati, usiamo la sintesi già preparata
   if (analysisResult.synthesis) {
     outputContent += analysisResult.synthesis;
@@ -146,7 +146,7 @@ ${commitInfo.files.map(f => `- ${f}`).join("\n")}
     outputContent += "\n## Analisi del Commit\n\n";
     outputContent += "Nessun risultato disponibile dall'analisi.\n";
   }
-  
+
   // Verdetto combinato
   if (successful.length > 0) {
     outputContent += `
@@ -155,13 +155,13 @@ ${commitInfo.files.map(f => `- ${f}`).join("\n")}
 Basandosi sull'analisi parallela (${successful.map(r => r.backend).join(" + ")}):
 
 `;
-    
+
     // Logica per determinare il verdetto
     // In un'implementazione reale, potremmo analizzare i testi delle risposte
     // Per ora, usiamo una logica semplificata
     const hasFailures = failed.length > 0;
     const hasSuccessfulAnalyses = successful.length > 0;
-    
+
     if (hasFailures && !hasSuccessfulAnalyses) {
       outputContent += `### ❌ RIFIUTATO
 
@@ -179,7 +179,7 @@ L'analisi è stata completata con successo. Si raccomanda di attenere alle racco
 `;
     }
   }
-  
+
   // Avvisi se alcuni backend sono falliti
   if (failed.length > 0) {
     outputContent += `
@@ -191,7 +191,7 @@ ${failed.map(f => `- **${f.backend}**: ${f.error}`).join("\n")}
 La validazione potrebbe essere incompleta. Si consiglia di risolvere i problemi e riprovare.
 `;
   }
-  
+
   // Raccomandazioni finali
   outputContent += `
 ## Raccomandazioni Finali
@@ -203,9 +203,9 @@ La validazione potrebbe essere incompleta. Si consiglia di risolvere i problemi 
 
 Per dettagli specifici, consulta le analisi individuali sopra.
 `;
-  
+
   onProgress?.(`Validazione commit completata: ${successful.length}/${analysisResult.results.length} analisi riuscite`);
-  
+
   return formatWorkflowOutput(`Validazione Commit (Commit Validation): ${commit_ref}`, outputContent, metadata);
 }
 
@@ -214,7 +214,7 @@ Per dettagli specifici, consulta le analisi individuali sopra.
  */
 export const validateLastCommitWorkflow: WorkflowDefinition = {
   name: 'validate-last-commit',
-  description: "Valida un commit Git specifico utilizzando analisi parallela con Gemini e Qwen per identificare problemi e breaking changes",
+  description: "Valida un commit Git specifico utilizzando analisi parallela con Gemini e Cursor per identificare problemi e breaking changes",
   schema: validateLastCommitSchema,
   execute: executeValidateLastCommit
 };

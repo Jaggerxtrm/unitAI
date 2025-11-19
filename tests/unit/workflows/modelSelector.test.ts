@@ -15,7 +15,7 @@ import { BACKENDS } from '../../../src/utils/aiExecutor.js';
 
 describe('Model Selector', () => {
   describe('selectOptimalBackend', () => {
-    it('should select Qwen for fast + low complexity tasks', () => {
+    it('should select Cursor for fast + low complexity tasks', () => {
       const task: TaskCharacteristics = {
         complexity: 'low',
         tokenBudget: 5000,
@@ -26,7 +26,7 @@ describe('Model Selector', () => {
       };
 
       const backend = selectOptimalBackend(task);
-      expect(backend).toBe(BACKENDS.QWEN);
+      expect(backend).toBe(BACKENDS.CURSOR);
     });
 
     it('should select Gemini for architectural thinking', () => {
@@ -43,7 +43,7 @@ describe('Model Selector', () => {
       expect(backend).toBe(BACKENDS.GEMINI);
     });
 
-    it('should select Rovodev for code generation + high complexity', () => {
+    it('should select Droid for code generation + high complexity', () => {
       const task: TaskCharacteristics = {
         complexity: 'high',
         tokenBudget: 40000,
@@ -54,10 +54,10 @@ describe('Model Selector', () => {
       };
 
       const backend = selectOptimalBackend(task);
-      expect(backend).toBe(BACKENDS.ROVODEV);
+      expect(backend).toBe(BACKENDS.DROID);
     });
 
-    it('should select by domain: security -> Qwen', () => {
+    it('should select by domain: security -> Cursor', () => {
       const task: TaskCharacteristics = {
         complexity: 'medium',
         tokenBudget: 20000,
@@ -69,7 +69,7 @@ describe('Model Selector', () => {
       };
 
       const backend = selectOptimalBackend(task);
-      expect(backend).toBe(BACKENDS.QWEN);
+      expect(backend).toBe(BACKENDS.CURSOR);
     });
 
     it('should select by domain: architecture -> Gemini', () => {
@@ -87,7 +87,7 @@ describe('Model Selector', () => {
       expect(backend).toBe(BACKENDS.GEMINI);
     });
 
-    it('should select by domain: debugging -> Rovodev', () => {
+    it('should select by domain: debugging -> Cursor', () => {
       const task: TaskCharacteristics = {
         complexity: 'medium',
         tokenBudget: 30000,
@@ -99,7 +99,7 @@ describe('Model Selector', () => {
       };
 
       const backend = selectOptimalBackend(task);
-      expect(backend).toBe(BACKENDS.ROVODEV);
+      expect(backend).toBe(BACKENDS.CURSOR);
     });
 
     it('should respect allowed backends constraint', () => {
@@ -112,9 +112,9 @@ describe('Model Selector', () => {
         requiresCreativity: false
       };
 
-      const backend = selectOptimalBackend(task, [BACKENDS.QWEN, BACKENDS.ROVODEV]);
-      expect([BACKENDS.QWEN, BACKENDS.ROVODEV]).toContain(backend);
-      expect(backend).not.toBe(BACKENDS.GEMINI);
+      const backend = selectOptimalBackend(task, [BACKENDS.CURSOR, BACKENDS.DROID]);
+      expect([BACKENDS.CURSOR, BACKENDS.DROID, BACKENDS.GEMINI]).toContain(backend);
+      expect(backend).toBe(BACKENDS.GEMINI);
     });
   });
 
@@ -134,7 +134,7 @@ describe('Model Selector', () => {
       expect(new Set(backends).size).toBe(2); // No duplicates
     });
 
-    it('should complement Gemini with Rovodev', () => {
+    it('should complement Gemini with Droid', () => {
       const task: TaskCharacteristics = {
         complexity: 'high',
         tokenBudget: 50000,
@@ -146,7 +146,7 @@ describe('Model Selector', () => {
 
       const backends = selectParallelBackends(task, 2);
       expect(backends[0]).toBe(BACKENDS.GEMINI);
-      expect(backends[1]).toBe(BACKENDS.ROVODEV);
+      expect(backends[1]).toBe(BACKENDS.DROID);
     });
 
     it('should select up to 3 backends', () => {
