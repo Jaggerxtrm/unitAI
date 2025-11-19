@@ -33,33 +33,11 @@ if [ -z "$TOOL_NAME" ]; then
   exit 0
 fi
 
-# Function to block with educational message
-block_with_message() {
-  local reason=$1
-  local alternative=$2
-  local savings=$3
-
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
-  echo "⚠️  TOKEN EFFICIENCY ENFORCER" >&2
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
-  echo "" >&2
-  echo "BLOCKED: $reason" >&2
-  echo "" >&2
-  echo "Token savings: $savings" >&2
-  echo "" >&2
-  echo "USE INSTEAD:" >&2
-  echo "$alternative" >&2
-  echo "" >&2
-  echo "To bypass (not recommended): BYPASS_ENFORCER=1" >&2
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
-
-  exit 1  # Block the tool
-}
-
 # Function to warn (allow but educate)
 warn_with_message() {
   local reason=$1
   local suggestion=$2
+  local savings=$3
 
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
   echo "⚡ TOKEN EFFICIENCY WARNING" >&2
@@ -67,6 +45,10 @@ warn_with_message() {
   echo "" >&2
   echo "INEFFICIENT: $reason" >&2
   echo "" >&2
+  if [ -n "$savings" ]; then
+      echo "Potential savings: $savings" >&2
+      echo "" >&2
+  fi
   echo "SUGGESTION:" >&2
   echo "$suggestion" >&2
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
@@ -107,11 +89,11 @@ case "$TOOL_NAME" in
         ;;
     esac
 
-    # Block if file is too large
+    # Warn if file is too large (previously blocked)
     if [ "$FILE_LINES" -gt "$MAX_FILE_SIZE_LINES" ]; then
       if [ "$IS_TS_JS" -eq 1 ]; then
         # TypeScript/JavaScript: Use Serena
-        block_with_message \
+        warn_with_message \
           "Reading large file ($FILE_LINES LOC): $FILE_PATH" \
           "  mcp__serena__get_symbols_overview --relative_path \"$FILE_PATH\"
   mcp__serena__find_symbol --name_path \"SymbolName\" --relative_path \"$FILE_PATH\" --include_body true
@@ -120,7 +102,7 @@ REASON: Serena provides symbol-level navigation (75-80% token savings)" \
           "~$((FILE_LINES * 4)) tokens → ~$((FILE_LINES / 5)) tokens (80% reduction)"
       else
         # Other files: Use claude-context
-        block_with_message \
+        warn_with_message \
           "Reading large file ($FILE_LINES LOC): $FILE_PATH" \
           "  mcp__claude-context__search_code \"relevant query\" --path \"$(dirname "$FILE_PATH")\"
 
@@ -137,14 +119,14 @@ REASON: Semantic search finds relevant code without reading entire file" \
           "  Consider using Serena for symbol-level navigation:
   mcp__serena__get_symbols_overview --relative_path \"$FILE_PATH\"
 
-  Potential savings: ~$((FILE_LINES * 3)) tokens"
+  Potential savings: ~$((FILE_LINES * 3)) tokens" ""
       else
         warn_with_message \
           "Reading moderately large file ($FILE_LINES LOC): $FILE_PATH" \
           "  Consider using claude-context for semantic search:
   mcp__claude-context__search_code \"query\" --path \"$(dirname "$FILE_PATH")\"
 
-  Potential savings: ~$((FILE_LINES * 3)) tokens"
+  Potential savings: ~$((FILE_LINES * 3)) tokens" ""
       fi
     fi
     ;;
@@ -162,9 +144,9 @@ REASON: Semantic search finds relevant code without reading entire file" \
     # Count TypeScript/JavaScript files in search path
     FILE_COUNT=$(find "$SEARCH_PATH" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) 2>/dev/null | wc -l)
 
-    # Block if searching too many files
+    # Warn if searching too many files (previously blocked)
     if [ "$FILE_COUNT" -gt "$MAX_GREP_SCOPE" ]; then
-      block_with_message \
+      warn_with_message \
         "Grep searching $FILE_COUNT files in: $SEARCH_PATH" \
         "  mcp__claude-context__search_code \"$PATTERN\" --path \"$SEARCH_PATH\"
 
@@ -181,10 +163,10 @@ REASON: claude-context uses hybrid search (BM25 + vectors) for efficient semanti
       exit 0
     fi
 
-    # Block token-wasteful bash patterns
+    # Warn token-wasteful bash patterns (previously blocked)
     case "$COMMAND" in
       *"cat "*" | "*|*"find "*)
-        block_with_message \
+        warn_with_message \
           "Token-wasteful bash command: $COMMAND" \
           "  Use claude-context for semantic search:
   mcp__claude-context__search_code \"query\" --path /project/path
@@ -195,7 +177,7 @@ REASON: claude-context uses hybrid search (BM25 + vectors) for efficient semanti
         ;;
 
       *"grep -r"*)
-        block_with_message \
+        warn_with_message \
           "Recursive grep detected: $COMMAND" \
           "  mcp__claude-context__search_code \"query\" --path /project/path
 
