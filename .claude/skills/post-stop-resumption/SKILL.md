@@ -1,6 +1,6 @@
 ---
 name: post-stop-resumption
-description: Use this skill when restarting work after a stop or interruption. This skill guides Claude to assess the current situation, understand what happened before the stop, and seek assistance from MCP tools to understand how to proceed. Use when resuming work after an interruption, error, or when Claude was stopped mid-task.
+description: Resume work after interruptions via MCP tools assistance. Use when restarting after stop, error, or mid-task interruption. Assesses situation and seeks guidance to continue.
 ---
 
 # Post-Stop Resumption Skill

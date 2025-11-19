@@ -3,6 +3,7 @@
 #
 # Gently suggests smart-workflows when detecting relevant patterns
 # in user's reading/exploration activities.
+# Now with smart throttling per workflow type
 #
 # Hook Type: PostToolUse (Read, Bash, Grep)
 # Triggers: After user reads files or runs commands
@@ -13,19 +14,53 @@ set -euo pipefail
 # Read hook input from stdin (JSON with tool name and arguments)
 HOOK_INPUT=$(cat)
 
-# Extract tool name and arguments
+# Extract tool name, arguments and session
 TOOL_NAME=$(echo "$HOOK_INPUT" | jq -r '.tool // empty')
 TOOL_ARGS=$(echo "$HOOK_INPUT" | jq -r '.arguments // empty')
+SESSION_ID=$(echo "$HOOK_INPUT" | jq -r '.session_id // "default"')
 
 # Skip if no tool name
 if [ -z "$TOOL_NAME" ]; then
   exit 0
 fi
 
+# Setup cache directory
+CACHE_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude/tsc-cache/${SESSION_ID}"
+mkdir -p "$CACHE_DIR"
+
+# Throttling configuration (10 minutes per workflow type)
+COOLDOWN_SECONDS=600
+
+# Function to check if workflow suggestion should be throttled
+should_throttle() {
+  local workflow=$1
+  local timestamp_file="$CACHE_DIR/workflow-${workflow}-last-suggestion"
+  
+  if [ -f "$timestamp_file" ]; then
+    local last_time=$(cat "$timestamp_file")
+    local now=$(date +%s)
+    local time_since=$((now - last_time))
+    
+    if [ $time_since -lt $COOLDOWN_SECONDS ]; then
+      return 0  # Should throttle
+    fi
+  fi
+  
+  return 1  # Should not throttle
+}
+
 # Function to suggest workflow
 suggest_workflow() {
   local workflow=$1
   local reason=$2
+  
+  # Check throttling
+  if should_throttle "$workflow"; then
+    exit 0  # Skip suggestion
+  fi
+  
+  # Update timestamp
+  date +%s > "$CACHE_DIR/workflow-${workflow}-last-suggestion"
 
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "💡 WORKFLOW SUGGESTION"
