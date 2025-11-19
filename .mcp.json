@@ -26,12 +26,9 @@
       "type": "stdio",
       "command": "npx",
       "args": [
-        "@jaggerxtrm/unified-ai-mcp-tool@latest"
+        "@jaggerxt/unified-ai-mcp@latest"
       ],
-      "env": {
-        "CURSOR_AGENT_TOKEN": "set-me",
-        "DROID_API_KEY": "set-me"
-      }
+      "env": {}
     },
     "serena": {
       "type": "stdio",
@@ -48,7 +45,7 @@
       ],
       "env": {}
     },
-    "openmemory": {
+    "openmemory-cloud": {
       "type": "stdio",
       "command": "npx",
       "args": [
@@ -60,16 +57,12 @@
         "CLIENT_NAME": "cursor"
       }
     },
-    "memory-local": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["/home/dawid/Projects/unified-ai-mcp-tool/OpenMemory/backend/dist/ai/mcp.js"],
-      "env": {
-        "NODE_ENV": "production",
-        "OM_PORT": "8080",
-        "OM_MODE": "langgraph",
-        "OM_EMBEDDINGS": "openai",
-        "OPENAI_API_KEY": "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"
+    "openmemory": {
+      "type": "http",
+      "url": "http://localhost:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer om-dev-mcp-key",
+        "x-api-key": "om-dev-mcp-key"
       }
     }
   }
