@@ -195,9 +195,9 @@ describe('GitHelper', () => {
       const { checkCLIAvailability } = await import('../../src/utils/gitHelper.js');
       const available = await checkCLIAvailability();
 
-      expect(available).toHaveProperty('cursor-agent');
-      expect(available).toHaveProperty('gemini');
-      expect(available).toHaveProperty('droid');
+      expect(available).toHaveProperty('ask-cursor');
+      expect(available).toHaveProperty('ask-gemini');
+      expect(available).toHaveProperty('ask-droid');
     });
 
     it('should detect unavailable CLI commands', async () => {
@@ -206,9 +206,9 @@ describe('GitHelper', () => {
       const { checkCLIAvailability } = await import('../../src/utils/gitHelper.js');
       const available = await checkCLIAvailability();
 
-      expect(available).toHaveProperty('cursor-agent');
-      expect(available).toHaveProperty('gemini');
-      expect(available).toHaveProperty('droid');
+      expect(available).toHaveProperty('ask-cursor');
+      expect(available).toHaveProperty('ask-gemini');
+      expect(available).toHaveProperty('ask-droid');
     });
   });
 });

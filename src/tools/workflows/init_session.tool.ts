@@ -32,7 +32,7 @@ Run this at the start of every session to get context.
     ],
     cost: "low",
     duration: "10-20s",
-    backends: ["gemini", "cursor-agent"]
+    backends: ["ask-gemini", "ask-cursor"]
   },
   examples: [
     {

@@ -30,7 +30,7 @@ Best for critical refactors or complex bug fixes where you need high confidence.
     ],
     cost: "high",
     duration: "60-90s",
-    backends: ["gemini", "cursor-agent", "droid"]
+    backends: ["ask-gemini", "ask-cursor", "ask-droid"]
   },
   examples: [
     {

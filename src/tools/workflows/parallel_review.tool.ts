@@ -33,7 +33,7 @@ Use this tool when you need a deep review of specific files, especially before m
     ],
     cost: "high",
     duration: "30-60s",
-    backends: ["gemini", "cursor-agent", "droid"]
+    backends: ["ask-gemini", "ask-cursor", "ask-droid"]
   },
   examples: [
     {

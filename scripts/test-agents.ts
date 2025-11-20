@@ -74,14 +74,14 @@ test("Can create ArchitectAgent via factory", () => {
   const agent = AgentFactory.createArchitect();
   return agent.name === "ArchitectAgent" &&
          agent.description.length > 0 &&
-         agent.preferredBackend === "gemini";
+         agent.preferredBackend === "ask-gemini";
 });
 
 test("Can create ImplementerAgent via factory", () => {
   const agent = AgentFactory.createImplementer();
   return agent.name === "ImplementerAgent" &&
          agent.description.length > 0 &&
-         agent.preferredBackend === "droid" &&
+         agent.preferredBackend === "ask-droid" &&
          agent.fallbackBackend === undefined;
 });
 
@@ -89,7 +89,7 @@ test("Can create TesterAgent via factory", () => {
   const agent = AgentFactory.createTester();
   return agent.name === "TesterAgent" &&
          agent.description.length > 0 &&
-         agent.preferredBackend === "cursor-agent";
+         agent.preferredBackend === "ask-cursor";
 });
 
 test("Can create agents dynamically by type", () => {
@@ -225,17 +225,17 @@ logSection("TEST 5: Backend Configuration");
 
 test("ArchitectAgent uses Gemini with no fallback", () => {
   const agent = AgentFactory.createArchitect();
-  return agent.preferredBackend === "gemini" && agent.fallbackBackend === undefined;
+  return agent.preferredBackend === "ask-gemini" && agent.fallbackBackend === undefined;
 });
 
 test("ImplementerAgent uses Droid with no fallback", () => {
   const agent = AgentFactory.createImplementer();
-  return agent.preferredBackend === "droid" && agent.fallbackBackend === undefined;
+  return agent.preferredBackend === "ask-droid" && agent.fallbackBackend === undefined;
 });
 
 test("TesterAgent uses Cursor-Agent with no fallback", () => {
   const agent = AgentFactory.createTester();
-  return agent.preferredBackend === "cursor-agent" && agent.fallbackBackend === undefined;
+  return agent.preferredBackend === "ask-cursor" && agent.fallbackBackend === undefined;
 });
 
 // ============================================================================

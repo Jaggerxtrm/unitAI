@@ -31,7 +31,7 @@ Use for complex features requiring multiple files or careful architectural plann
     ],
     cost: "high",
     duration: "45-90s",
-    backends: ["gemini", "cursor-agent", "droid"]
+    backends: ["ask-gemini", "ask-cursor", "ask-droid"]
   },
   examples: [
     {

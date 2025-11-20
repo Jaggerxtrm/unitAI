@@ -38,7 +38,7 @@ describe("droidTool", () => {
     expect(result).toBe("droid-ok");
     expect(mockExecuteAIClient).toHaveBeenCalledWith(
       expect.objectContaining({
-        backend: "droid",
+        backend: "ask-droid",
         prompt: "Generate remediation plan",
         auto: "medium",
         attachments: ["/repo/logs/error.log"],

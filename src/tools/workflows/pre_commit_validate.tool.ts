@@ -33,7 +33,7 @@ Run this *after* 'git add' but *before* 'git commit'.
     ],
     cost: "medium",
     duration: "5-20s",
-    backends: ["gemini", "qwen", "droid (optional)"]
+    backends: ["ask-gemini", "qwen", "droid (optional)"]
   },
   examples: [
     {

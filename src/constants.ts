@@ -95,9 +95,9 @@ export const APPROVAL_MODES = {
 } as const;
 
 export const BACKENDS = {
-  GEMINI: "gemini",
-  CURSOR: "cursor-agent",
-  DROID: "droid"
+  GEMINI: "ask-gemini",
+  CURSOR: "ask-cursor",
+  DROID: "ask-droid"
 } as const;
 
 // Export BACKENDS values for easier importing

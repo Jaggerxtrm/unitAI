@@ -33,7 +33,7 @@ Use this in CI pipelines or for post-commit reviews. Defaults to HEAD (most rece
     ],
     cost: "medium",
     duration: "15-30s",
-    backends: ["gemini", "cursor-agent"]
+    backends: ["ask-gemini", "ask-cursor"]
   },
   examples: [
     {

@@ -4,7 +4,7 @@
 import { registerTool } from "./registry.js";
 import { askGeminiTool } from "./ask-gemini.tool.js";
 import { smartWorkflowsTool } from "./smart-workflows.tool.js";
-import { cursorAgentTool } from "./cursor-agent.tool.js";
+import { cursorAgentTool } from "./ask-cursor.tool.js";
 import { droidTool } from "./droid.tool.js";
 import {
   openspecInitTool,
@@ -26,7 +26,10 @@ import {
   workflowTriangulatedReviewTool,
   workflowInitSessionTool,
   workflowFeatureDesignTool,
-  workflowOpenspecDrivenDevelopmentTool
+  workflowOpenspecDrivenDevelopmentTool,
+  workflowBugHuntTool,
+  workflowAutoRemediationTool,
+  workflowRefactorSprintTool
 } from "./workflows/index.js";
 import { initializeWorkflowRegistry } from "../workflows/index.js";
 
@@ -52,6 +55,11 @@ registerTool(workflowInitSessionTool);
 registerTool(workflowFeatureDesignTool);
 registerTool(workflowOpenspecDrivenDevelopmentTool);
 
+// Register Workflow tools (Phase 2 Batch 3)
+registerTool(workflowBugHuntTool);
+registerTool(workflowAutoRemediationTool);
+registerTool(workflowRefactorSprintTool);
+
 // Register OpenSpec tools
 registerTool(openspecInitTool);
 registerTool(openspecProposalTool);
@@ -67,7 +75,7 @@ initializeWorkflowRegistry();
 export * from "./registry.js";
 export { askGeminiTool } from "./ask-gemini.tool.js";
 export { smartWorkflowsTool } from "./smart-workflows.tool.js";
-export { cursorAgentTool } from "./cursor-agent.tool.js";
+export { cursorAgentTool } from "./ask-cursor.tool.js";
 export { droidTool } from "./droid.tool.js";
 
 // Export Meta tools
@@ -85,7 +93,10 @@ export {
   workflowTriangulatedReviewTool,
   workflowInitSessionTool,
   workflowFeatureDesignTool,
-  workflowOpenspecDrivenDevelopmentTool
+  workflowOpenspecDrivenDevelopmentTool,
+  workflowBugHuntTool,
+  workflowAutoRemediationTool,
+  workflowRefactorSprintTool
 } from "./workflows/index.js";
 
 // Export OpenSpec tools

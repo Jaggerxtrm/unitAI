@@ -33,7 +33,7 @@ Best for projects enforcing strict specification protocols or when clear documen
     ],
     cost: "high",
     duration: "60-120s",
-    backends: ["gemini", "cursor-agent", "droid"]
+    backends: ["ask-gemini", "ask-cursor", "ask-droid"]
   },
   examples: [
     {

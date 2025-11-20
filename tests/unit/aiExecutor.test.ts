@@ -146,7 +146,7 @@ describe('AIExecutor', () => {
       await executeAIClient({ backend: BACKENDS.CURSOR, prompt: 'Cursor prompt' });
 
       expect(mockExecuteCommand).toHaveBeenCalled();
-      expect(mockExecuteCommand.mock.calls[0][0]).toBe('cursor-agent');
+      expect(mockExecuteCommand.mock.calls[0][0]).toBe('ask-cursor');
     });
 
     it('should route to droid backend', async () => {
@@ -159,7 +159,7 @@ describe('AIExecutor', () => {
       await executeAIClient({ backend: BACKENDS.DROID, prompt: 'Droid prompt' });
 
       expect(mockExecuteCommand).toHaveBeenCalled();
-      expect(mockExecuteCommand.mock.calls[0][0]).toBe('droid');
+      expect(mockExecuteCommand.mock.calls[0][0]).toBe('ask-droid');
     });
 
     it('should throw error for unknown backend', async () => {

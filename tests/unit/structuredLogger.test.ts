@@ -364,14 +364,14 @@ describe('WorkflowLogger', () => {
   });
 
   it('should log AI backend calls', async () => {
-    workflowLogger.aiCall('gemini', 'Test prompt', { model: 'gemini-2.0' });
+    workflowLogger.aiCall('ask-gemini', 'Test prompt', { model: 'gemini-2.0' });
 
     // Wait for log to be written
     await new Promise(resolve => setTimeout(resolve, 100));
 
     const logs = baseLogger.queryLogs({ category: LogCategory.AI_BACKEND });
     expect(logs.length).toBeGreaterThan(0);
-    expect(logs[0].metadata?.backend).toBe('gemini');
+    expect(logs[0].metadata?.backend).toBe('ask-gemini');
   });
 
   it('should log permission checks', async () => {

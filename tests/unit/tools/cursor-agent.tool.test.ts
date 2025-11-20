@@ -38,7 +38,7 @@ describe("cursorAgentTool", () => {
     expect(result).toBe("ok");
     expect(mockExecuteAIClient).toHaveBeenCalledWith(
       expect.objectContaining({
-        backend: "cursor-agent",
+        backend: "ask-cursor",
         prompt: "Refactor the workflow",
         attachments: ["/repo/src/workflows/example.ts"],
         projectRoot: "/repo",

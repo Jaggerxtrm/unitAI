@@ -72,7 +72,7 @@ describe('Workflow Integration Tests', () => {
       // Mock AI responses for parallel execution
       mockAIExecutor({
         gemini: 'Gemini analysis: Good architecture, consider adding error handling',
-        'cursor-agent': 'Cursor Agent review: Refactoring suggestions for better maintainability',
+        'ask-cursor': 'Cursor Agent review: Refactoring suggestions for better maintainability',
         droid: 'Droid review: Code is production-ready with minor improvements'
       });
 

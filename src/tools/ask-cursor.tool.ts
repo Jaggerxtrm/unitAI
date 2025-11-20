@@ -39,7 +39,7 @@ const cursorAgentSchema = z.object({
 export type CursorAgentParams = z.infer<typeof cursorAgentSchema>;
 
 export const cursorAgentTool: UnifiedTool = {
-  name: "cursor-agent",
+  name: "ask-cursor",
   description: "Multi-model Cursor Agent CLI per bug fixing e refactoring guidati",
   category: "ai-client",
   zodSchema: cursorAgentSchema,
@@ -67,7 +67,7 @@ export const cursorAgentTool: UnifiedTool = {
     });
   },
   prompt: {
-    name: "cursor-agent",
+    name: "ask-cursor",
     description: "Esegui Cursor Agent headless per analisi e refactoring multi-modello",
     arguments: [
       {
@@ -87,5 +87,5 @@ export const cursorAgentTool: UnifiedTool = {
       }
     ]
   }
-};
+};;;
 
