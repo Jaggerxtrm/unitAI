@@ -14,6 +14,17 @@ import {
   openspecListTool,
   openspecShowTool,
 } from "./openspec/index.js";
+import {
+  listWorkflowsTool,
+  describeWorkflowTool,
+  getSystemInstructionsTool
+} from "./meta/index.js";
+import {
+  workflowParallelReviewTool,
+  workflowPreCommitValidateTool,
+  workflowValidateLastCommitTool,
+  workflowTriangulatedReviewTool
+} from "./workflows/index.js";
 import { initializeWorkflowRegistry } from "../workflows/index.js";
 
 // Register all tools
@@ -21,6 +32,17 @@ registerTool(askGeminiTool);
 registerTool(cursorAgentTool);
 registerTool(droidTool);
 registerTool(smartWorkflowsTool);
+
+// Register Meta tools
+registerTool(listWorkflowsTool);
+registerTool(describeWorkflowTool);
+registerTool(getSystemInstructionsTool);
+
+// Register Workflow tools (Phase 2 Batch 1)
+registerTool(workflowParallelReviewTool);
+registerTool(workflowPreCommitValidateTool);
+registerTool(workflowValidateLastCommitTool);
+registerTool(workflowTriangulatedReviewTool);
 
 // Register OpenSpec tools
 registerTool(openspecInitTool);
@@ -39,6 +61,21 @@ export { askGeminiTool } from "./ask-gemini.tool.js";
 export { smartWorkflowsTool } from "./smart-workflows.tool.js";
 export { cursorAgentTool } from "./cursor-agent.tool.js";
 export { droidTool } from "./droid.tool.js";
+
+// Export Meta tools
+export {
+  listWorkflowsTool,
+  describeWorkflowTool,
+  getSystemInstructionsTool
+} from "./meta/index.js";
+
+// Export Workflow tools
+export {
+  workflowParallelReviewTool,
+  workflowPreCommitValidateTool,
+  workflowValidateLastCommitTool,
+  workflowTriangulatedReviewTool
+} from "./workflows/index.js";
 
 // Export OpenSpec tools
 export {

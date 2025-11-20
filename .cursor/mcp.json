@@ -1,16 +1,52 @@
 {
   "mcpServers": {
     "claude-context": {
+      "type": "stdio",
       "command": "npx",
       "args": [
         "@zilliz/claude-context-mcp@latest"
       ],
       "env": {
-        "OPENAI_API_KEY": "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",
+        "OPENAI_API_KEY": "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",
         "MILVUS_TOKEN": "552edc860fe0eca5f5a6cc87ad5425e57270067cce63afb81de3da07f206401f4c9a128a5eb92899c110639ca31e16951c48dbd3"
       }
     },
-    "openmemory": {
+    "deepwiki": {
+      "type": "http",
+      "url": "https://mcp.deepwiki.com/mcp"
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "ctx7sk-704e66d0-ed71-443a-8650-c1501cb4054d"
+      }
+    },
+    "unified-ai-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@jaggerxtrm/unified-ai-mcp-tool@latest"
+      ],
+      "env": {}
+    },
+    "serena": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide-assistant",
+        "--project",
+        "unified-ai-mcp-tool"
+      ],
+      "env": {}
+    },
+    "openmemory-cloud": {
+      "type": "stdio",
       "command": "npx",
       "args": [
         "-y",
@@ -21,18 +57,13 @@
         "CLIENT_NAME": "cursor"
       }
     },
-    "unified-ai-mcp": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@jaggerxtrm/unified-ai-mcp-tool"
-      ]
-    },
-    "context7": {
-      "url": "https://mcp.context7.com/mcp"
-    },
-    "deepwiki": {
-      "url": "https://mcp.deepwiki.com/mcp"
+    "openmemory": {
+      "type": "http",
+      "url": "http://localhost:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer om-dev-mcp-key",
+        "x-api-key": "om-dev-mcp-key"
+      }
     }
   }
 }

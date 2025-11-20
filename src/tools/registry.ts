@@ -20,6 +20,18 @@ export interface UnifiedTool {
   zodSchema: z.ZodObject<any>;
   execute: ToolExecuteFunction;
   category?: string;
+  metadata?: {
+    bestFor?: string[];
+    notFor?: string[];
+    cost?: 'low' | 'medium' | 'high';
+    duration?: string;
+    backends?: string[];
+    relatedTools?: string[];
+  };
+  examples?: Array<{
+    scenario: string;
+    params: Record<string, any>;
+  }>;
   prompt?: {
     name: string;
     description: string;
