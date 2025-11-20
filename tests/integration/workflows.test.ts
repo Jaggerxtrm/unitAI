@@ -70,10 +70,11 @@ describe('Workflow Integration Tests', () => {
   describe('parallelReviewWorkflow', () => {
     it('should execute parallel reviews successfully', async () => {
       // Mock AI responses for parallel execution
+      // Use backend identifiers (BACKENDS.*) not CLI command names
       mockAIExecutor({
-        gemini: 'Gemini analysis: Good architecture, consider adding error handling',
+        'ask-gemini': 'Gemini analysis: Good architecture, consider adding error handling',
         'ask-cursor': 'Cursor Agent review: Refactoring suggestions for better maintainability',
-        droid: 'Droid review: Code is production-ready with minor improvements'
+        'ask-droid': 'Droid review: Code is production-ready with minor improvements'
       });
 
       const { executeParallelReview } = await import('../../src/workflows/parallel-review.workflow.js');
@@ -182,8 +183,8 @@ describe('Workflow Integration Tests', () => {
       ]);
 
       mockAIExecutor({
-        gemini: 'WARNING: Breaking change detected - exported function removed',
-        qwen: 'Alert: API changes may break existing integrations'
+        'ask-gemini': 'WARNING: Breaking change detected - exported function removed. This is a breaking change that may affect existing integrations.',
+        'ask-cursor': 'Alert: API changes may break existing integrations. The removal of oldAPI() requires migration of all callers.'
       });
 
       const { executeValidateLastCommit } = await import('../../src/workflows/validate-last-commit.workflow.js');

@@ -12,11 +12,11 @@ export const listWorkflowsTool: UnifiedTool = {
   }),
   category: "meta",
   execute: async ({ category }) => {
-    const workflows = toolRegistry.filter(t => 
+    const workflows = toolRegistry.filter(t =>
       (t.name.startsWith('workflow_') || t.category === 'workflow') &&
       (category === 'all' || t.metadata?.category === category)
     );
-    
+
     if (workflows.length === 0) {
       return "No workflows found. (Note: Workflows are being migrated to tools in Phase 2)";
     }

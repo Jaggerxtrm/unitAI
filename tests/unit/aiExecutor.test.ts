@@ -62,7 +62,7 @@ describe('AIExecutor', () => {
       expect(result).toBe('Cursor response');
     });
 
-    it('should include attachments, cwd and auto-approve flags', async () => {
+    it('should include attachments, force and output format flags', async () => {
       const mockExecuteCommand = vi.fn().mockResolvedValue('Cursor response');
       vi.doMock('../../src/utils/commandExecutor.js', () => ({
         executeCommand: mockExecuteCommand
@@ -72,19 +72,21 @@ describe('AIExecutor', () => {
       await executeCursorAgentCLI({
         prompt: 'Plan refactor',
         attachments: ['/repo/src/file.ts'],
-        projectRoot: '/repo',
         autoApprove: true,
         outputFormat: 'json'
       });
 
       const args = mockExecuteCommand.mock.calls[0][1];
+      expect(args).toContain('--print'); // Required for headless mode
+      expect(args).toContain('--force'); // Replaces --auto-approve
       expect(args).toContain('--file');
       expect(args).toContain('/repo/src/file.ts');
-      expect(args).toContain('--cwd');
-      expect(args).toContain('/repo');
-      expect(args).toContain('--auto-approve');
       expect(args).toContain('--output-format');
       expect(args).toContain('json');
+      // --cwd flag was removed (not supported by cursor-agent CLI)
+      expect(args).not.toContain('--cwd');
+      // --auto-approve was replaced by --force
+      expect(args).not.toContain('--auto-approve');
     });
   });
 
@@ -146,7 +148,8 @@ describe('AIExecutor', () => {
       await executeAIClient({ backend: BACKENDS.CURSOR, prompt: 'Cursor prompt' });
 
       expect(mockExecuteCommand).toHaveBeenCalled();
-      expect(mockExecuteCommand.mock.calls[0][0]).toBe('ask-cursor');
+      // CLI command is 'cursor-agent', not 'ask-cursor' (backend identifier)
+      expect(mockExecuteCommand.mock.calls[0][0]).toBe('cursor-agent');
     });
 
     it('should route to droid backend', async () => {
@@ -159,7 +162,8 @@ describe('AIExecutor', () => {
       await executeAIClient({ backend: BACKENDS.DROID, prompt: 'Droid prompt' });
 
       expect(mockExecuteCommand).toHaveBeenCalled();
-      expect(mockExecuteCommand.mock.calls[0][0]).toBe('ask-droid');
+      // CLI command is 'droid', not 'ask-droid' (backend identifier)
+      expect(mockExecuteCommand.mock.calls[0][0]).toBe('droid');
     });
 
     it('should throw error for unknown backend', async () => {
