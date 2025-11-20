@@ -1,6 +1,6 @@
 # MCP 2.0: The "Discovery" Update
 
-**Status:** Proposed
+**Status:** In Progress
 **Date:** November 19, 2025
 **Author:** Exploration Agent
 

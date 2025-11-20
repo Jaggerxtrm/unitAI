@@ -17,7 +17,7 @@ This workflow:
 ## Usage
 Run this at the start of every session to get context.
   `.trim(),
-  zodSchema: initSessionWorkflow.schema,
+  zodSchema: initSessionWorkflow.schema as any,
   category: "workflow",
   metadata: {
     category: "session",

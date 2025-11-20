@@ -21,6 +21,7 @@ export interface UnifiedTool {
   execute: ToolExecuteFunction;
   category?: string;
   metadata?: {
+    category?: string;
     bestFor?: string[];
     notFor?: string[];
     cost?: 'low' | 'medium' | 'high';

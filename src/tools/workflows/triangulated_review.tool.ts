@@ -15,7 +15,7 @@ Perform a 3-way cross-check on critical changes.
 ## Usage
 Best for critical refactors or complex bug fixes where you need high confidence.
   `.trim(),
-  zodSchema: triangulatedReviewWorkflow.schema,
+  zodSchema: triangulatedReviewWorkflow.schema as any,
   category: "workflow",
   metadata: {
     category: "code-review",

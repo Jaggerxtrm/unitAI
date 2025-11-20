@@ -18,7 +18,7 @@ This workflow examines the *committed* code (unlike pre-commit which checks stag
 ## Usage
 Use this in CI pipelines or for post-commit reviews. Defaults to HEAD (most recent commit).
   `.trim(),
-  zodSchema: validateLastCommitWorkflow.schema,
+  zodSchema: validateLastCommitWorkflow.schema as any,
   category: "workflow",
   metadata: {
     category: "validation",

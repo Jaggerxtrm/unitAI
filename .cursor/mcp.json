@@ -24,9 +24,9 @@
     },
     "unified-ai-mcp": {
       "type": "stdio",
-      "command": "npx",
+      "command": "node",
       "args": [
-        "@jaggerxtrm/unified-ai-mcp-tool@latest"
+        "/home/dawid/Projects/unified-ai-mcp-tool/dist/index.js"
       ],
       "env": {}
     },

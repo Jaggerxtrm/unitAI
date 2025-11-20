@@ -16,7 +16,7 @@ This workflow activates three specialized agents:
 ## Usage
 Use for complex features requiring multiple files or careful architectural planning.
   `.trim(),
-  zodSchema: featureDesignWorkflow.schema,
+  zodSchema: featureDesignWorkflow.schema as any,
   category: "workflow",
   metadata: {
     category: "planning",

@@ -18,7 +18,7 @@ This workflow:
 ## Usage
 Best for projects enforcing strict specification protocols or when clear documentation is required before coding.
   `.trim(),
-  zodSchema: openspecDrivenDevelopmentWorkflow.schema,
+  zodSchema: openspecDrivenDevelopmentWorkflow.schema as any,
   category: "workflow",
   metadata: {
     category: "planning",

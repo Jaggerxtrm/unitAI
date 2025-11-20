@@ -18,7 +18,7 @@ This workflow executes Gemini (architecture), Cursor (refactoring), and Droid (i
 ## Usage
 Use this tool when you need a deep review of specific files, especially before merging critical changes.
   `.trim(),
-  zodSchema: parallelReviewWorkflow.schema,
+  zodSchema: parallelReviewWorkflow.schema as any,
   category: "workflow",
   metadata: {
     category: "code-review",

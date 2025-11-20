@@ -18,7 +18,7 @@ It uses parallel execution of Gemini and Qwen, plus Droid if depth is "paranoid"
 ## Usage
 Run this *after* 'git add' but *before* 'git commit'.
   `.trim(),
-  zodSchema: preCommitValidateWorkflow.schema,
+  zodSchema: preCommitValidateWorkflow.schema as any,
   category: "workflow",
   metadata: {
     category: "validation",
