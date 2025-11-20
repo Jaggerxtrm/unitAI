@@ -210,7 +210,6 @@ Genera:
 3. Esperimenti/strumenti suggeriti
 4. Metriche da monitorare`,
         attachments,
-        projectRoot: process.cwd(),
         outputFormat: "text"
       });
     } catch (error) {

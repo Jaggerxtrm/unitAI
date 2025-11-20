@@ -179,7 +179,6 @@ ${context || "N/A"}
 
 Genera suggerimenti concreti di implementazione (patch outline, rischi, test consigliati).`,
           attachments: attachments.length ? attachments : targetFiles.slice(0, 3),
-          projectRoot: process.cwd(),
           outputFormat: "text",
           autoApprove: false
         });
@@ -302,7 +301,6 @@ Feature: ${featureDescription}
 Plan:
 ${finalOutput}`,
               attachments,
-              projectRoot: process.cwd(),
               outputFormat: "text"
             });
             break;

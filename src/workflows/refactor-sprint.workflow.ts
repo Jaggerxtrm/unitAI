@@ -36,7 +36,6 @@ Genera:
 - Patch suggerite (anche descrittive)
 - Test consigliati`,
       attachments: attachments.length ? attachments : targetFiles.slice(0, 5),
-      projectRoot: process.cwd(),
       outputFormat: "text"
     });
   } catch (error) {

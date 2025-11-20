@@ -123,9 +123,8 @@ Come Factory Droid, agisci come verificatore autonomo:
         if (backend === BACKENDS.CURSOR) {
           return {
             attachments,
-            projectRoot: process.cwd(),
             outputFormat: "text",
-            autoApprove: strategy === "double-check"
+            autoApprove: strategy === "double-check" // Maps to --force flag
           };
         }
         if (backend === BACKENDS.DROID) {

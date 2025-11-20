@@ -48,7 +48,7 @@ Genera suggerimenti concreti di refactoring con priorità e rischi residui.`;
     promptBuilder,
     onProgress,
     (backend) => backend === BACKENDS.CURSOR
-      ? { attachments: files.slice(0, 5), projectRoot: process.cwd(), outputFormat: "text" }
+      ? { attachments: files.slice(0, 5), outputFormat: "text" }
       : {}
   );
 
