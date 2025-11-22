@@ -1,4 +1,7 @@
-import { CommandResult } from '../types';
+import { CommandResult } from './commands/types';
+import { featureDesignWorkflow } from '../../src/workflows/feature-design.workflow.js';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 export async function executeCreateSpec(params: string[]): Promise<CommandResult> {
   try {
@@ -41,12 +44,13 @@ export async function executeCreateSpec(params: string[]): Promise<CommandResult
         const designResult = await runFeatureDesign(featureDescription);
         output += `${designResult}\n\n`;
       } catch (error) {
-        output += `⚠️ Analisi architetturale fallita: ${error.message}\n\n`;
+        output += `⚠️ Analisi architetturale fallita: ${error instanceof Error ? error.message : String(error)}\n\n`;
       }
     }
 
     // Determine output path
-    const outputPath = options.output || `docs/specs/${generateSpecFilename(featureDescription)}.md`;
+    const filename = generateSpecFilename(featureDescription);
+    const outputPath = options.output || path.join(process.cwd(), 'docs', 'specs', `${filename}.md`);
 
     // Save spec file
     output += `## Salvataggio Specifiche\n`;
@@ -66,7 +70,7 @@ export async function executeCreateSpec(params: string[]): Promise<CommandResult
       return {
         success: false,
         output,
-        error: `Errore durante il salvataggio: ${error.message}`
+        error: `Errore durante il salvataggio: ${error instanceof Error ? error.message : String(error)}`
       };
     }
 
@@ -79,7 +83,7 @@ export async function executeCreateSpec(params: string[]): Promise<CommandResult
     return {
       success: false,
       output: '',
-      error: `Errore durante la creazione delle specifiche: ${error.message}`
+      error: `Errore durante la creazione delle specifiche: ${error instanceof Error ? error.message : String(error)}`
     };
   }
 }
@@ -109,7 +113,7 @@ function extractOptionValue(params: string[], option: string): string | undefine
 }
 
 function getSpecTemplate(type: string): string {
-  const templates = {
+  const templates: Record<string, string> = {
     api: `# API Specification: {featureDescription}
 
 ## Overview
@@ -334,33 +338,20 @@ function generateSpecFilename(description: string): string {
 }
 
 async function runFeatureDesign(description: string): Promise<string> {
-  // This would call the feature-design workflow
-  // For now, return mock architectural analysis
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  return `### Analisi Architetturale Preliminare
-
-**Complessità:** Media
-**Approccio Suggerito:** Implementazione modulare con TDD
-
-#### Componenti Principali
-1. **Controller/Service Layer:** Gestione logica business
-2. **Data Layer:** Interazione database con ORM
-3. **UI Layer:** Componenti React con TypeScript
-
-#### Considerazioni Tecniche
-- Utilizzo pattern Repository per l'accesso dati
-- Implementazione validation lato server
-- Caching per ottimizzare performance
-- Logging strutturato per monitoring
-
-#### Rischi e Mitigazioni
-- **Rischio:** Complessità integrazione → **Mitigazione:** Sviluppo incrementale
-- **Rischio:** Performance → **Mitigazione:** Profiling precoce`;
+  // Run feature-design workflow
+  return await featureDesignWorkflow.execute({
+    featureDescription: description,
+    targetFiles: [], // Will be determined by the workflow
+    architecturalFocus: 'design',
+    implementationApproach: 'incremental'
+  });
 }
 
-async function saveSpecFile(path: string, content: string): Promise<void> {
-  // This would save the file to the filesystem
-  // For now, just simulate the operation
-  await new Promise(resolve => setTimeout(resolve, 200));
+async function saveSpecFile(filePath: string, content: string): Promise<void> {
+  // Ensure directory exists
+  const dir = path.dirname(filePath);
+  await fs.mkdir(dir, { recursive: true });
+
+  // Write file
+  await fs.writeFile(filePath, content, 'utf-8');
 }

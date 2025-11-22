@@ -33,5 +33,19 @@ Used efficient tools for the refactor:
 ## Breaking Changes
 This is a **breaking change** for external MCP consumers. Tool names have changed and require updates in client code.
 
+## Follow-up Fix (November 22, 2025)
+
+### Bug: CLI Availability Check Broken
+The `checkCLIAvailability()` function in `src/utils/gitHelper.ts` was incorrectly updated during the refactor:
+
+**Issues Found:**
+1. **Key mismatch**: Function returned `ask-*` keys but `init-session` display code expected old keys (`gemini`, `cursor-agent`, `droid`)
+2. **Wrong command**: `ask-cursor` mapped to `cursor-agent` but the actual CLI command is `cursor`
+
+**Fix Applied:**
+- Reverted keys to display-friendly names for the availability check (this function is only used for display purposes in init-session)
+- Corrected cursor command from `cursor-agent` to `cursor`
+- Commit: `4004d19`
+
 ## Rationale
 The `ask-*` convention makes it immediately clear that these tools are query/request interfaces to AI backends, improving code readability and consistency throughout the codebase.

@@ -1,4 +1,6 @@
-import { CommandResult } from '../types';
+import { CommandResult } from './commands/types';
+import { executeAIClient, BACKENDS } from '../../src/utils/aiExecutor.js';
+import { executeWorkflow as runWorkflowInternal, listWorkflows as listWorkflowsInternal, getWorkflow } from '../../src/workflows/index.js';
 
 export async function executeAiTask(params: string[]): Promise<CommandResult> {
   try {
@@ -6,7 +8,7 @@ export async function executeAiTask(params: string[]): Promise<CommandResult> {
       return {
         success: false,
         output: '',
-        error: 'Sottocomando richiesto. Uso: /ai-task <list|run|status> [parametri]'
+        error: 'Sottocomando richiesto. Uso: /ai-task <list|run|status|cursor|droid> [parametri]'
       };
     }
 
@@ -48,51 +50,15 @@ export async function executeAiTask(params: string[]): Promise<CommandResult> {
 }
 
 async function listWorkflows(): Promise<CommandResult> {
-  const workflows = [
-    {
-      name: 'init-session',
-      description: 'Inizializza sessione di lavoro',
-      backends: 'Gemini + Qwen',
-      duration: '15-30s'
-    },
-    {
-      name: 'pre-commit-validate',
-      description: 'Validazione pre-commit',
-      backends: 'Tutti (Qwen + Gemini + Rovodev)',
-      duration: '5-90s'
-    },
-    {
-      name: 'parallel-review',
-      description: 'Review parallelo del codice',
-      backends: 'Gemini + Rovodev',
-      duration: '10-30s'
-    },
-    {
-      name: 'validate-last-commit',
-      description: 'Validazione post-commit',
-      backends: 'Gemini + Qwen',
-      duration: '15-25s'
-    },
-    {
-      name: 'bug-hunt',
-      description: 'Caccia ai bug con analisi root cause',
-      backends: 'Qwen → Gemini → Rovodev',
-      duration: '30-60s'
-    },
-    {
-      name: 'feature-design',
-      description: 'Design feature con agenti multipli',
-      backends: 'ArchitectAgent + ImplementerAgent + TesterAgent',
-      duration: '45-90s'
-    }
-  ];
+  const workflowNames = listWorkflowsInternal();
 
   let output = '# Workflow Disponibili\n\n';
-  output += '| Workflow | Descrizione | Backend | Durata |\n';
-  output += '|----------|-------------|---------|---------|\n';
+  output += '| Workflow | Descrizione |\n';
+  output += '|----------|-------------|\n';
 
-  workflows.forEach(wf => {
-    output += `| ${wf.name} | ${wf.description} | ${wf.backends} | ${wf.duration} |\n`;
+  workflowNames.forEach(name => {
+    const wf = getWorkflow(name);
+    output += `| ${name} | ${wf?.description || 'N/A'} |\n`;
   });
 
   output += '\n## Esempi di Utilizzo\n\n';
@@ -122,26 +88,20 @@ async function runWorkflow(params: string[]): Promise<CommandResult> {
   const workflowParams = parseWorkflowParams(params.slice(1));
 
   try {
-    const result = await executeWorkflow({
-      workflow: workflowName,
-      params: workflowParams
+    const startTime = Date.now();
+    const output = await runWorkflowInternal(workflowName, workflowParams, (msg) => {
+      // Optional progress logging
     });
+    const duration = Date.now() - startTime;
 
-    let output = `# Esecuzione Workflow: ${workflowName}\n\n`;
-    output += `**Status:** ${result.success ? '✅ Successo' : '❌ Fallito'}\n`;
-    output += `**Durata:** ${result.duration || 'N/A'}ms\n\n`;
-
-    if (result.output) {
-      output += `## Risultato\n\n${result.output}\n`;
-    }
-
-    if (result.error) {
-      output += `## Errore\n\n${result.error}\n`;
-    }
+    let resultOutput = `# Esecuzione Workflow: ${workflowName}\n\n`;
+    resultOutput += `**Status:** ✅ Successo\n`;
+    resultOutput += `**Durata:** ${duration}ms\n\n`;
+    resultOutput += `## Risultato\n\n${output}\n`;
 
     return {
-      success: result.success,
-      output
+      success: true,
+      output: resultOutput
     };
 
   } catch (error) {
@@ -155,11 +115,11 @@ async function runWorkflow(params: string[]): Promise<CommandResult> {
 }
 
 async function getWorkflowStatus(): Promise<CommandResult> {
-  // This would check for running workflows
-  // For now, return mock status
+  // Currently we don't track async workflow status in a persistent way accessible here
+  // This is a placeholder for future implementation
   return {
     success: true,
-    output: '# Status Workflow\n\nNessun workflow attualmente in esecuzione.'
+    output: '# Status Workflow\n\nNessun workflow in background monitorato attivamente.'
   };
 }
 
@@ -198,18 +158,6 @@ function parseWorkflowParams(params: string[]): Record<string, any> {
   return result;
 }
 
-async function executeWorkflow(params: any): Promise<any> {
-  // This would call the actual MCP smart-workflows tool
-  // For now, return mock successful result
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate execution time
-
-  return {
-    success: true,
-    output: 'Workflow completato con successo. Output dettagliato qui.',
-    duration: 1500
-  };
-}
-
 async function executeCursor(params: string[]): Promise<CommandResult> {
   if (params.length === 0) {
     return {
@@ -231,21 +179,16 @@ async function executeCursor(params: string[]): Promise<CommandResult> {
   }
 
   try {
-    // This would call the MCP cursor-agent tool
-    // For now, return formatted result
-    let output = `# Cursor Agent Execution\n\n`;
-    output += `**Prompt:** "${prompt}"\n`;
-    output += `**Model:** ${options.model || 'gpt-5.1 (default)'}\n`;
-    if (options.files) {
-      output += `**Files:** ${options.files.join(', ')}\n`;
-    }
-    output += `\n## Result\n\n`;
-    output += `Cursor agent analysis completed successfully.\n`;
-    output += `\n*Note: This is a mock result. Integration with actual cursor-agent MCP tool pending.*\n`;
+    const output = await executeAIClient({
+      backend: BACKENDS.CURSOR,
+      prompt: prompt,
+      model: options.model,
+      attachments: options.files
+    });
 
     return {
       success: true,
-      output
+      output: `# Cursor Agent Execution\n\n${output}`
     };
   } catch (error) {
     const err = error as Error;
@@ -278,21 +221,16 @@ async function executeDroid(params: string[]): Promise<CommandResult> {
   }
 
   try {
-    // This would call the MCP droid tool
-    // For now, return formatted result
-    let output = `# Droid Execution\n\n`;
-    output += `**Prompt:** "${prompt}"\n`;
-    output += `**Autonomy:** ${options.auto || 'low (default)'}\n`;
-    if (options.files) {
-      output += `**Files:** ${options.files.join(', ')}\n`;
-    }
-    output += `\n## Result\n\n`;
-    output += `Droid analysis completed successfully.\n`;
-    output += `\n*Note: This is a mock result. Integration with actual droid MCP tool pending.*\n`;
+    const output = await executeAIClient({
+      backend: BACKENDS.DROID,
+      prompt: prompt,
+      auto: options.auto as any,
+      attachments: options.files
+    });
 
     return {
       success: true,
-      output
+      output: `# Droid Execution\n\n${output}`
     };
   } catch (error) {
     const err = error as Error;

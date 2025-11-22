@@ -1,54 +1,48 @@
-import { CommandResult } from '../types';
+import { CommandResult } from './commands/types';
+import { initSessionWorkflow } from '../../src/workflows/init-session.workflow.js';
 
 export async function executeInitSession(params: string[]): Promise<CommandResult> {
   try {
     // Parse parameters
     const options = parseOptions(params);
 
-    // Execute the init-session workflow via MCP
+    // Execute the init-session workflow directly
     const workflowParams = {
-      workflow: 'init-session',
-      params: {
-        autonomyLevel: options.deep ? 'read-write' : 'read-only'
-      }
+      autonomyLevel: options.deep ? 'low' : 'read-only',
+      commitCount: options.deep ? 20 : 10
     };
 
-    // Call the smart-workflows MCP tool
-    // This would be handled by the MCP server in the actual implementation
-    const result = await executeWorkflow(workflowParams);
+    // Execute the workflow
+    // Note: We pass a simple progress callback that logs to console (or could be ignored)
+    const output = await initSessionWorkflow.execute(workflowParams, (msg) => {
+      // Optional: log progress if needed, or ignore
+      // console.log(msg);
+    });
 
-    let output = `# Sessione Inizializzata\n\n${result.output}`;
+    let finalOutput = `# Sessione Inizializzata\n\n${output}`;
 
     // Execute suggested memory queries if not disabled
-    if (!options.noMemory && result.memoryQueries) {
-      output += '\n\n## Ricerche Memoria Suggerite\n';
-      result.memoryQueries.forEach((query: string, index: number) => {
-        output += `${index + 1}. \`${query}\`\n`;
-      });
+    // Note: The workflow output already contains suggested queries in text format.
+    // If we want to automate execution, we would need to parse them or have the workflow return structured data.
+    // For now, we rely on the workflow's text output which includes the queries.
 
-      if (!options.noMemory) {
-        output += '\nEseguendo ricerche automatiche...\n';
-        for (const query of result.memoryQueries.slice(0, 2)) { // Limit to first 2
-          try {
-            const memoryResult = await searchMemory(query);
-            output += `\n### ${query}\n${memoryResult}\n`;
-          } catch (error) {
-            output += `\n### ${query}\nNessun risultato trovato.\n`;
-          }
-        }
-      }
+    if (!options.noMemory) {
+      // TODO: If openmemory has a CLI, we could execute searches here.
+      // For now, the workflow output suggests the commands to run.
+      finalOutput += '\n\n*Suggerimento: Esegui i comandi di ricerca memoria sopra indicati per recuperare il contesto.*';
     }
 
     return {
       success: true,
-      output
+      output: finalOutput
     };
 
   } catch (error) {
+    const err = error as Error;
     return {
       success: false,
       output: '',
-      error: `Errore durante l'inizializzazione della sessione: ${error.message}`
+      error: `Errore durante l'inizializzazione della sessione: ${err.message}`
     };
   }
 }
@@ -58,33 +52,4 @@ function parseOptions(params: string[]) {
     deep: params.includes('--deep'),
     noMemory: params.includes('--no-memory')
   };
-}
-
-async function executeWorkflow(params: any): Promise<any> {
-  // This would call the actual MCP smart-workflows tool
-  // For now, return mock data based on the existing workflow documentation
-  return {
-    output: `## Stato Repository
-Branch: feature/slash-commands
-File modificati: 5
-File staged: 2
-
-## Commit Recenti
-- abc123: feat: Add slash commands infrastructure
-- def456: docs: Update workflow documentation
-
-## Analisi AI
-Sessione di sviluppo attiva sui comandi slash. Buona progressione.`,
-    memoryQueries: [
-      'recent work on slash commands',
-      'slash commands implementation patterns',
-      'workflow integration examples'
-    ]
-  };
-}
-
-async function searchMemory(query: string): Promise<string> {
-  // This would call the openmemory MCP tool
-  // For now, return mock data
-  return `Risultati per: "${query}"\n- Entry 1: Implementazione comandi slash iniziata\n- Entry 2: Pattern di workflow documentati`;
 }

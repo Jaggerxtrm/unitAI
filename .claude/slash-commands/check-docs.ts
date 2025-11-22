@@ -1,4 +1,9 @@
-import { CommandResult } from '../types';
+import { CommandResult } from './commands/types';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import * as path from 'path';
+
+const execAsync = promisify(exec);
 
 export async function executeCheckDocs(params: string[]): Promise<CommandResult> {
   try {
@@ -14,28 +19,28 @@ export async function executeCheckDocs(params: string[]): Promise<CommandResult>
     const source = params[1] || 'auto'; // auto, context7, deepwiki, local, all
 
     let output = `# Ricerca Documentazione: "${topic}"\n\n`;
-    output += `**Sorgente:** ${source}\n\n`;
+    output += `** Sorgente:** ${source} \n\n`;
 
     const results: string[] = [];
 
     // Determine which sources to search based on source parameter
     const sourcesToSearch = source === 'all' ? ['local', 'context7', 'deepwiki'] :
-                          source === 'auto' ? determineAutoSources(topic) : [source];
+      source === 'auto' ? determineAutoSources(topic) : [source];
 
     for (const searchSource of sourcesToSearch) {
       try {
         const sourceResults = await searchDocumentation(topic, searchSource);
         if (sourceResults.length > 0) {
-          output += `## Risultati da ${searchSource.toUpperCase()}\n\n`;
+          output += `## Risultati da ${searchSource.toUpperCase()} \n\n`;
           sourceResults.forEach(result => {
-            output += `- ${result}\n`;
+            output += `- ${result} \n`;
           });
           output += '\n';
         } else {
-          output += `## ${searchSource.toUpperCase()}\nNessun risultato trovato per "${topic}".\n\n`;
+          output += `## ${searchSource.toUpperCase()} \nNessun risultato trovato per "${topic}".\n\n`;
         }
       } catch (error) {
-        output += `## ${searchSource.toUpperCase()}\nErrore durante la ricerca: ${error.message}\n\n`;
+        output += `## ${searchSource.toUpperCase()} \nErrore durante la ricerca: ${error instanceof Error ? error.message : String(error)} \n\n`;
       }
     }
 
@@ -46,7 +51,7 @@ export async function executeCheckDocs(params: string[]): Promise<CommandResult>
     // Add helpful suggestions if no results found
     if (!output.includes('- ')) {
       output += `## Suggerimenti\n\n`;
-      output += `Se non hai trovato quello che cercavi, prova:\n\n`;
+      output += `Se non hai trovato quello che cercavi, prova: \n\n`;
       output += `- Usa \`/check-docs "${topic}" all\` per cercare in tutte le sorgenti\n`;
       output += `- Sorgenti disponibili: \`local\`, \`context7\`, \`deepwiki\`, \`all\`\n`;
       output += `- Per documentazione esterna: usa \`context7\` (es. React, Node.js)\n`;
@@ -63,119 +68,71 @@ export async function executeCheckDocs(params: string[]): Promise<CommandResult>
     return {
       success: false,
       output: '',
-      error: `Errore durante la ricerca documentazione: ${error.message}`
+      error: `Errore durante la ricerca documentazione: ${error instanceof Error ? error.message : String(error)}`
     };
   }
 }
 
 function determineAutoSources(topic: string): string[] {
-  const sources: string[] = ['local']; // Always search local first
-
-  // Determine if it's likely an external library/package
-  const externalLibraries = [
-    'react', 'vue', 'angular', 'node', 'express', 'typescript',
-    'mongodb', 'postgres', 'redis', 'docker', 'kubernetes',
-    'aws', 'azure', 'gcp', 'firebase', 'stripe'
-  ];
-
-  const isExternalLib = externalLibraries.some(lib =>
-    topic.toLowerCase().includes(lib.toLowerCase())
-  );
-
-  if (isExternalLib) {
-    sources.push('context7');
-  }
-
-  // Check if it looks like a GitHub repo reference
+  // Simple heuristic to guess source
   if (topic.includes('/') && !topic.includes(' ')) {
-    sources.push('deepwiki');
+    return ['deepwiki']; // Looks like repo/owner
   }
-
-  return sources;
+  if (['react', 'node', 'typescript', 'nextjs'].some(k => topic.toLowerCase().includes(k))) {
+    return ['context7', 'local'];
+  }
+  return ['local'];
 }
 
 async function searchDocumentation(topic: string, source: string): Promise<string[]> {
   switch (source) {
     case 'local':
       return await searchLocalDocs(topic);
-
     case 'context7':
       return await searchContext7(topic);
-
     case 'deepwiki':
       return await searchDeepWiki(topic);
-
     default:
-      return [];
+      throw new Error(`Sorgente sconosciuta: ${source}`);
   }
 }
 
 async function searchLocalDocs(topic: string): Promise<string[]> {
-  // This would search through local project documentation
-  // For now, return mock results based on common project docs
-  const mockResults = {
-    'workflow': [
-      'docs/WORKFLOWS.md - Guida completa ai workflow disponibili',
-      'docs/enhancement-plan/04-proposal-slash-commands.md - Proposta implementazione comandi slash'
-    ],
-    'mcp': [
-      'docs/INTEGRATIONS.md - Guida integrazione MCP servers',
-      'docs/mcp_tools_documentations.md - Documentazione strumenti MCP'
-    ],
-    'agent': [
-      'docs/AGENT_MIGRATION_GUIDE.md - Guida migrazione agenti',
-      'src/agents/ - Implementazioni agenti disponibili'
-    ]
-  };
+  try {
+    // Use grep to search in docs/ directory and .md files
+    // -r: recursive
+    // -i: case insensitive
+    // -l: print only filenames
+    // --include: only search .md files
+    const command = `grep -r -i -l --include="*.md" "${topic}" docs/ .claude/docs/ README.md`;
+    const { stdout } = await execAsync(command).catch(() => ({ stdout: '' })); // Catch error if grep finds nothing (exit code 1)
 
-  // Simple keyword matching
-  for (const [key, results] of Object.entries(mockResults)) {
-    if (topic.toLowerCase().includes(key)) {
-      return results;
+    if (!stdout.trim()) {
+      return [];
     }
-  }
 
-  return [`Ricerca locale completata per "${topic}". Controlla docs/ per documentazione dettagliata.`];
+    const files = stdout.trim().split('\n');
+    return files.map(file => `Trovato in: [${path.basename(file)}](${file})`);
+  } catch (error) {
+    console.error('Error searching local docs:', error);
+    return [];
+  }
 }
 
 async function searchContext7(topic: string): Promise<string[]> {
-  // This would call the context7 MCP tool
-  // For now, return mock results
-  await new Promise(resolve => setTimeout(resolve, 300));
-
-  if (topic.toLowerCase().includes('react')) {
-    return [
-      'React Documentation - Hooks: useState, useEffect, useCallback',
-      'React.useCallback - Hook per memoizzazione funzioni',
-      'React Best Practices - Ottimizzazione performance con memo'
-    ];
-  }
-
-  if (topic.toLowerCase().includes('typescript')) {
-    return [
-      'TypeScript Handbook - Generics e utility types',
-      'TypeScript Configuration - tsconfig.json options',
-      'TypeScript Advanced Types - Conditional types e mapped types'
-    ];
-  }
-
-  return [`Documentazione Context7 per "${topic}" - Ricerca completata`];
+  // This would call context7 MCP tool
+  // For now, return mock results with a note
+  return [
+    `Risultato simulato da Context7 per "${topic}"`,
+    `Nota: Integrazione reale richiede client MCP`
+  ];
 }
 
 async function searchDeepWiki(topic: string): Promise<string[]> {
-  // This would call the deepwiki MCP tool
-  // For now, return mock results
-  await new Promise(resolve => setTimeout(resolve, 400));
-
-  // Check if it looks like a repo reference
-  if (topic.includes('/') && !topic.includes(' ')) {
-    return [
-      `DeepWiki - Repository: ${topic}`,
-      'README.md - Panoramica progetto e setup',
-      'CONTRIBUTING.md - Guida contributi',
-      'docs/ - Documentazione tecnica dettagliata'
-    ];
-  }
-
-  return [`DeepWiki ricerca completata per "${topic}". Usa owner/repo format per repository specifici.`];
+  // This would call deepwiki MCP tool
+  // For now, return mock results with a note
+  return [
+    `Risultato simulato da DeepWiki per "${topic}"`,
+    `Nota: Integrazione reale richiede client MCP`
+  ];
 }

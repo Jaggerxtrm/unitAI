@@ -1,11 +1,12 @@
 import { SlashCommand, CommandResult } from './types';
-import { executeInitSession } from './commands/init-session';
-import { executeSaveCommit } from './commands/save-commit';
-import { executeAiTask } from './commands/ai-task';
-import { executeCreateSpec } from './commands/create-spec';
-import { executeCheckDocs } from './commands/check-docs';
-import { executeOpenspec } from './commands/openspec';
-import { executeHelp } from './commands/help';
+import { executeInitSession } from '../init-session';
+import { executeSaveCommit } from '../save-commit';
+import { executeAiTask } from '../ai-task';
+import { executeCreateSpec } from '../create-spec';
+import { executeCheckDocs } from '../check-docs';
+import { executeOpenspec } from '../openspec';
+import { executePrompt } from '../prompt';
+import { executeHelp } from './help';
 
 const commandHandlers: Record<string, (params: string[]) => Promise<CommandResult>> = {
   'init-session': executeInitSession,
@@ -14,6 +15,7 @@ const commandHandlers: Record<string, (params: string[]) => Promise<CommandResul
   'create-spec': executeCreateSpec,
   'check-docs': executeCheckDocs,
   'openspec': executeOpenspec,
+  'prompt': executePrompt,
   'help': executeHelp
 };
 

@@ -1,4 +1,11 @@
-import { CommandResult } from '../types';
+import { CommandResult } from './commands/types';
+import { preCommitValidateWorkflow } from '../../src/workflows/pre-commit-validate.workflow.js';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
+const execAsync = promisify(exec);
 
 export async function executeSaveCommit(params: string[]): Promise<CommandResult> {
   try {
@@ -29,59 +36,66 @@ export async function executeSaveCommit(params: string[]): Promise<CommandResult
       output += '## Validazione Stabilità Codice\n';
       try {
         const validationResult = await validateCodeStability();
-        if (!validationResult.passed) {
+
+        // Check if validation failed (based on output string analysis as the workflow returns string)
+        // The workflow output contains "Verdict: 🔴 FAIL" or "Verdict: ⚠️ WARNINGS" or "Verdict: ✅ PASS"
+        const failed = validationResult.includes('Verdict: 🔴 FAIL');
+        const warned = validationResult.includes('Verdict: ⚠️ WARNINGS');
+
+        output += validationResult + '\n\n';
+
+        if (failed) {
           return {
             success: false,
             output,
-            error: `Codice non stabile. Problemi trovati:\n${validationResult.issues.join('\n')}\n\nUsa --force per forzare il commit.`
+            error: `Codice non stabile. Validazione fallita. Usa --force per forzare il commit.`
           };
         }
-        output += '✅ Codice stabile - tutti i controlli passati\n\n';
+
+        output += '✅ Codice validato (o con warning accettabili)\n\n';
       } catch (error) {
         return {
           success: false,
           output,
-          error: `Errore durante la validazione: ${error.message}`
+          error: `Errore durante la validazione: ${error instanceof Error ? error.message : String(error)}`
         };
       }
+    } else {
+      output += '⚠️ Validazione saltata (--force)\n\n';
     }
 
     // Step 2: Save to memory (local and cloud)
     output += '## Salvataggio Memoria\n';
     try {
-      const memoryContent = `Commit: ${commitMessage}\nTimestamp: ${new Date().toISOString()}\nChanges: ${await getGitChanges()}`;
+      const memoryContent = `Commit: ${commitMessage}\nTimestamp: ${new Date().toISOString()}\nTag: ${options.tag || 'none'}`;
+
+      // Fallback to local file append since we don't have easy access to openmemory MCP client here
+      await saveToMemoryLocalFallback(memoryContent);
+      output += '✅ Salvato in memoria locale (.claude/memory.md)\n';
 
       if (!options.noCloud) {
-        await saveToMemoryCloud(memoryContent, options.tag);
-        output += '✅ Salvato in openmemory-cloud\n';
+        output += '⚠️ Salvataggio cloud non disponibile in questa modalità (richiede MCP client)\n';
       }
 
-      await saveToMemoryLocal(memoryContent, options.tag);
-      output += '✅ Salvato in openmemory locale\n\n';
-
     } catch (error) {
-      return {
-        success: false,
-        output,
-        error: `Errore durante il salvataggio memoria: ${error.message}`
-      };
+      output += `⚠️ Errore salvataggio memoria: ${error instanceof Error ? error.message : String(error)}\n`;
     }
 
     // Step 3: Create git commit
-    output += '## Creazione Commit\n';
+    output += '\n## Creazione Commit\n';
     try {
       const commitResult = await createGitCommit(commitMessage);
       output += `✅ Commit creato: ${commitResult.hash}\n\n`;
       output += '## Riepilogo\n';
       output += '- Codice validato e stabile\n';
-      output += '- Memoria salvata con successo\n';
+      output += '- Memoria salvata\n';
       output += `- Commit: ${commitResult.hash}\n`;
 
     } catch (error) {
       return {
         success: false,
         output,
-        error: `Errore durante la creazione del commit: ${error.message}`
+        error: `Errore durante la creazione del commit: ${error instanceof Error ? error.message : String(error)}`
       };
     }
 
@@ -94,7 +108,7 @@ export async function executeSaveCommit(params: string[]): Promise<CommandResult
     return {
       success: false,
       output: '',
-      error: `Errore durante il salvataggio commit: ${error.message}`
+      error: `Errore durante il salvataggio commit: ${error instanceof Error ? error.message : String(error)}`
     };
   }
 }
@@ -122,37 +136,34 @@ function extractTag(params: string[]): string | undefined {
   return undefined;
 }
 
-async function validateCodeStability(): Promise<{ passed: boolean; issues: string[] }> {
-  // This would run pre-commit-validate workflow with thorough depth
-  // For now, return mock result
-  return {
-    passed: true,
-    issues: []
-  };
+async function validateCodeStability(): Promise<string> {
+  // Run pre-commit-validate workflow with thorough depth
+  return await preCommitValidateWorkflow.execute({
+    depth: 'thorough',
+    autonomyLevel: 'MEDIUM'
+  });
 }
 
-async function saveToMemoryCloud(content: string, tag?: string): Promise<void> {
-  // This would call openmemory-cloud MCP tool
-  // For now, mock implementation
-  await new Promise(resolve => setTimeout(resolve, 100));
-}
+async function saveToMemoryLocalFallback(content: string): Promise<void> {
+  const memoryPath = path.join(process.cwd(), '.claude', 'memory.md');
+  const entry = `\n\n## Memory Entry [${new Date().toISOString()}]\n${content}\n`;
 
-async function saveToMemoryLocal(content: string, tag?: string): Promise<void> {
-  // This would call openmemory MCP tool
-  // For now, mock implementation
-  await new Promise(resolve => setTimeout(resolve, 50));
-}
-
-async function getGitChanges(): Promise<string> {
-  // This would call git commands to get staged changes
-  // For now, return mock data
-  return 'Modified: .claude/slash-commands/\nAdded: 5 new files';
+  try {
+    await fs.appendFile(memoryPath, entry);
+  } catch (err) {
+    // If file doesn't exist, create it
+    await fs.writeFile(memoryPath, '# Project Memory\n' + entry);
+  }
 }
 
 async function createGitCommit(message: string): Promise<{ hash: string }> {
-  // This would execute git commit
-  // For now, return mock hash
+  // Execute git commit
+  // We assume files are already staged (as per pre-commit-validate workflow assumption)
+  await execAsync(`git commit -m "${message}"`);
+
+  // Get the hash
+  const { stdout } = await execAsync('git rev-parse HEAD');
   return {
-    hash: 'abc123def456'
+    hash: stdout.trim()
   };
 }
