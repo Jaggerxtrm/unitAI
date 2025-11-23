@@ -110,12 +110,34 @@ Lightweight classifier for automatic routing:
 - Contains "I prefer", "always do X" → OpenMemory Cloud
 - Temporal/session context → OpenMemory Local
 
+## Related Pattern: Optional Backend Delegation
+
+A similar orchestration pattern was implemented in slash commands like `/check-docs`:
+
+```
+/check-docs <topic> [--source auto|local|context7|deepwiki] [--backend gemini|cursor|droid]
+```
+
+**Design Principle:** Claude executes by default, but can delegate to AI backends when:
+- Large context analysis needed (Gemini)
+- Code-focused review required (Cursor)
+- Implementation guidance needed (Droid)
+
+This pattern applies broadly:
+- **Without `--backend`**: Claude handles directly (fast, lightweight)
+- **With `--backend`**: Delegate to specialized AI (deep analysis)
+
+The same principle could apply to memory operations:
+- Quick lookups → Claude queries directly
+- Deep analysis of memory patterns → Delegate to backend
+
 ## Open Questions
 
 1. **Consolidation triggers** - Time-based? Memory count threshold? Manual only?
 2. **Archive strategy** - What happens to OpenMemory items after consolidation?
 3. **Conflict resolution** - How to handle contradictions between systems?
 4. **Cross-project knowledge** - Should some Serena docs be shareable?
+5. **Backend delegation for memories** - Should `/consolidate-memories` support `--backend` for AI-assisted grouping?
 
 ## Related Documents
 
