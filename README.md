@@ -336,7 +336,6 @@ Each workflow is now exposed as an individual, directly-callable tool:
 | `workflow_feature_design` | Multi-agent feature planning | New features |
 | `workflow_auto_remediation` | Autonomous fix generation | Quick fixes |
 | `workflow_refactor_sprint` | Coordinated refactoring | Large refactors |
-| `workflow_openspec_driven_development` | Spec-first implementation | Structured development |
 
 > **Note:** The legacy `smart-workflows` router is still available for backward compatibility but will be deprecated in a future release.
 
@@ -570,15 +569,6 @@ These are used internally for resilience and fallback when primary backends fail
 |---------|--------------|---------|
 | **Qwen Code** | `pip install qwen-code-cli` | Fallback for analysis tasks |
 | **Rovo Dev** | `npm install -g @atlassian/acli` | Fallback for code generation |
-
-### Optional: OpenSpec Integration
-
-For spec-driven development workflows:
-
-```bash
-npm install -g @fission-ai/openspec
-openspec --version
-```
 
 > **Note:** The system automatically detects available CLIs at startup and adapts its capabilities accordingly. You can check availability with the `workflow_init_session` tool.
 

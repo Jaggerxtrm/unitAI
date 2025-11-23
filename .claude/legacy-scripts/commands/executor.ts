@@ -4,7 +4,6 @@ import { executeSaveCommit } from '../save-commit';
 import { executeAiTask } from '../ai-task';
 import { executeCreateSpec } from '../create-spec';
 import { executeCheckDocs } from '../check-docs';
-import { executeOpenspec } from '../openspec';
 import { executePrompt } from '../prompt';
 import { executeHelp } from './help';
 
@@ -14,7 +13,6 @@ const commandHandlers: Record<string, (params: string[]) => Promise<CommandResul
   'ai-task': executeAiTask,
   'create-spec': executeCreateSpec,
   'check-docs': executeCheckDocs,
-  'openspec': executeOpenspec,
   'prompt': executePrompt,
   'help': executeHelp
 };

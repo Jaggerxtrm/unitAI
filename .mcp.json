@@ -22,11 +22,11 @@
         "CONTEXT7_API_KEY": "ctx7sk-704e66d0-ed71-443a-8650-c1501cb4054d"
       }
     },
-    "unified-ai-mcp": {
+    "unitAI": {
       "type": "stdio",
       "command": "node",
       "args": [
-        "/home/dawid/Projects/unitai/dist/src/index.js"
+        "/home/dawid/Projects/unitAI/dist/src/index.js"
       ],
       "env": {}
     },

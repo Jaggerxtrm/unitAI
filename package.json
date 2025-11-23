@@ -28,14 +28,12 @@
     "cursor",
     "droid",
     "smart-workflows",
-    "openspec",
     "circuit-breaker",
     "multi-model-ai"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@fission-ai/openspec": "^0.15.0",
     "@modelcontextprotocol/sdk": "^1.21.0",
     "better-sqlite3": "^11.8.1",
     "zod": "^3.25.76",

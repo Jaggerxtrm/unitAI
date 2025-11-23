@@ -7,14 +7,6 @@ import { smartWorkflowsTool } from "./smart-workflows.tool.js";
 import { cursorAgentTool } from "./ask-cursor.tool.js";
 import { droidTool } from "./droid.tool.js";
 import {
-  openspecInitTool,
-  openspecProposalTool,
-  openspecApplyTool,
-  openspecArchiveTool,
-  openspecListTool,
-  openspecShowTool,
-} from "./openspec/index.js";
-import {
   listWorkflowsTool,
   describeWorkflowTool,
   getSystemInstructionsTool
@@ -26,7 +18,6 @@ import {
   workflowTriangulatedReviewTool,
   workflowInitSessionTool,
   workflowFeatureDesignTool,
-  workflowOpenspecDrivenDevelopmentTool,
   workflowBugHuntTool,
   workflowAutoRemediationTool,
   workflowRefactorSprintTool
@@ -53,20 +44,12 @@ registerTool(workflowTriangulatedReviewTool);
 // Register Workflow tools (Phase 2 Batch 2)
 registerTool(workflowInitSessionTool);
 registerTool(workflowFeatureDesignTool);
-registerTool(workflowOpenspecDrivenDevelopmentTool);
 
 // Register Workflow tools (Phase 2 Batch 3)
 registerTool(workflowBugHuntTool);
 registerTool(workflowAutoRemediationTool);
 registerTool(workflowRefactorSprintTool);
 
-// Register OpenSpec tools
-registerTool(openspecInitTool);
-registerTool(openspecProposalTool);
-registerTool(openspecApplyTool);
-registerTool(openspecArchiveTool);
-registerTool(openspecListTool);
-registerTool(openspecShowTool);
 
 // Initialize workflow registry (registers all 6 workflows)
 initializeWorkflowRegistry();
@@ -93,18 +76,8 @@ export {
   workflowTriangulatedReviewTool,
   workflowInitSessionTool,
   workflowFeatureDesignTool,
-  workflowOpenspecDrivenDevelopmentTool,
   workflowBugHuntTool,
   workflowAutoRemediationTool,
   workflowRefactorSprintTool
 } from "./workflows/index.js";
 
-// Export OpenSpec tools
-export {
-  openspecInitTool,
-  openspecProposalTool,
-  openspecApplyTool,
-  openspecArchiveTool,
-  openspecListTool,
-  openspecShowTool,
-} from "./openspec/index.js";

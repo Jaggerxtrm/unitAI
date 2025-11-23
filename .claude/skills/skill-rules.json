@@ -62,52 +62,6 @@
                 ]
             }
         },
-        "openspec-workflow": {
-            "type": "domain",
-            "enforcement": "suggest",
-            "priority": "medium",
-            "description": "Reminds to use OpenSpec for spec-driven development before implementing new features. Create specs first with `/openspec add` or `mcp__openspec-init`, then track implementation alignment with `/openspec track`.",
-            "behaviorFlags": {
-                "showEveryTime": false,
-                "minimumConfidence": 0.70,
-                "canBeDismissed": true,
-                "dismissDurationMinutes": 90
-            },
-            "promptTriggers": {
-                "keywords": [
-                    "implement",
-                    "feature",
-                    "new",
-                    "add functionality",
-                    "build",
-                    "create",
-                    "develop",
-                    "spec",
-                    "specification",
-                    "design document"
-                ],
-                "intentPatterns": [
-                    "(implement|create|add|build).*?(feature|functionality|component)",
-                    "(new|fresh).*?(feature|implementation|module)",
-                    "(spec|specification|design).*?(first|before|doc)"
-                ]
-            },
-            "fileTriggers": {
-                "pathPatterns": [
-                    "**/src/**",
-                    "**/features/**",
-                    "**/components/**"
-                ]
-            },
-            "relatedTools": [
-                "openspec-init",
-                "openspec-add",
-                "openspec-track"
-            ],
-            "relatedSkills": [
-                "feature-design"
-            ]
-        },
         "claude-context-usage": {
             "type": "domain",
             "enforcement": "suggest",

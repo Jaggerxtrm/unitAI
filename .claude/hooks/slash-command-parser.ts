@@ -9,7 +9,6 @@
  *
  * Native slash commands are defined in:
  * - .claude/commands/*.md (main commands)
- * - .claude/commands/openspec/*.md (namespaced commands)
  *
  * This hook is kept for backward compatibility but should not be used for new commands.
  */

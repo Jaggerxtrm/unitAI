@@ -1,18 +1,13 @@
-<!-- OPENSPEC:START -->
-# OpenSpec Instructions
+# unitAI Agents Guidelines
 
-These instructions are for AI assistants working in this project.
+This document provides guidelines for AI agents working in the unitAI project.
 
-Always open `@/openspec/AGENTS.md` when the request:
-- Mentions planning or proposals (words like proposal, spec, change, plan)
-- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
-- Sounds ambiguous and you need the authoritative spec before coding
+## Project Overview
 
-Use `@/openspec/AGENTS.md` to learn:
-- How to create and apply change proposals
-- Spec format and conventions
-- Project structure and guidelines
+unitAI is a Unified Model Context Protocol (MCP) server that orchestrates multiple AI backends (Gemini, Cursor, Droid) with intelligent workflows.
 
-Keep this managed block so 'openspec update' can refresh the instructions.
+## Development Guidelines
 
-<!-- OPENSPEC:END -->
+- Follow TypeScript best practices
+- Use the existing code patterns and conventions
+- Ensure all changes are tested before committing

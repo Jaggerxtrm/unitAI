@@ -18,7 +18,6 @@ import { bugHuntWorkflow } from "./bug-hunt.workflow.js";
 import { triangulatedReviewWorkflow } from "./triangulated-review.workflow.js";
 import { autoRemediationWorkflow } from "./auto-remediation.workflow.js";
 import { refactorSprintWorkflow } from "./refactor-sprint.workflow.js";
-import { openspecDrivenDevelopmentWorkflow } from "./openspec-driven-development.workflow.js";
 
 /**
  * Registro di tutti i workflow disponibili
@@ -100,8 +99,7 @@ export const smartWorkflowsSchema = z.object({
     "bug-hunt",
     "triangulated-review",
     "auto-remediation",
-    "refactor-sprint",
-    "openspec-driven-development"
+    "refactor-sprint"
   ]).describe("Workflow da eseguire"),
   params: z.record(z.any()).optional().describe("Parametri specifici del workflow")
 });
@@ -178,16 +176,6 @@ export const workflowSchemas = {
     scope: z.string().describe("Descrizione dello scope"),
     depth: z.enum(["light", "balanced", "deep"]).optional().default("balanced"),
     autonomyLevel: z.enum(["read-only", "low", "medium", "high"]).optional()
-  }),
-  "openspec-driven-development": z.object({
-    featureDescription: z.string().describe("Descrizione della feature da implementare"),
-    projectInitialized: z.boolean().optional().default(false).describe("Se OpenSpec è già inizializzato"),
-    aiTools: z.array(z.string()).optional().describe("AI tools da configurare"),
-    changeType: z.enum(["feature", "bugfix", "improvement", "refactor"]).optional().default("feature"),
-    targetFiles: z.array(z.string()).optional().describe("File coinvolti nell'implementazione"),
-    implementationApproach: z.enum(["incremental", "full-rewrite", "minimal"]).optional().default("incremental"),
-    autonomyLevel: z.enum(["read-only", "low", "medium", "high"]).optional().default("low"),
-    validationBackends: z.array(z.enum(["ask-gemini", "cursor-agent", "droid"])).optional().describe("Backend per validazione AI")
   })
 };
 
@@ -210,7 +198,6 @@ export function initializeWorkflowRegistry(): void {
   registerWorkflow("triangulated-review", triangulatedReviewWorkflow);
   registerWorkflow("auto-remediation", autoRemediationWorkflow);
   registerWorkflow("refactor-sprint", refactorSprintWorkflow);
-  registerWorkflow("openspec-driven-development", openspecDrivenDevelopmentWorkflow);
 
   // Removed console.log - corrupts MCP JSON protocol
   // Use logger.debug() if logging needed
