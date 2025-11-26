@@ -26,7 +26,7 @@
       "type": "stdio",
       "command": "node",
       "args": [
-        "/home/dawid/Projects/unitAI/dist/src/index.js"
+        "/home/jagger/projects/unitAI/dist/index.js"
       ],
       "env": {}
     },
