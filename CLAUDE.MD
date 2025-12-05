@@ -39,7 +39,7 @@ mcp__unitAI__smart-workflows({
 
 ## 3) MCP TOOLS & WORKFLOWS
 
-**CLAUDE-CONTEXT** (Repo: /home/dawid/Projects/unitai)
+**CLAUDE-CONTEXT** (Repo: /home/jagger/projects/unitAI)
 - Index: mcp__claude-context__index_codebase --path <repo>
 - Search: mcp__claude-context__search_code "semantic query" --path <repo>
 - Use BEFORE: features, bugs, refactors (finds ALL related code, 0 file reads)
@@ -134,7 +134,7 @@ Task({ subagent_type: "AGENT_NAME", prompt: "task description" })
 - ALWAYS: Serena find_referencing_symbols before editing (75-80% token savings)
 
 ## 5) MISSING/MOVED FILE RECOVERY
-- mcp__claude-context__search_code "where is <X> now?" --path /home/dawid/Projects/unitai
+- mcp__claude-context__search_code "where is <X> now?" --path /home/jagger/projects/unitAI
 - Serena: mcp__serena__find_file "<name>" (if symbol-based)
 - Glob: **/<name.ext>, **/<partial>*.ts
 - Grep: rg -n "<signature>" --glob '!**/node_modules/**'

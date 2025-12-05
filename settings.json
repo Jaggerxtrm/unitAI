@@ -3,19 +3,6 @@
     "unitAI": {
       "command": "unitai",
       "env": {}
-    },
-    "openmemory": {
-      "command": "node",
-      "args": [
-        "/home/dawid/Projects/unitai/OpenMemory/backend/src/ai/mcp.ts"
-      ],
-      "env": {
-        "NODE_ENV": "production",
-        "OM_PORT": "8080",
-        "OM_MODE": "langgraph",
-        "OM_EMBEDDINGS": "openai",
-        "OPENAI_API_KEY": "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"
-      }
     }
   }
 }

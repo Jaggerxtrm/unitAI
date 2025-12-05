@@ -4,7 +4,7 @@ package-lock.json
 yarn.lock
 
 # Build artifacts
-/dist/
+
 
 # Database files (sqlite)
 data/*.sqlite
