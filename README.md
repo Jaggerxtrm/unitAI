@@ -37,6 +37,30 @@ UnitAI is built for reliability. It implements a **Circuit Breaker** pattern com
 
 If a primary backend (e.g., Gemini) becomes unresponsive or fails during a workflow, the system does not simply error out. Instead, it instantly triggers a fallback mechanism, retrying the operation with the next most capable available backend (e.g., Qwen or Cursor) based on the task type. This ensures that your coding sessions remain uninterrupted even when external API conditions are unstable.
 
+System Architecture
+
+### Autonomy Levels & Permissions
+UnitAI enforces a strict 4-tier permission system (`permissionManager.ts`) to ensure agent safety and control:
+
+- **READ_ONLY**: Safe analysis operations only (Git status, file reads). *Default level.*
+- **LOW**: Allows file modifications within the project directory.
+- **MEDIUM**: Permits local Git operations (commit, branch) and dependency management.
+- **HIGH**: Full autonomy, including external API calls and `git push`.
+
+### Agent Specialization
+The system is built on specialized agent roles rather than generic LLM calls:
+- **ArchitectAgent (Gemini)**: Operates in specific focus modes (`design`, `security`, `performance`, `refactoring`) to provide high-level system guidance without implementation bias.
+- **ImplementerAgent (Droid)**: Focuses purely on code generation using defined approaches (`incremental`, `full-rewrite`, `minimal`) to ensure production-ready output.
+
+### Robust Tool Registry
+All tools are defined via a `UnifiedTool` interface with strict **Zod schema validation**. This ensures that every tool invocation—whether from a human or an agent—is type-safe and validated before execution, preventing runtime errors and malformed requests.
+
+### Activity Analytics
+A built-in analytics engine (`ActivityAnalytics`) tracks:
+- **Token Savings**: Estimated cost reduction vs. manual coding.
+- **Tool Usage**: Success rates and frequency of tool invocations.
+- **Audit Trail**: A permanent SQLite-backed record of all autonomous actions for compliance and review.
+
 ## Core Workflows
 
 UnitAI replaces static tool calls with "Smart Workflows"—multi-step, agentic processes that mimic human engineering practices.
@@ -79,11 +103,19 @@ claude mcp add --transport stdio unitAI -- npx -y @jaggerxtrm/unitai
 claude mcp add --transport stdio unitAI -- cmd /c "npx -y @jaggerxtrm/unitai"
 ```
 
+> [!TIP]
+> **Windows Users: Use WSL2**
+> For the best experience with AI agentic tools, we strongly recommend running UnitAI within **WSL2** (Windows Subsystem for Linux).
+> - **Performance**: Significantly faster filesystem operations for large codebases.
+> - **Compatibility**: Native support for standard Unix tools and MCP protocols without shell quirks.
+> - **Reliability**: Avoids common Windows-specific pathing and permission issues.
+
 **Option 2: Using Global Install**
 First install globally, then add:
 ```bash
 npm install -g @jaggerxtrm/unitai
-claude mcp add --transport stdio unitAI -- unitai
+claude mcp add --transport stdio unitAI -- unitai 
+*might not work on windows*
 ```
 
 ### Quick Start (npx)
