@@ -8,7 +8,7 @@
 
 UnitAI is a unified **Model Context Protocol** server designed to orchestrate a multi-agent AI environment. It abstracts the complexity of managing distinct AI connections behind a single interface, allowing for seamless switching, fallback, and parallel execution across five powerful AI backends.
 
-Unlike traditional tools that rely on static documentation or rigid rule-based systems, UnitAI promotes **iterative agentic coding**. By leveraging intelligent session initialization and context-aware workflows, it transforms the development lifecycle into a collaborative process between the human developer and a specialized team of AI agents.
+Unlike traditional tools that rely on static documentation or rigid rule-based systems, UnitAI promotes **iterative agentic coding**. By leveraging intelligent session initialization and context-aware workflows, it transforms the development lifecycle into a collaborative process between the human developer and a specialized team of AI agents. Think of it as automatically using sub-agents, offloading token usage for repetitive tasks, reading long files or folders... while Claude is still the BOSS.
 
 ## System Architecture
 
@@ -110,6 +110,17 @@ claude mcp add --transport stdio unitAI -- cmd /c "npx -y @jaggerxtrm/unitai"
 > - **Compatibility**: Native support for standard Unix tools and MCP protocols without shell quirks.
 > - **Reliability**: Avoids common Windows-specific pathing and permission issues.
 
+## 🧪 Beta Testing & Feedback
+
+We are currently in **Public Beta**. If you encounter issues or have ideas for improvements, we'd love to hear from you!
+
+👉 **[Read our Beta Testing Guide](beta-testing.md)** to learn how to:
+- Report bugs simply and effectively.
+- Propose new features or workflows.
+- Use GitHub Issues like a pro (even if you're not a developer).
+
+Your feedback is crucial for stabilizing the system before v1.0.
+
 **Option 2: Using Global Install**
 First install globally, then add:
 ```bash
@@ -139,14 +150,57 @@ npm install -g @jaggerxtrm/unitai
 
 ## Usage
 
-Once installed, UnitAI exposes its capabilities to your MCP client (like Claude Desktop or plain terminals). You can invoke workflows directly using natural language or structured commands.
 
-**Example: Starting a new session**
-> "Initialize the session and check what we worked on yesterday."
+## Custom Slash Commands 💻
+
+UnitAI includes a set of custom interactive commands (`.claude/commands`) that you can add to your project. Simply copy the `.claude/commands` folder to the root of your project to enable them.
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `/ai-task` | Execute standard workflows or specific agents | `/ai-task run parallel-review` |
+| `/init-session` | Initialize a dev session (git analysis + memory) | `/init-session` |
+| `/check-docs` | Verify functionality against documentation | `/check-docs` |
+| `/create-spec` | Generate technical specifications | `/create-spec "New login flow"` |
+| `/save-commit` | Generate commit message and save | `/save-commit` |
+| `/prompt` | Load specific prompt templates | `/prompt refactor` |
+
+**How to Install:**
+Copy the provided `.claude/commands` folder into your project root:
+```bash
+cp -r .claude/commands /path/to/your/project/
+```
+These commands will then appear in the slash menu (`/`) of your Claude CLI.
 > *(Triggers `init-session` workflow)*
 
 **Example: Deep Code Review**
-> "Run a triangulated review on `src/utils/aiExecutor.ts` to check for concurrency issues."
+> `/ai-task run parallel-review`
+
+## Advanced Automation: Hooks & Skills 
+
+UnitAI leverages the experimental **Claude Hooks & Skills** system to create a truly agentic experience.
+*ATTENTION: This is still experimental and subject to change. Also i noticed the hooks are not working properly yet, there are some hooks that are "blocking" and others that work kind of a suggestion. In the first case before CC answers or uses a tool, it will first trigger the hook - which can be wrong. In the other case, eg. we have instructed it to use Serena but it still uses glob or read a long file directly, after it used the said tool the hook will act as a reminder to use Serena. Again, it requires more testing and fixing.*
+
+### Hooks (`.claude/hooks`)
+Automated scripts triggered by specific events (like user messages) to provide context or enforce rules *before* the AI responds.
+
+| Hook | Function |
+|------|----------|
+| `smart-tool-enforcer` | Detects inefficient tool usage (e.g., reading a generic file) and suggests better alternatives (e.g., Serena) to save tokens. |
+| `workflow-pattern-detector` | Suggests running a Smart Workflow when your request matches a known pattern (e.g., "fix bug" -> `bug-hunt`). |
+| `memory-search-reminder` | Reminds the AI to check long-term memory for relevant context before answering. |
+
+### Skills (`.claude/skills`)
+Reusable, pre-packaged tool definitions that give the AI specialized capabilities without manual tool calls.
+
+| Skill | Capability |
+|-------|------------|
+| `unified-ai-orchestration` | The brain behind routing tasks to the right AI backend. |
+| `serena-surgical-editing` | Specialized logic for precise code modifications. |
+| `code-validation` | Encapsulates the logic for linting, security checks, and test execution. |
+
+**How they work:**
+These scripts are located in your `.claude` folder. When you use the Claude CLI, it automatically loads them to enhance the AI's behavior, making it "smarter" and more context-aware without you having to prompt it explicitly.
+ on `src/utils/aiExecutor.ts` to check for concurrency issues."
 > *(Triggers `triangulated-review` workflow)*
 
 ## Development

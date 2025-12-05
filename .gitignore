@@ -24,7 +24,6 @@ logs/
 gemini-error.json
 
 .serena/
-.claude/
 .cursor/
 .factory/
 venv/
