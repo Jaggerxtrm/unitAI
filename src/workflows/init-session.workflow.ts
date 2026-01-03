@@ -1,4 +1,6 @@
 import { z } from "zod";
+import * as fs from "fs";
+import * as path from "path";
 import { getGitRepoInfo, getGitDiff, getDetailedGitStatus, getGitBranches, checkCLIAvailability, isGitRepository, getRecentCommitsWithDiffs, getDateRangeFromCommits } from "../utils/gitHelper.js";
 import { formatWorkflowOutput } from "./utils.js";
 import { executeAIClient } from "../utils/aiExecutor.js";
@@ -21,41 +23,110 @@ const initSessionSchema = z.object({
 });
 
 /**
- * Genera query semantiche per la ricerca nelle memorie basate sull'analisi AI
+ * Estrae keywords significative dai messaggi di commit
  */
-function generateMemorySearchQueries(aiAnalysis: string): string[] {
-  const queries: string[] = [];
+function extractKeywordsFromCommits(commits: GitCommitInfo[]): string[] {
+  const keywords = new Set<string>();
+  const stopWords = ['add', 'fix', 'update', 'refactor', 'improve', 'remove', 'delete', 'change', 'modify', 'create', 'implement', 'the', 'and', 'or', 'for', 'with', 'from', 'to', 'in', 'on', 'at'];
 
-  // Estrai concetti chiave dall'analisi
-  // Cerca pattern comuni nell'analisi
+  commits.forEach(commit => {
+    // Estrai parole dal messaggio di commit
+    const words = commit.message
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, ' ')
+      .split(/\s+/)
+      .filter(word => word.length > 3 && !stopWords.includes(word));
 
-  // Query 1: Feature/workflow changes
-  if (aiAnalysis.toLowerCase().includes('workflow') || aiAnalysis.toLowerCase().includes('feature')) {
-    queries.push('workflows implementation features architecture');
+    words.forEach(word => keywords.add(word));
+
+    // Estrai anche dai nomi dei file modificati
+    commit.files.forEach(file => {
+      const baseName = path.basename(file, path.extname(file));
+      const fileWords = baseName
+        .split(/[-_.]/)
+        .filter(word => word.length > 3 && !stopWords.includes(word.toLowerCase()));
+
+      fileWords.forEach(word => keywords.add(word.toLowerCase()));
+    });
+  });
+
+  return Array.from(keywords);
+}
+
+/**
+ * Estrae il titolo da un file markdown (prima riga non vuota o primo heading)
+ */
+function extractTitleFromContent(content: string): string {
+  const lines = content.split('\n');
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // Se è un heading markdown, rimuovi il marcatore
+    if (trimmed.startsWith('#')) {
+      return trimmed.replace(/^#+\s*/, '').substring(0, 80);
+    }
+
+    // Altrimenti usa la prima riga non vuota
+    return trimmed.substring(0, 80);
   }
 
-  // Query 2: Bug fixes e miglioramenti
-  if (aiAnalysis.toLowerCase().includes('bug') || aiAnalysis.toLowerCase().includes('fix')) {
-    queries.push('bug fixes improvements optimization');
+  return 'No title found';
+}
+
+/**
+ * Cerca nelle Serena memories basandosi sui commit recenti
+ */
+function searchSerenaMemories(commits: GitCommitInfo[]): string[] {
+  const results: string[] = [];
+
+  // 1. Verifica se esiste .serena/memories
+  const serenaMemoriesPath = path.join(process.cwd(), '.serena', 'memories');
+  if (!fs.existsSync(serenaMemoriesPath)) {
+    return results;
   }
 
-  // Query 3: AI/backend integration
-  if (aiAnalysis.toLowerCase().includes('gemini') || aiAnalysis.toLowerCase().includes('cursor') || aiAnalysis.toLowerCase().includes('droid')) {
-    queries.push('AI analysis Gemini Cursor Droid parallel backends');
+  // 2. Estrai keywords dai commit messages
+  const keywords = extractKeywordsFromCommits(commits);
+
+  // 3. Cerca file markdown che contengono le keywords
+  let memoryFiles: string[];
+  try {
+    memoryFiles = fs.readdirSync(serenaMemoriesPath)
+      .filter(f => f.endsWith('.md'));
+  } catch (error) {
+    return results;
   }
 
-  // Query 4: Architecture e refactoring
-  if (aiAnalysis.toLowerCase().includes('refactor') || aiAnalysis.toLowerCase().includes('architecture')) {
-    queries.push('refactoring architecture code organization');
+  for (const file of memoryFiles) {
+    const filePath = path.join(serenaMemoriesPath, file);
+    let content: string;
+
+    try {
+      content = fs.readFileSync(filePath, 'utf-8');
+    } catch (error) {
+      continue;
+    }
+
+    // Cerca corrispondenze di keywords nel content
+    const matches = keywords.filter(kw =>
+      content.toLowerCase().includes(kw.toLowerCase())
+    );
+
+    if (matches.length > 0) {
+      const title = extractTitleFromContent(content);
+      const memoryName = file.replace('.md', '');
+      results.push(`- **${memoryName}**: ${title} (matches: ${matches.slice(0, 5).join(', ')}${matches.length > 5 ? ', ...' : ''})`);
+    }
   }
 
-  // Query 5: Token optimization
-  if (aiAnalysis.toLowerCase().includes('token') || aiAnalysis.toLowerCase().includes('optimization')) {
-    queries.push('token optimization performance efficiency');
-  }
-
-  // Limita a 3 query più rilevanti
-  return queries.slice(0, 3);
+  // Ordina per numero di matches (decrescente)
+  return results.sort((a, b) => {
+    const matchesA = (a.match(/matches:/)?.[0] || '').split(',').length;
+    const matchesB = (b.match(/matches:/)?.[0] || '').split(',').length;
+    return matchesB - matchesA;
+  });
 }
 
 /**
@@ -182,36 +253,35 @@ ${aiAnalysis}
         metadata.aiAnalysisCompleted = false;
       }
 
-      // Genera query semantiche per la ricerca nelle memorie
-      onProgress?.("Generazione query semantiche per memorie...");
-      if (aiAnalysis) {
-        const memoryQueries = generateMemorySearchQueries(aiAnalysis);
+      // Cerca nelle Serena memories basandosi sui commit
+      onProgress?.("Ricerca nelle Serena memories...");
+      const serenaMemories = searchSerenaMemories(recentCommits);
 
-        if (memoryQueries.length > 0) {
-          metadata.memoryQueriesGenerated = memoryQueries.length;
+      if (serenaMemories.length > 0) {
+        metadata.serenaMemoriesFound = serenaMemories.length;
 
-          sections.push(`
-## Relevant Memories - Suggested Searches
+        sections.push(`
+## Relevant Serena Memories
 
-Based on the AI analysis of recent work, try these semantic memory searches:
+Based on commit analysis, these project memories may be relevant:
 
-${memoryQueries.map((query, i) => `${i + 1}. \`mcp__openmemory__search-memories "${query}"\``).join('\n')}
+${serenaMemories.join('\n')}
 
-*These queries target key concepts from your recent commits for better semantic matching.*
+📁 Path: \`.serena/memories/\`
+
+*Use \`mcp__plugin_serena_serena__read_memory\` to read specific memory files.*
 `);
-        }
       } else {
-        // Fallback se l'analisi AI non è disponibile
         const dateRange = getDateRangeFromCommits(recentCommits);
-        if (dateRange) {
-          sections.push(`
-## Relevant Memories
+        sections.push(`
+## Relevant Serena Memories
 
-📅 Commit date range: ${dateRange.oldest} to ${dateRange.newest}
+No matching memories found in \`.serena/memories/\` based on recent commits.
 
-*AI analysis unavailable. Search memories manually based on specific topics from commits above.*
+${dateRange ? `📅 Commit date range: ${dateRange.oldest} to ${dateRange.newest}` : ''}
+
+*Consider creating new memories for significant work completed.*
 `);
-        }
       }
 
       // Status dettagliato
