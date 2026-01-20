@@ -7,13 +7,13 @@ export declare const smartWorkflowsTool: {
     name: string;
     description: string;
     zodSchema: z.ZodObject<{
-        workflow: z.ZodEnum<["parallel-review", "pre-commit-validate", "init-session", "validate-last-commit", "feature-design", "bug-hunt", "triangulated-review", "auto-remediation", "refactor-sprint"]>;
+        workflow: z.ZodEnum<["parallel-review", "pre-commit-validate", "init-session", "validate-last-commit", "feature-design", "bug-hunt", "triangulated-review", "auto-remediation", "refactor-sprint", "overthinker"]>;
         params: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>;
     }, "strip", z.ZodTypeAny, {
-        workflow: "parallel-review" | "pre-commit-validate" | "bug-hunt" | "feature-design" | "validate-last-commit" | "init-session" | "triangulated-review" | "auto-remediation" | "refactor-sprint";
+        workflow: "parallel-review" | "pre-commit-validate" | "bug-hunt" | "feature-design" | "validate-last-commit" | "init-session" | "triangulated-review" | "auto-remediation" | "refactor-sprint" | "overthinker";
         params?: Record<string, any> | undefined;
     }, {
-        workflow: "parallel-review" | "pre-commit-validate" | "bug-hunt" | "feature-design" | "validate-last-commit" | "init-session" | "triangulated-review" | "auto-remediation" | "refactor-sprint";
+        workflow: "parallel-review" | "pre-commit-validate" | "bug-hunt" | "feature-design" | "validate-last-commit" | "init-session" | "triangulated-review" | "auto-remediation" | "refactor-sprint" | "overthinker";
         params?: Record<string, any> | undefined;
     }>;
     execute: ToolExecuteFunction;

@@ -20,13 +20,13 @@ export declare function executeWorkflow(name: string, params: any, onProgress?: 
  * Schema Zod per il router dei workflow
  */
 export declare const smartWorkflowsSchema: z.ZodObject<{
-    workflow: z.ZodEnum<["parallel-review", "pre-commit-validate", "init-session", "validate-last-commit", "feature-design", "bug-hunt", "triangulated-review", "auto-remediation", "refactor-sprint"]>;
+    workflow: z.ZodEnum<["parallel-review", "pre-commit-validate", "init-session", "validate-last-commit", "feature-design", "bug-hunt", "triangulated-review", "auto-remediation", "refactor-sprint", "overthinker"]>;
     params: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>;
 }, "strip", z.ZodTypeAny, {
-    workflow: "parallel-review" | "pre-commit-validate" | "bug-hunt" | "feature-design" | "validate-last-commit" | "init-session" | "triangulated-review" | "auto-remediation" | "refactor-sprint";
+    workflow: "parallel-review" | "pre-commit-validate" | "bug-hunt" | "feature-design" | "validate-last-commit" | "init-session" | "triangulated-review" | "auto-remediation" | "refactor-sprint" | "overthinker";
     params?: Record<string, any> | undefined;
 }, {
-    workflow: "parallel-review" | "pre-commit-validate" | "bug-hunt" | "feature-design" | "validate-last-commit" | "init-session" | "triangulated-review" | "auto-remediation" | "refactor-sprint";
+    workflow: "parallel-review" | "pre-commit-validate" | "bug-hunt" | "feature-design" | "validate-last-commit" | "init-session" | "triangulated-review" | "auto-remediation" | "refactor-sprint" | "overthinker";
     params?: Record<string, any> | undefined;
 }>;
 /**
@@ -161,6 +161,25 @@ export declare const workflowSchemas: {
         scope: string;
         autonomyLevel?: "low" | "medium" | "high" | "read-only" | undefined;
         depth?: "light" | "balanced" | "deep" | undefined;
+    }>;
+    overthinker: z.ZodObject<{
+        initialPrompt: z.ZodString;
+        iterations: z.ZodOptional<z.ZodDefault<z.ZodNumber>>;
+        contextFiles: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        outputFile: z.ZodDefault<z.ZodOptional<z.ZodString>>;
+        modelOverride: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        initialPrompt: string;
+        outputFile: string;
+        iterations?: number | undefined;
+        contextFiles?: string[] | undefined;
+        modelOverride?: string | undefined;
+    }, {
+        initialPrompt: string;
+        iterations?: number | undefined;
+        contextFiles?: string[] | undefined;
+        outputFile?: string | undefined;
+        modelOverride?: string | undefined;
     }>;
 };
 /**

@@ -33,6 +33,7 @@ This guide provides comprehensive documentation for all workflows available in u
 | triangulated-review | Gemini + Cursor + Droid | Misto | 20-60s | Refactor/bugfix con doppia conferma |
 | refactor-sprint | Cursor + Gemini + Droid | Sequenziale | 40-120s | Refactor organizzato in sprint |
 | auto-remediation | Droid | Sequenziale | 15-45s | Piani di remediation autonomi |
+| overthinker | Gemini (Multi-persona) | Sequenziale | 60-180s | Deep reasoning & refinement |
 
 ### When to Use Each Workflow
 
@@ -54,6 +55,7 @@ This guide provides comprehensive documentation for all workflows available in u
 
 **Planning Features:**
 - Use `feature-design` for architectural planning and implementation guidance
+- Use `overthinker` for deep reasoning and refining complex ideas
 
 ---
 
@@ -811,6 +813,74 @@ Factory Droid CLI (`droid exec`).
 - Sezione “Symptoms” con il testo originale
 - Piano in markdown con step numerati (azione, output atteso, controlli, rischi)
 - Metadati con numero di azioni e allegati utilizzati
+
+---
+
+### overthinker
+
+A deep reasoning loop using multiple AI personas to refine, critique, and perfect an idea.
+
+**Purpose:**  
+Simulate a room of experts (Prompt Refiner, Lead Architect, Reviewers, Synthesizer) to iteratively improve a concept or solution before finalizing it.
+
+**When to Use:**
+- Brainstorming complex architectural decisions
+- Refining vague requirements into concrete specifications
+- "Rubber ducking" difficult bugs or system designs
+- Creating comprehensive documentation or policy documents
+
+**Backends:**  
+Gemini (simulating multiple personas in a sequential chain-of-thought).
+
+**Parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| initialPrompt | string | Yes | - | The raw idea or request |
+| iterations | number | No | 3 | Number of review cycles (1-10) |
+| contextFiles | string[] | No | [] | Files to provide as background context |
+| outputFile | string | No | overthinking.md | Filename for the final output |
+| modelOverride | string | No | - | Override backend model |
+| autonomyLevel | string | No | read-only | Permission level |
+
+**Example Usage:**
+
+```json
+{
+  "workflow": "overthinker",
+  "params": {
+    "initialPrompt": "Design a distributed caching strategy for unitAI",
+    "iterations": 3,
+    "contextFiles": ["src/workflows/cache.ts", "docs/ARCHITECTURE.md"]
+  }
+}
+```
+
+**Workflow Steps:**
+
+1. **Prompt Refiner**
+   - Analyzes raw request + context
+   - Produces a detailed "Master Prompt" with clear constraints
+
+2. **Initial Reasoning**
+   - "Lead Architect" proposes a concrete initial solution based on the Master Prompt
+
+3. **Iterative Review Loop**
+   - "Reviewer Agents" (1 to N) critique the current thinking
+   - They identify gaps, risks, and improvements
+   - Each iteration refines and evolves the solution
+
+4. **Consolidation**
+   - "Synthesizer" compiles the entire history into a final, polished document
+
+**Output:**
+
+- A comprehensive Markdown file (`overthinking.md`) containing:
+  - Executive Summary
+  - Refined Master Prompt
+  - Detailed Solution
+  - Reasoning Process history
+  - Implementation Steps
 
 ---
 

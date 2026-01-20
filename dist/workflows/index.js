@@ -9,6 +9,7 @@ import { bugHuntWorkflow } from "./bug-hunt.workflow.js";
 import { triangulatedReviewWorkflow } from "./triangulated-review.workflow.js";
 import { autoRemediationWorkflow } from "./auto-remediation.workflow.js";
 import { refactorSprintWorkflow } from "./refactor-sprint.workflow.js";
+import { overthinkerWorkflow } from "./overthinker.workflow.js";
 /**
  * Registro di tutti i workflow disponibili
  */
@@ -75,7 +76,8 @@ export const smartWorkflowsSchema = z.object({
         "bug-hunt",
         "triangulated-review",
         "auto-remediation",
-        "refactor-sprint"
+        "refactor-sprint",
+        "overthinker"
     ]).describe("Workflow da eseguire"),
     params: z.record(z.any()).optional().describe("Parametri specifici del workflow")
 });
@@ -146,6 +148,17 @@ export const workflowSchemas = {
         scope: z.string().describe("Descrizione dello scope"),
         depth: z.enum(["light", "balanced", "deep"]).optional().default("balanced"),
         autonomyLevel: z.enum(["read-only", "low", "medium", "high"]).optional()
+    }),
+    "overthinker": z.object({
+        initialPrompt: z.string().describe("The initial raw idea or request from the user"),
+        iterations: z.number().int().min(1).max(10).default(3).optional()
+            .describe("Number of review/refinement iterations (default: 3)"),
+        contextFiles: z.array(z.string()).optional()
+            .describe("List of file paths to provide as context"),
+        outputFile: z.string().optional().default("overthinking.md")
+            .describe("Filename for the final output"),
+        modelOverride: z.string().optional()
+            .describe("Specific model/backend to use for all steps (default: auto)")
     })
 };
 /**
@@ -167,6 +180,7 @@ export function initializeWorkflowRegistry() {
     registerWorkflow("triangulated-review", triangulatedReviewWorkflow);
     registerWorkflow("auto-remediation", autoRemediationWorkflow);
     registerWorkflow("refactor-sprint", refactorSprintWorkflow);
+    registerWorkflow("overthinker", overthinkerWorkflow);
     // Removed console.log - corrupts MCP JSON protocol
     // Use logger.debug() if logging needed
 }
