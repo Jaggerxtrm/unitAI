@@ -9,6 +9,7 @@
  */
 import { AuditStats } from '../utils/auditTrail.js';
 import { TokenSavingsStats } from '../utils/tokenEstimator.js';
+import { ActivityRepository } from '../repositories/activity.js';
 /**
  * Time range for activity queries
  */
@@ -83,17 +84,8 @@ export interface MCPActivity {
 export declare class ActivityAnalytics {
     private auditTrail;
     private tokenMetrics;
-    private activityDb;
-    private activityDbPath;
-    constructor(auditDbPath?: string, tokenDbPath?: string, activityDbPath?: string);
-    /**
-     * Ensure data directory exists
-     */
-    private ensureDataDirectory;
-    /**
-     * Initialize activity tracking schema
-     */
-    private initializeActivitySchema;
+    private repository;
+    constructor(repository: ActivityRepository, auditDbPath?: string, tokenDbPath?: string);
     /**
      * Record an MCP activity
      */
@@ -146,13 +138,10 @@ export declare class ActivityAnalytics {
      * Generate unique ID for activity
      */
     private generateId;
-    /**
-     * Convert database row to MCPActivity
-     */
-    private rowToActivity;
 }
 /**
  * Get or create the global analytics instance
+ * Note: This relies on dependencies being initialized earlier in the lifecycle
  */
 export declare function getActivityAnalytics(): ActivityAnalytics;
 //# sourceMappingURL=activityAnalytics.d.ts.map

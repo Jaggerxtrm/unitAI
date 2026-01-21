@@ -7,12 +7,10 @@
  * - Workflow executions
  * - Agent performance
  */
-import Database from 'better-sqlite3';
-import * as path from 'path';
-import * as fs from 'fs';
 import { AuditTrail } from '../utils/auditTrail.js';
 import { TokenSavingsMetrics } from '../utils/tokenEstimator.js';
 import { logger } from '../utils/logger.js';
+import { ActivityRepository } from '../repositories/activity.js';
 /**
  * Activity Analytics Service
  *
@@ -21,51 +19,14 @@ import { logger } from '../utils/logger.js';
 export class ActivityAnalytics {
     auditTrail;
     tokenMetrics;
-    activityDb;
-    activityDbPath;
-    constructor(auditDbPath, tokenDbPath, activityDbPath) {
+    repository;
+    constructor(repository, auditDbPath, tokenDbPath) {
         // Initialize data sources
         this.auditTrail = new AuditTrail(auditDbPath);
         this.tokenMetrics = new TokenSavingsMetrics(tokenDbPath);
-        // Initialize activity tracking database
-        this.activityDbPath = activityDbPath || path.join(process.cwd(), 'data', 'activity.sqlite');
-        this.ensureDataDirectory();
-        this.activityDb = new Database(this.activityDbPath);
-        this.initializeActivitySchema();
-    }
-    /**
-     * Ensure data directory exists
-     */
-    ensureDataDirectory() {
-        const dataDir = path.dirname(this.activityDbPath);
-        if (!fs.existsSync(dataDir)) {
-            fs.mkdirSync(dataDir, { recursive: true });
-        }
-    }
-    /**
-     * Initialize activity tracking schema
-     */
-    initializeActivitySchema() {
-        this.activityDb.exec(`
-      CREATE TABLE IF NOT EXISTS mcp_activities (
-        id TEXT PRIMARY KEY,
-        timestamp INTEGER NOT NULL,
-        activity_type TEXT NOT NULL,
-        tool_name TEXT,
-        workflow_name TEXT,
-        agent_name TEXT,
-        duration INTEGER,
-        success INTEGER NOT NULL,
-        error_message TEXT,
-        metadata TEXT
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_activity_timestamp ON mcp_activities(timestamp);
-      CREATE INDEX IF NOT EXISTS idx_activity_type ON mcp_activities(activity_type);
-      CREATE INDEX IF NOT EXISTS idx_activity_tool ON mcp_activities(tool_name);
-      CREATE INDEX IF NOT EXISTS idx_activity_workflow ON mcp_activities(workflow_name);
-      CREATE INDEX IF NOT EXISTS idx_activity_success ON mcp_activities(success);
-    `);
+        this.repository = repository;
+        // Ensure schema is initialized
+        this.repository.initializeSchema();
     }
     /**
      * Record an MCP activity
@@ -74,13 +35,11 @@ export class ActivityAnalytics {
         const id = this.generateId();
         const timestamp = Date.now();
         try {
-            const stmt = this.activityDb.prepare(`
-        INSERT INTO mcp_activities (
-          id, timestamp, activity_type, tool_name, workflow_name,
-          agent_name, duration, success, error_message, metadata
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-            stmt.run(id, timestamp, activity.activityType, activity.toolName || null, activity.workflowName || null, activity.agentName || null, activity.duration || null, activity.success ? 1 : 0, activity.errorMessage || null, JSON.stringify(activity.metadata || {}));
+            this.repository.create({
+                id,
+                timestamp,
+                ...activity
+            });
             logger.debug(`Recorded MCP activity: ${id} (${activity.activityType})`);
             return id;
         }
@@ -94,40 +53,12 @@ export class ActivityAnalytics {
      * Query MCP activities
      */
     queryActivities(filters = {}) {
-        let sql = 'SELECT * FROM mcp_activities WHERE 1=1';
-        const params = [];
-        if (filters.activityType) {
-            sql += ' AND activity_type = ?';
-            params.push(filters.activityType);
-        }
-        if (filters.toolName) {
-            sql += ' AND tool_name = ?';
-            params.push(filters.toolName);
-        }
-        if (filters.workflowName) {
-            sql += ' AND workflow_name = ?';
-            params.push(filters.workflowName);
-        }
-        if (filters.startTime) {
-            sql += ' AND timestamp >= ?';
-            params.push(filters.startTime.getTime());
-        }
-        if (filters.endTime) {
-            sql += ' AND timestamp <= ?';
-            params.push(filters.endTime.getTime());
-        }
-        if (filters.success !== undefined) {
-            sql += ' AND success = ?';
-            params.push(filters.success ? 1 : 0);
-        }
-        sql += ' ORDER BY timestamp DESC';
-        if (filters.limit) {
-            sql += ' LIMIT ?';
-            params.push(filters.limit);
-        }
         try {
-            const rows = this.activityDb.prepare(sql).all(...params);
-            return rows.map((row) => this.rowToActivity(row));
+            return this.repository.query({
+                ...filters,
+                startTime: filters.startTime?.getTime(),
+                endTime: filters.endTime?.getTime()
+            });
         }
         catch (error) {
             const errorMsg = error instanceof Error ? error.message : String(error);
@@ -340,10 +271,9 @@ export class ActivityAnalytics {
     cleanup(daysToKeep = 30) {
         const cutoffTimestamp = Date.now() - (daysToKeep * 24 * 60 * 60 * 1000);
         try {
-            const stmt = this.activityDb.prepare('DELETE FROM mcp_activities WHERE timestamp < ?');
-            const result = stmt.run(cutoffTimestamp);
-            logger.info(`Cleaned up ${result.changes} old activity records`);
-            return result.changes;
+            const deleted = this.repository.cleanup(cutoffTimestamp);
+            logger.info(`Cleaned up ${deleted} old activity records`);
+            return deleted;
         }
         catch (error) {
             const errorMsg = error instanceof Error ? error.message : String(error);
@@ -355,7 +285,9 @@ export class ActivityAnalytics {
      * Close all database connections
      */
     close() {
-        this.activityDb.close();
+        // Repository handling is managed by DI container typically, 
+        // but if we own resources we can close them. 
+        // Here we delegate up or ignore since DI container closes db.
         this.auditTrail.close();
         this.tokenMetrics.close();
     }
@@ -365,32 +297,26 @@ export class ActivityAnalytics {
     generateId() {
         return `activity_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     }
-    /**
-     * Convert database row to MCPActivity
-     */
-    rowToActivity(row) {
-        return {
-            id: row.id,
-            timestamp: new Date(row.timestamp),
-            activityType: row.activity_type,
-            toolName: row.tool_name || undefined,
-            workflowName: row.workflow_name || undefined,
-            agentName: row.agent_name || undefined,
-            duration: row.duration || undefined,
-            success: row.success === 1,
-            errorMessage: row.error_message || undefined,
-            metadata: JSON.parse(row.metadata || '{}')
-        };
-    }
 }
 // Singleton instance
 let analyticsInstance = null;
+import { getDependencies } from "../dependencies.js";
 /**
  * Get or create the global analytics instance
+ * Note: This relies on dependencies being initialized earlier in the lifecycle
  */
 export function getActivityAnalytics() {
     if (!analyticsInstance) {
-        analyticsInstance = new ActivityAnalytics();
+        try {
+            const deps = getDependencies();
+            const repo = new ActivityRepository(deps.activityDb);
+            analyticsInstance = new ActivityAnalytics(repo);
+        }
+        catch (e) {
+            // Fallback for scripts/tests that might not have init dependencies
+            // Ideally we should fix those call sites, but for now this is safter transition
+            throw new Error("Cannot get ActivityAnalytics: Dependencies not initialized.");
+        }
     }
     return analyticsInstance;
 }
