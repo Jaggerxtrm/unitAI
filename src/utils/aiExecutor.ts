@@ -13,7 +13,7 @@ export interface AIExecutionOptions {
   backend: string;
   prompt: string;
   // Common options
-  // model?: string; // Model name - DEPRECATED/REMOVED
+  model?: string; // Model name
   sandbox?: boolean; // Sandbox flag (Gemini)
   outputFormat?: "text" | "json"; // Cursor Agent / Droid preferred format
   projectRoot?: string; // Cursor Agent working directory
@@ -43,9 +43,8 @@ export async function executeGeminiCLI(
   const args: string[] = [];
 
   // Always pass a model: default to PRIMARY if none provided
-  // const effectiveModel = model ?? AI_MODELS.GEMINI.PRIMARY;
-  // args.push(CLI.FLAGS.GEMINI.MODEL, effectiveModel);
-  // REMOVED: Rely on CLI default
+  const effectiveModel = options.model ?? AI_MODELS.GEMINI.PRIMARY;
+  args.push(CLI.FLAGS.GEMINI.MODEL, effectiveModel);
 
   // Sandbox flag
   if (sandbox) {

@@ -25,7 +25,7 @@ describe('Workflow Integration Tests', () => {
       mockGitCommands([
         { command: 'rev-parse --git-dir', output: '.git' },
         { command: 'log --oneline', output: 'abc123 Commit 1\ndef456 Commit 2' },
-        { 
+        {
           command: 'show --format=%H|%an|%ad|%s --date=iso abc123',
           output: 'abc123|Author|2024-01-15 10:00:00 +0000|Commit 1\n' + mockDiff
         },
@@ -56,7 +56,7 @@ describe('Workflow Integration Tests', () => {
       ]);
 
       const { executeInitSession } = await import('../../src/workflows/init-session.workflow.js');
-      
+
       // Should not throw with READ_ONLY for git read operations
       await expect(
         executeInitSession({
@@ -74,7 +74,8 @@ describe('Workflow Integration Tests', () => {
       mockAIExecutor({
         'ask-gemini': 'Gemini analysis: Good architecture, consider adding error handling',
         'ask-cursor': 'Cursor Agent review: Refactoring suggestions for better maintainability',
-        'ask-droid': 'Droid review: Code is production-ready with minor improvements'
+        'ask-droid': 'Droid review: Code is production-ready with minor improvements',
+        'ask-qwen': 'Qwen analysis: Logic is sound.'
       });
 
       const { executeParallelReview } = await import('../../src/workflows/parallel-review.workflow.js');
@@ -83,7 +84,8 @@ describe('Workflow Integration Tests', () => {
       const result = await executeParallelReview({
         autonomyLevel: AutonomyLevel.READ_ONLY,
         files: ['src/index.ts', 'src/utils.ts'],
-        focus: 'security and performance'
+        focus: 'security and performance',
+        backendOverrides: ['ask-gemini', 'ask-cursor']
       }, callback);
 
       expect(result).toContain('Parallel Review');
@@ -121,7 +123,7 @@ describe('Workflow Integration Tests', () => {
       });
 
       const { executeParallelReview } = await import('../../src/workflows/parallel-review.workflow.js');
-      
+
       await executeParallelReview({
         autonomyLevel: AutonomyLevel.READ_ONLY,
         files: ['test.ts'],
@@ -129,7 +131,7 @@ describe('Workflow Integration Tests', () => {
       });
 
       const duration = Date.now() - startTime;
-      
+
       // Should complete noticeably faster than sequential execution (~2x delay)
       expect(duration).toBeLessThan(700);
     });
@@ -145,7 +147,7 @@ describe('Workflow Integration Tests', () => {
 
       mockGitCommands([
         { command: 'rev-parse --git-dir', output: '.git' },
-        { 
+        {
           command: 'show --format=%H|%an|%ad|%s --date=iso HEAD',
           output: 'abc123|Author|2024-01-15 10:00:00 +0000|Fix security issue\n' + mockDiff
         },
@@ -178,7 +180,7 @@ describe('Workflow Integration Tests', () => {
 
       mockGitCommands([
         { command: 'rev-parse --git-dir', output: '.git' },
-        { 
+        {
           command: 'show --format=%H|%an|%ad|%s --date=iso HEAD',
           output: 'abc123|Author|2024-01-15 10:00:00 +0000|Refactor API\n' + mockDiff
         },
@@ -192,7 +194,7 @@ describe('Workflow Integration Tests', () => {
       });
 
       const { executeValidateLastCommit } = await import('../../src/workflows/validate-last-commit.workflow.js');
-      
+
       const result = await executeValidateLastCommit({
         autonomyLevel: AutonomyLevel.READ_ONLY
       });
@@ -235,7 +237,7 @@ describe('Workflow Integration Tests', () => {
       }));
 
       const { executeInitSession } = await import('../../src/workflows/init-session.workflow.js');
-      
+
       // Should succeed with fallback
       const result = await executeInitSession({
         autonomyLevel: AutonomyLevel.READ_ONLY,
@@ -322,7 +324,7 @@ describe('Workflow Integration Tests', () => {
       });
 
       const { executeInitSession } = await import('../../src/workflows/init-session.workflow.js');
-      
+
       // Should work without autonomyLevel parameter
       const result = await executeInitSession({
         commitCount: 1
