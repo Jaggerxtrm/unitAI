@@ -88,6 +88,9 @@ Transforms a high-level feature request into a concrete implementation plan. It 
 ### Auto Remediation
 A self-healing workflow that takes an error condition and autonomously generates and applies a fix, complete with verification steps.
 
+### Overthinker
+A deep reasoning loop using multiple AI personas (Refiner, Architect, Reviewers, Synthesizer) to iteratively critique and perfect a concept. It saves a comprehensive analysis to `.unitai/overthinking.md`, ensuring complex decisions are thoroughly vetted before implementation.
+
 ## Installation and Setup
 
 ### Automatic Setup (Claude CLI)
