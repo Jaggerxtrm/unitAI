@@ -4,7 +4,7 @@ import * as path from "path";
 import { getGitRepoInfo, getDetailedGitStatus, getGitBranches, checkCLIAvailability, isGitRepository, getRecentCommitsWithDiffs, getDateRangeFromCommits } from "../utils/gitHelper.js";
 import { formatWorkflowOutput } from "./utils.js";
 import { executeAIClient } from "../utils/aiExecutor.js";
-import { BACKENDS } from "../constants.js";
+import { BACKENDS, AI_MODELS } from "../constants.js";
 /**
  * Schema Zod per il workflow init-session
  */
@@ -63,28 +63,56 @@ function extractTitleFromContent(content) {
     return 'No title found';
 }
 /**
- * Cerca nelle Serena memories basandosi sui commit recenti
+ * Recursively finds all markdown files in a directory
  */
-function searchSerenaMemories(commits) {
-    const results = [];
-    // 1. Verifica se esiste .serena/memories
-    const serenaMemoriesPath = path.join(process.cwd(), '.serena', 'memories');
-    if (!fs.existsSync(serenaMemoriesPath)) {
-        return results;
-    }
-    // 2. Estrai keywords dai commit messages
-    const keywords = extractKeywordsFromCommits(commits);
-    // 3. Cerca file markdown che contengono le keywords
-    let memoryFiles;
+function findMarkdownFiles(dir, fileList = []) {
+    if (!fs.existsSync(dir))
+        return fileList;
     try {
-        memoryFiles = fs.readdirSync(serenaMemoriesPath)
-            .filter(f => f.endsWith('.md'));
+        const files = fs.readdirSync(dir, { withFileTypes: true });
+        for (const file of files) {
+            const filePath = path.join(dir, file.name);
+            if (file.isDirectory()) {
+                // Skip hidden folders and node_modules
+                if (file.name !== 'node_modules' && !file.name.startsWith('.')) {
+                    findMarkdownFiles(filePath, fileList);
+                }
+            }
+            else if (file.name.endsWith('.md')) {
+                // Get relative path for cleaner display
+                fileList.push(filePath);
+            }
+        }
     }
     catch (error) {
-        return results;
+        // Ignore access errors
+        console.error(`Error reading directory ${dir}:`, error);
     }
-    for (const file of memoryFiles) {
-        const filePath = path.join(serenaMemoriesPath, file);
+    return fileList;
+}
+/**
+ * Searches for relevant documentation in .serena/memories and docs/
+ * basandosi sui commit recenti
+ */
+function searchRelatedDocumentation(commits) {
+    const results = [];
+    const projectRoot = process.cwd();
+    // Directories to search
+    const searchDirs = [
+        path.join(projectRoot, '.serena', 'memories'),
+        path.join(projectRoot, 'docs')
+    ];
+    // 1. Extract keywords from commits
+    const keywords = extractKeywordsFromCommits(commits);
+    if (keywords.length === 0)
+        return results;
+    // 2. Gather all markdown files
+    const markdownFiles = [];
+    searchDirs.forEach(dir => findMarkdownFiles(dir, markdownFiles));
+    if (markdownFiles.length === 0)
+        return results;
+    // 3. Search for keywords in files
+    for (const filePath of markdownFiles) {
         let content;
         try {
             content = fs.readFileSync(filePath, 'utf-8');
@@ -96,8 +124,9 @@ function searchSerenaMemories(commits) {
         const matches = keywords.filter(kw => content.toLowerCase().includes(kw.toLowerCase()));
         if (matches.length > 0) {
             const title = extractTitleFromContent(content);
-            const memoryName = file.replace('.md', '');
-            results.push(`- **${memoryName}**: ${title} (matches: ${matches.slice(0, 5).join(', ')}${matches.length > 5 ? ', ...' : ''})`);
+            // Get relative path for display
+            const relPath = path.relative(projectRoot, filePath);
+            results.push(`- **${relPath}**: ${title} (matches: ${matches.slice(0, 5).join(', ')}${matches.length > 5 ? ', ...' : ''})`);
         }
     }
     // Ordina per numero di matches (decrescente)
@@ -190,6 +219,7 @@ ${recentCommits.map((commit, i) => `${i + 1}. [${commit.hash.substring(0, 8)}] $
                 try {
                     aiAnalysis = await executeAIClient({
                         backend,
+                        model: AI_MODELS.GEMINI.FLASH,
                         prompt: analysisPrompt
                     });
                     metadata.aiAnalysisCompleted = true;
@@ -216,33 +246,29 @@ ${aiAnalysis}
 `);
                 metadata.aiAnalysisCompleted = false;
             }
-            // Cerca nelle Serena memories basandosi sui commit
-            onProgress?.("Ricerca nelle Serena memories...");
-            const serenaMemories = searchSerenaMemories(recentCommits);
-            if (serenaMemories.length > 0) {
-                metadata.serenaMemoriesFound = serenaMemories.length;
+            // Cerca documentation e memorie rilevanti basandosi sui commit
+            onProgress?.("Ricerca documentazione correlata...");
+            const relatedDocs = searchRelatedDocumentation(recentCommits);
+            if (relatedDocs.length > 0) {
+                metadata.relatedDocsFound = relatedDocs.length;
                 sections.push(`
-## Relevant Serena Memories
+## Relevant Documentation & Memories
 
-Based on commit analysis, these project memories may be relevant:
+Based on commit analysis, these documents may be relevant:
 
-${serenaMemories.join('\n')}
+${relatedDocs.join('\n')}
 
-📁 Path: \`.serena/memories/\`
-
-*Use \`mcp__plugin_serena_serena__read_memory\` to read specific memory files.*
+*Use \`check_file\` or \`read_file\` to review specific documents.*
 `);
             }
             else {
                 const dateRange = getDateRangeFromCommits(recentCommits);
                 sections.push(`
-## Relevant Serena Memories
+## Relevant Documentation & Memories
 
-No matching memories found in \`.serena/memories/\` based on recent commits.
+No matching documents found in \`.serena/memories/\` or \`docs/\` based on recent commits.
 
 ${dateRange ? `📅 Commit date range: ${dateRange.oldest} to ${dateRange.newest}` : ''}
-
-*Consider creating new memories for significant work completed.*
 `);
             }
             // Status dettagliato

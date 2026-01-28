@@ -1,4 +1,4 @@
-import { CLI, ERROR_MESSAGES, STATUS_MESSAGES, BACKENDS } from "../constants.js";
+import { CLI, AI_MODELS, ERROR_MESSAGES, STATUS_MESSAGES, BACKENDS } from "../constants.js";
 // Re-export BACKENDS for convenience
 export { BACKENDS };
 import { executeCommand } from "./commandExecutor.js";
@@ -13,9 +13,8 @@ export async function executeGeminiCLI(options) {
     }
     const args = [];
     // Always pass a model: default to PRIMARY if none provided
-    // const effectiveModel = model ?? AI_MODELS.GEMINI.PRIMARY;
-    // args.push(CLI.FLAGS.GEMINI.MODEL, effectiveModel);
-    // REMOVED: Rely on CLI default
+    const effectiveModel = options.model ?? AI_MODELS.GEMINI.PRIMARY;
+    args.push(CLI.FLAGS.GEMINI.MODEL, effectiveModel);
     // Sandbox flag
     if (sandbox) {
         args.push(CLI.FLAGS.GEMINI.SANDBOX);

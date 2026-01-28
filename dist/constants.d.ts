@@ -4,8 +4,11 @@
 export declare const LOG_PREFIX = "[UAI-MCP]";
 export declare const AI_MODELS: {
     readonly GEMINI: {
-        readonly PRIMARY: "gemini-2.5-pro";
-        readonly FLASH: "gemini-2.5-flash";
+        readonly PRIMARY: "gemini-3-pro-preview";
+        readonly FLASH: "gemini-3-flash-preview";
+        readonly PRO_2_5: "gemini-2.5-pro";
+        readonly FLASH_2_5: "gemini-2.5-flash";
+        readonly FLASH_LITE: "gemini-2.5-flash-lite";
     };
     readonly CURSOR_AGENT: {
         readonly GPT_5_1: "gpt-5.1";
@@ -30,6 +33,7 @@ export declare const CLI: {
         readonly GEMINI: {
             readonly SANDBOX: "-s";
             readonly HELP: "-help";
+            readonly MODEL: "--model";
         };
         readonly CURSOR: {
             readonly PROMPT: "-p";

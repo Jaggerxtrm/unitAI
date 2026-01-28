@@ -4,8 +4,11 @@
 export const LOG_PREFIX = "[UAI-MCP]";
 export const AI_MODELS = {
     GEMINI: {
-        PRIMARY: "gemini-2.5-pro",
-        FLASH: "gemini-2.5-flash"
+        PRIMARY: "gemini-3-pro-preview",
+        FLASH: "gemini-3-flash-preview",
+        PRO_2_5: "gemini-2.5-pro",
+        FLASH_2_5: "gemini-2.5-flash",
+        FLASH_LITE: "gemini-2.5-flash-lite"
     },
     CURSOR_AGENT: {
         GPT_5_1: "gpt-5.1",
@@ -30,7 +33,8 @@ export const CLI = {
         // Gemini specific flags (based on gemini CLI help)
         GEMINI: {
             SANDBOX: "-s",
-            HELP: "-help"
+            HELP: "-help",
+            MODEL: "--model"
         },
         CURSOR: {
             PROMPT: "-p",

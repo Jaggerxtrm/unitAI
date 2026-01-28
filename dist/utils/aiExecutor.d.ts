@@ -6,6 +6,7 @@ export { BACKENDS };
 export interface AIExecutionOptions {
     backend: string;
     prompt: string;
+    model?: string;
     sandbox?: boolean;
     outputFormat?: "text" | "json";
     projectRoot?: string;
